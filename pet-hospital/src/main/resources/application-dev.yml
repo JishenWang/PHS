@@ -1,0 +1,6 @@
+# 开发环境配置
+logging:
+  level:
+    root: info
+    com.pethospital: debug
+    java.sql: debug
