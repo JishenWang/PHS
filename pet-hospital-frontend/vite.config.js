@@ -10,7 +10,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080', // 后端SpringBoot端口（按你要求修改）
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '') // 去掉/api前缀，后端直接接收
+        
       }
     }
   },
