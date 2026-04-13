@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.UserMapper">
+
+    <select id="listByNameOrPhone" resultType="com.pethospital.pet_hospital.entity.User">
+        select id,
+               username,
+               password,
+               real_name as realName,
+               phone,
+               role,
+               status,
+               created_time as createdAt,
+               updated_time as updatedAt
+        from sys_user
+        where is_deleted = 0
+          and (
+            role_code in ('OWNER', 'DESK')
+                or role in ('owner', 'desk')
+            )
+          and (
+            #{keyword} is null or #{keyword} = ''
+                or username like concat('%', #{keyword}, '%')
+                or real_name like concat('%', #{keyword}, '%')
+                or phone like concat('%', #{keyword}, '%')
+            )
+        order by id desc
+    </select>
+
+</mapper>

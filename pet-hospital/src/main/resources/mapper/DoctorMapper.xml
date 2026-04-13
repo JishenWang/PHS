@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.DoctorMapper">
+
+    <select id="listAll" resultType="com.pethospital.pet_hospital.entity.Doctor">
+        select id,
+               doctor_no as doctorNo,
+               name,
+               department as dept,
+               case work_status
+                   when 1 then 'FREE'
+                   when 2 then 'BUSY'
+                   else 'REST'
+                   end as workStatus,
+               created_time as createdAt,
+               updated_time as updatedAt
+        from doctor_profile
+        where is_deleted = 0
+        order by id desc
+    </select>
+
+</mapper>

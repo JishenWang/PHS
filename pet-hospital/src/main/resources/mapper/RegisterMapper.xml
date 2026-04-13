@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.RegisterMapper">
+
+    <sql id="deskRegisterWhere">
+        rr.is_deleted = 0
+        <if test="doctorId != null">
+            and rr.doctor_id = #{doctorId}
+        </if>
+        <if test="status != null and status != ''">
+            and rr.status =
+            <choose>
+                <when test="status == 'WAITING'">0</when>
+                <when test="status == 'IN_PROGRESS'">1</when>
+                <when test="status == 'DONE'">2</when>
+                <when test="status == 'CANCELED'">3</when>
+                <otherwise>-1</otherwise>
+            </choose>
+        </if>
+        <if test="keyword != null and keyword != ''">
+            and (
+            rr.register_no like concat('%', #{keyword}, '%')
+            or su.real_name like concat('%', #{keyword}, '%')
+            or su.phone like concat('%', #{keyword}, '%')
+            or p.name like concat('%', #{keyword}, '%')
+            or dp.name like concat('%', #{keyword}, '%')
+            )
+        </if>
+    </sql>
+
+    <select id="listDeskRegisters" resultType="java.util.HashMap">
+        select rr.id as id,
+               rr.register_no as registerNo,
+               su.real_name as customerName,
+               su.phone as phone,
+               p.name as petName,
+               p.species as petSpecies,
+               dp.name as doctorName,
+               rr.register_time as visitTime,
+               case rr.status
+                   when 0 then 'WAITING'
+                   when 1 then 'IN_PROGRESS'
+                   when 2 then 'DONE'
+                   when 3 then 'CANCELED'
+                   else 'WAITING'
+                   end as status
+        from register_record rr
+                 left join sys_user su on su.id = rr.owner_user_id
+                 left join pet p on p.id = rr.pet_id
+                 left join doctor_profile dp on dp.id = rr.doctor_id
+        where <include refid="deskRegisterWhere"/>
+        order by rr.id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countDeskRegisters" resultType="java.lang.Long">
+        select count(1)
+        from register_record rr
+                 left join sys_user su on su.id = rr.owner_user_id
+                 left join pet p on p.id = rr.pet_id
+                 left join doctor_profile dp on dp.id = rr.doctor_id
+        where <include refid="deskRegisterWhere"/>
+    </select>
+
+    <update id="updateStatusById">
+        update register_record
+        set status = #{status},
+            update_time = now(),
+            updated_time = now()
+        where id = #{id}
+          and is_deleted = 0
+    </update>
+
+</mapper>
