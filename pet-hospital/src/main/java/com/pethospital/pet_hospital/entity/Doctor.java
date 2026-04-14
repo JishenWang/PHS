@@ -1,7 +1,5 @@
-// 提示词：全字段映射必须严格来源于 pet_hospital.sql，字段名不得猜测。
 package com.pethospital.pet_hospital.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -17,7 +15,6 @@ public class Doctor {
     // 数据库字段：id
     @TableId(type = IdType.AUTO)
     private Long id;
-    // 数据库字段：user_id
     private Long userId;
     // 数据库字段：doctor_no
     private String doctorNo;
@@ -30,11 +27,8 @@ public class Doctor {
     private String department;
     // 数据库字段：title
     private String title;
-    // 数据库字段：phone
-    private String phone;
-    // 数据库字段：specialty
+    private String department;
     private String specialty;
-    // 数据库字段：introduction
     private String introduction;
     // 数据库字段：avatar_url
     private String avatarUrl;
@@ -55,9 +49,9 @@ public class Doctor {
     private BigDecimal rating;
     // 数据库字段：status
     private Integer status;
-    // 数据库字段：create_time
+    private Integer authStatus;
+    private String authRemark;
     private LocalDateTime createTime;
-    // 数据库字段：update_time
     private LocalDateTime updateTime;
     // 数据库字段：created_time
     private LocalDateTime createdTime;
