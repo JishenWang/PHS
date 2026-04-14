@@ -1,19 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-const routes = [
-  { path: '/', redirect: '/pet' },
-  { path: '/pet', component: () => import('@/views/owner/pet/index.vue') },
-  { path: '/health', component: () => import('@/views/owner/health/index.vue') },
-  { path: '/reserve', component: () => import('@/views/owner/reserve/index.vue') },
-  { path: '/consult', component: () => import('@/views/owner/consult/index.vue') },
-  { path: '/profile', component: () => import('@/views/owner/profile/index.vue') },
-  { path: '/orders', component: () => import('@/views/owner/order/index.vue') },
-  { path: '/order/:id', component: () => import('@/views/owner/order/detail.vue') }
-]
+import { constantRoutes } from './constant'
+import { getToken } from '@/utils/auth'
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes: constantRoutes
 })
+
+// 白名单
+const whiteList = ['/login', '/403', '/404']
+
+// 路由守卫
+router.beforeEach(async (to, from, next) => {
+  const hasToken = getToken()
+  
+  if (hasToken) {
+    // 已登录
+    if (to.path === '/login') {
+      const role = localStorage.getItem('pet_hospital_role') || 'owner'
+      const homePath = getHomePathByRole(role)
+      next(homePath)
+    } else {
+      next()
+    }
+  } else {
+    // 未登录
+    if (whiteList.includes(to.path)) {
+      next()
+    } else {
+      next('/login')
+    }
+  }
+})
+
+function getHomePathByRole(role) {
+  switch (role) {
+    case 'admin':
+      return '/admin/dashboard'
+    case 'owner':
+      return '/owner/pet'
+    case 'desk':
+      return '/desk/customer'
+    case 'doctor':
+      return '/doctor/accept'
+    default:
+      return '/login'
+  }
+}
 
 export default router

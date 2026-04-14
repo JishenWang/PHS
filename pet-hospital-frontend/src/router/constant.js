@@ -23,21 +23,15 @@ export const constantRoutes = [
   },
   {
     path: '/',
-    redirect: '/owner/pet',
+    redirect: '/login',
     hidden: true
-  }
-]
-
-// 异步路由（根据角色动态加载）
-import { asyncRouteModules } from './modules'
-
-// 异步路由（根据角色动态加载）- 合并所有模块
-export const asyncRoutes = asyncRouteModules[
-  // 管理员路由
+  },
+  
+  // ==================== 管理端路由 ====================
   {
     path: '/admin',
-    name: 'Admin',
     component: () => import('../layout/AdminLayout.vue'),
+    redirect: '/admin/dashboard',
     meta: { title: '管理端', roles: ['admin'] },
     children: [
       {
@@ -73,47 +67,101 @@ export const asyncRoutes = asyncRouteModules[
     ]
   },
   
-  // 客户自助端路由
+  // ==================== 客户自助端路由 ====================
   {
     path: '/owner',
-    name: 'Owner',
     component: () => import('../layout/OwnerLayout.vue'),
+    redirect: '/owner/pet',
     meta: { title: '客户自助端', roles: ['owner'] },
     children: [
       {
         path: 'pet',
         name: 'OwnerPet',
         component: () => import('../views/owner/pet/index.vue'),
-        meta: { title: '我的宠物', icon: 'pet' }
+        meta: { title: '我的宠物', icon: 'Pets', keepAlive: true }
+      },
+      {
+        path: 'pet/add',
+        name: 'OwnerPetAdd',
+        component: () => import('../views/owner/pet/add.vue'),
+        meta: { title: '添加宠物', hidden: true }
+      },
+      {
+        path: 'pet/:id',
+        name: 'OwnerPetDetail',
+        component: () => import('../views/owner/pet/detail.vue'),
+        meta: { title: '宠物详情', hidden: true }
       },
       {
         path: 'health',
         name: 'OwnerHealth',
         component: () => import('../views/owner/health/index.vue'),
-        meta: { title: '健康记录', icon: 'health' }
+        meta: { title: '健康记录', icon: 'Notebook', keepAlive: true }
       },
       {
         path: 'reserve',
         name: 'OwnerReserve',
         component: () => import('../views/owner/reserve/index.vue'),
-        meta: { title: '预约申请', icon: 'reserve' }
+        meta: { title: '预约申请', icon: 'Calendar', keepAlive: true }
+      },
+      {
+        path: 'reserve/:id',
+        name: 'OwnerReserveDetail',
+        component: () => import('../views/owner/reserve/detail.vue'),
+        meta: { title: '预约详情', hidden: true }
+      },
+      {
+        path: 'reserve/create',
+        name: 'OwnerReserveCreate',
+        component: () => import('../views/owner/reserve/create.vue'),
+        meta: { title: '创建预约', hidden: true }
       },
       {
         path: 'consult',
         name: 'OwnerConsult',
         component: () => import('../views/owner/consult/index.vue'),
-        meta: { title: '在线咨询', icon: 'consult' }
+        meta: { title: '在线咨询', icon: 'ChatDotRound', keepAlive: true }
+      },
+      {
+        path: 'consult/:id',
+        name: 'OwnerConsultDetail',
+        component: () => import('../views/owner/consult/detail.vue'),
+        meta: { title: '咨询详情', hidden: true }
+      },
+      {
+        path: 'profile',
+        name: 'OwnerProfile',
+        component: () => import('../views/owner/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
+      },
+      {
+        path: 'orders',
+        name: 'OwnerOrders',
+        component: () => import('../views/owner/order/index.vue'),
+        meta: { title: '我的订单', hidden: true }
+      },
+      {
+        path: 'order/:id',
+        name: 'OwnerOrderDetail',
+        component: () => import('../views/owner/order/detail.vue'),
+        meta: { title: '订单详情', hidden: true }
       }
     ]
   },
   
-  // 前台收银端路由
+  // ==================== 前台收银端路由 ====================
   {
     path: '/desk',
-    name: 'Desk',
     component: () => import('../layout/DeskLayout.vue'),
+    redirect: '/desk/customer',
     meta: { title: '前台收银端', roles: ['desk'] },
     children: [
+      {
+        path: 'customer',
+        name: 'DeskCustomer',
+        component: () => import('../views/desk/customer/index.vue'),
+        meta: { title: '客户查询', icon: 'customer' }
+      },
       {
         path: 'register',
         name: 'DeskRegister',
@@ -125,52 +173,52 @@ export const asyncRoutes = asyncRouteModules[
         name: 'DeskCharge',
         component: () => import('../views/desk/charge/index.vue'),
         meta: { title: '收费管理', icon: 'charge' }
-      },
-      {
-        path: 'customer',
-        name: 'DeskCustomer',
-        component: () => import('../views/desk/customer/index.vue'),
-        meta: { title: '客户管理', icon: 'customer' }
       }
     ]
   },
   
-  // 医生端路由
+  // ==================== 医生端路由 ====================
   {
     path: '/doctor',
-    name: 'Doctor',
     component: () => import('../layout/DoctorLayout.vue'),
+    redirect: '/doctor/accept',
     meta: { title: '医生端', roles: ['doctor'] },
     children: [
       {
         path: 'accept',
         name: 'DoctorAccept',
         component: () => import('../views/doctor/accept/index.vue'),
-        meta: { title: '接诊管理', icon: 'accept' }
-      },
-      {
-        path: 'record',
-        name: 'DoctorRecord',
-        component: () => import('../views/doctor/record/index.vue'),
-        meta: { title: '病历管理', icon: 'record' }
-      },
-      {
-        path: 'prescription',
-        name: 'DoctorPrescription',
-        component: () => import('../views/doctor/prescription/index.vue'),
-        meta: { title: '处方管理', icon: 'prescription' }
-      },
-      {
-        path: 'consult',
-        name: 'DoctorConsult',
-        component: () => import('../views/doctor/consult/index.vue'),
-        meta: { title: '在线咨询', icon: 'consult' }
+        meta: { title: '接诊列表', icon: 'accept' }
       },
       {
         path: 'pet',
         name: 'DoctorPet',
         component: () => import('../views/doctor/pet/index.vue'),
         meta: { title: '宠物档案', icon: 'pet' }
+      },
+      {
+        path: 'record',
+        name: 'DoctorRecord',
+        component: () => import('../views/doctor/record/index.vue'),
+        meta: { title: '病历记录', icon: 'record' }
+      },
+      {
+        path: 'prescription',
+        name: 'DoctorPrescription',
+        component: () => import('../views/doctor/prescription/index.vue'),
+        meta: { title: '处方开具', icon: 'prescription' }
+      },
+      {
+        path: 'consult',
+        name: 'DoctorConsult',
+        component: () => import('../views/doctor/consult/index.vue'),
+        meta: { title: '咨询回复', icon: 'consult' }
+      },
+      {
+        path: 'profile',
+        name: 'DoctorProfile',
+        component: () => import('../views/doctor/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
       }
     ]
   },
@@ -182,3 +230,6 @@ export const asyncRoutes = asyncRouteModules[
     hidden: true
   }
 ]
+
+// 异步路由（暂时为空，因为所有路由已在常量路由中）
+export const asyncRoutes = []

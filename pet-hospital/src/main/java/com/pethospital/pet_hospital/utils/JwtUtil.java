@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -90,8 +91,8 @@ public class JwtUtil {
      * 检查令牌是否过期
      */
     private Boolean isTokenExpired(String token) {
-        final Date expirationDate = getExpirationDateFromToken(token);
-        return expirationDate.before(new Date());
+        final Date expiration = getExpirationDateFromToken(token);
+        return expiration.before(new Date());
     }
 
     /**
@@ -160,5 +161,41 @@ public class JwtUtil {
                 .expiration(expireDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    /**
+     * 获取令牌剩余有效时间（毫秒）
+     * @param token JWT令牌
+     * @return 剩余有效时间（毫秒），负数表示已过期
+     */
+    public Long getRemainingTime(String token) {
+        try {
+            Date expirationDate = getExpirationDateFromToken(token);
+            Date now = new Date();
+            return expirationDate.getTime() - now.getTime();
+        } catch (Exception e) {
+            return -1L;
+        }
+    }
+
+    /**
+     * 获取令牌剩余有效时间（秒）
+     * @param token JWT令牌
+     * @return 剩余有效时间（秒），负数表示已过期
+     */
+    public Long getRemainingTimeSeconds(String token) {
+        return TimeUnit.MILLISECONDS.toSeconds(getRemainingTime(token));
+    }
+
+    /**
+     * 检查令牌是否即将过期（剩余时间小于指定分钟数）
+     * @param token JWT令牌
+     * @param minutes 分钟数
+     * @return true表示即将过期
+     */
+    public Boolean isTokenExpiringSoon(String token, int minutes) {
+        Long remainingMillis = getRemainingTime(token);
+        long thresholdMillis = TimeUnit.MINUTES.toMillis(minutes);
+        return remainingMillis > 0 && remainingMillis < thresholdMillis;
     }
 }

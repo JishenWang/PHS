@@ -20,23 +20,44 @@ export const useUserStore = defineStore('user', {
   },
   
   actions: {
-    // 登录
+    // 登录（支持角色）
     async login(loginData) {
       try {
-        const response = await request.post('/login', loginData)
-        if (response.code === 200) {
-          const { token, userInfo, role } = response.data
+        // 如果后端接口还没准备好，使用模拟登录
+        // 模拟不同角色的演示账号
+        const mockUsers = {
+          admin: { username: 'admin', password: '123456', role: 'admin', name: '系统管理员' },
+          owner: { username: 'owner', password: '123456', role: 'owner', name: '宠物主人' },
+          desk: { username: 'desk', password: '123456', role: 'desk', name: '前台工作人员' },
+          doctor: { username: 'doctor', password: '123456', role: 'doctor', name: '张医生' }
+        }
+        
+        const user = mockUsers[loginData.role]
+        if (user && loginData.username === user.username && loginData.password === user.password) {
+          const token = `mock-token-${user.role}-${Date.now()}`
+          const userInfo = {
+            id: 1,
+            username: user.name,
+            phone: '13800138000',
+            email: `${user.role}@example.com`,
+            role: user.role,
+            avatar: ''
+          }
+          
           this.token = token
           this.userInfo = userInfo
-          this.role = role
+          this.role = user.role
+          
           setToken(token)
           setUserInfo(userInfo)
-          setUserRole(role)
-          return { success: true, role }
+          setUserRole(user.role)
+          
+          return { success: true, role: user.role }
         }
-        return { success: false, message: response.message }
+        
+        return { success: false, message: '账号或密码错误' }
       } catch (error) {
-        return { success: false, message: error.message }
+        return { success: false, message: error.message || '登录失败' }
       }
     },
     
@@ -71,7 +92,7 @@ export const useUserStore = defineStore('user', {
         return null
       } catch (error) {
         console.error('获取用户信息失败:', error)
-        return null
+        return this.userInfo
       }
     },
     
