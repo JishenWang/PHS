@@ -1,19 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-const routes = [
-  { path: '/', redirect: '/pet' },
-  { path: '/pet', component: () => import('@/views/owner/pet/index.vue') },
-  { path: '/health', component: () => import('@/views/owner/health/index.vue') },
-  { path: '/reserve', component: () => import('@/views/owner/reserve/index.vue') },
-  { path: '/consult', component: () => import('@/views/owner/consult/index.vue') },
-  { path: '/profile', component: () => import('@/views/owner/profile/index.vue') },
-  { path: '/orders', component: () => import('@/views/owner/order/index.vue') },
-  { path: '/order/:id', component: () => import('@/views/owner/order/detail.vue') }
-]
+import { constantRoutes, asyncRoutes } from './constant'
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes: [
+    ...constantRoutes,  // 常量路由：/login, /403, /404
+    ...asyncRoutes      // 动态路由：/admin, /owner, /desk, /doctor
+  ]
+})
+
+// 路由守卫（权限控制）
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  
+  // 白名单，不需要登录
+  const whiteList = ['/login', '/403', '/404']
+  
+  if (whiteList.includes(to.path)) {
+    // 在白名单中，直接放行
+    next()
+  } else if (!token) {
+    // 未登录，跳转到登录页
+    next('/login')
+  } else {
+    // 已登录，放行
+    next()
+  }
 })
 
 export default router

@@ -1,4 +1,4 @@
-// 常量路由（所有人可访问）
+// ==================== 常量路由（所有人可访问）====================
 export const constantRoutes = [
   {
     path: '/login',
@@ -20,19 +20,11 @@ export const constantRoutes = [
     component: () => import('../views/404/index.vue'),
     hidden: true,
     meta: { title: '页面不存在' }
-  },
-  {
-    path: '/',
-    redirect: '/owner/pet',
-    hidden: true
   }
 ]
 
-// 异步路由（根据角色动态加载）
-import { asyncRouteModules } from './modules'
-
-// 异步路由（根据角色动态加载）- 合并所有模块
-export const asyncRoutes = asyncRouteModules[
+// ==================== 异步路由（需要登录和权限）====================
+export const asyncRoutes = [
   // 管理员路由
   {
     path: '/admin',
