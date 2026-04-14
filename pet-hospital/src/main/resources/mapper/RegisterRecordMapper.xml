@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.pethospital.pet_hospital.mapper.RegisterMapper">
+<mapper namespace="com.pethospital.pet_hospital.mapper.RegisterRecordMapper">
 
     <sql id="deskRegisterWhere">
         rr.is_deleted = 0
@@ -29,6 +29,76 @@
             )
         </if>
     </sql>
+
+    <select id="getById" resultType="java.util.HashMap">
+        select id as id,
+               register_no as registerNo,
+               appointment_id as appointmentId,
+               owner_user_id as ownerUserId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               service_item_id as serviceItemId,
+               desk_user_id as deskUserId,
+               register_time as registerTime,
+               accept_time as acceptTime,
+               queue_no as queueNo,
+               symptom as symptom,
+               triage_note as triageNote,
+               amount as amount,
+               status as status,
+               cancel_reason as cancelReason,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from register_record
+        where id = #{id}
+    </select>
+
+    <select id="listAll" resultType="java.util.HashMap">
+        select id as id,
+               register_no as registerNo,
+               appointment_id as appointmentId,
+               owner_user_id as ownerUserId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               service_item_id as serviceItemId,
+               desk_user_id as deskUserId,
+               register_time as registerTime,
+               accept_time as acceptTime,
+               queue_no as queueNo,
+               symptom as symptom,
+               triage_note as triageNote,
+               amount as amount,
+               status as status,
+               cancel_reason as cancelReason,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from register_record
+        order by id desc
+    </select>
+
+    <select id="listRegisterView" resultType="java.util.HashMap">
+        select rr.id as id,
+               rr.register_no as registerNo,
+               rr.register_time as registerTime,
+               rr.status as status,
+               p.name as petName,
+               p.species as petSpecies,
+               su.real_name as ownerName,
+               su.phone as ownerPhone,
+               dp.name as doctorName
+        from register_record rr
+                 left join pet p on p.id = rr.pet_id
+                 left join sys_user su on su.id = rr.owner_user_id
+                 left join doctor_profile dp on dp.id = rr.doctor_id
+        where rr.is_deleted = 0
+        order by rr.id desc
+    </select>
 
     <select id="listDeskRegisters" resultType="java.util.HashMap">
         select rr.id as id,

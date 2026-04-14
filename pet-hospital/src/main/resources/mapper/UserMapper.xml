@@ -4,6 +4,58 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pethospital.pet_hospital.mapper.UserMapper">
 
+    <select id="getById" resultType="com.pethospital.pet_hospital.entity.User">
+        select id as id,
+               username as username,
+               password as password,
+               real_name as realName,
+               phone as phone,
+               email as email,
+               role as role,
+               role_code as roleCode,
+               primary_role_code as primaryRoleCode,
+               avatar as avatar,
+               avatar_url as avatarUrl,
+               gender as gender,
+               birthday as birthday,
+               status as status,
+               remark as remark,
+               last_login_time as lastLoginTime,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from sys_user
+        where id = #{id}
+    </select>
+
+    <select id="listAllFull" resultType="com.pethospital.pet_hospital.entity.User">
+        select id as id,
+               username as username,
+               password as password,
+               real_name as realName,
+               phone as phone,
+               email as email,
+               role as role,
+               role_code as roleCode,
+               primary_role_code as primaryRoleCode,
+               avatar as avatar,
+               avatar_url as avatarUrl,
+               gender as gender,
+               birthday as birthday,
+               status as status,
+               remark as remark,
+               last_login_time as lastLoginTime,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from sys_user
+        order by id desc
+    </select>
+
     <select id="listByNameOrPhone" resultType="com.pethospital.pet_hospital.entity.User">
         select id,
                username,
@@ -11,9 +63,15 @@
                real_name as realName,
                phone,
                role,
+               role_code as roleCode,
+               primary_role_code as primaryRoleCode,
+               email,
                status,
-               created_time as createdAt,
-               updated_time as updatedAt
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
         from sys_user
         where is_deleted = 0
           and (

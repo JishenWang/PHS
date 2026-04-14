@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.CommonMapper">
+
+    <select id="listDept" resultType="java.util.HashMap">
+        select id as id,
+               dept_code as deptCode,
+               dept_name as deptName,
+               status as status,
+               sort_no as sortNo,
+               remark as remark,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime
+        from dept
+        order by id desc
+    </select>
+
+    <select id="listServiceItem" resultType="java.util.HashMap">
+        select id as id,
+               service_code as serviceCode,
+               service_name as serviceName,
+               category as category,
+               dept_id as deptId,
+               price as price,
+               duration_minutes as durationMinutes,
+               description as description,
+               status as status,
+               sort_no as sortNo,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from service_item
+        where is_deleted = 0
+        order by id desc
+    </select>
+
+    <select id="listMedicineItem" resultType="java.util.HashMap">
+        select id as id,
+               medicine_code as medicineCode,
+               medicine_name as medicineName,
+               category as category,
+               specification as specification,
+               unit as unit,
+               price as price,
+               stock_qty as stockQty,
+               warning_stock_qty as warningStockQty,
+               producer as producer,
+               allergy_risk as allergyRisk,
+               usage_desc as usageDesc,
+               status as status,
+               create_time as createTime,
+               update_time as updateTime,
+               is_deleted as isDeleted
+        from medicine_item
+        where is_deleted = 0
+        order by id desc
+    </select>
+
+    <select id="listSysDict" resultType="java.util.HashMap">
+        select id as id,
+               dict_type as dictType,
+               dict_code as dictCode,
+               dict_name as dictName,
+               sort_no as sortNo
+               ,remark as remark,
+               create_time as createTime,
+               update_time as updateTime,
+               is_deleted as isDeleted
+        from sys_dict
+        order by id desc
+    </select>
+
+    <select id="listSysConfig" resultType="java.util.HashMap">
+        select id as id,
+               config_key as configKey,
+               config_value as configValue,
+               config_name as configName,
+               config_group as configGroup,
+               remark as remark,
+               create_time as createTime,
+               update_time as updateTime
+        from sys_config
+        order by id desc
+    </select>
+
+</mapper>

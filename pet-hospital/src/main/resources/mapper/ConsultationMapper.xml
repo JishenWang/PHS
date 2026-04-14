@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.ConsultationMapper">
+
+    <select id="getById" resultType="com.pethospital.pet_hospital.entity.Consultation">
+        select
+               id as id,
+               consultation_no as consultationNo,
+               owner_id as ownerId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               title as title,
+               content as content,
+               images as images,
+               status as status,
+               rating as rating,
+               rating_comment as ratingComment,
+               create_time as createTime,
+               update_time as updateTime
+        from consultation
+        where id = #{id}
+    </select>
+
+    <select id="listAll" resultType="com.pethospital.pet_hospital.entity.Consultation">
+        select
+               id as id,
+               consultation_no as consultationNo,
+               owner_id as ownerId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               title as title,
+               content as content,
+               images as images,
+               status as status,
+               rating as rating,
+               rating_comment as ratingComment,
+               create_time as createTime,
+               update_time as updateTime
+        from consultation
+        order by id desc
+    </select>
+
+    <select id="listWithLatestReply" resultType="java.util.HashMap">
+        select c.id as consultationId,
+               c.consultation_no as consultationNo,
+               c.owner_id as ownerId,
+               c.pet_id as petId,
+               c.doctor_id as doctorId,
+               c.title as title,
+               c.content as content,
+               c.status as status,
+               c.rating as rating,
+               c.rating_comment as ratingComment,
+               c.create_time as consultationCreateTime,
+               cr.id as latestReplyId,
+               cr.reply_content as latestReplyContent,
+               cr.reply_time as latestReplyTime
+        from consultation c
+                 left join consultation_reply cr
+                           on cr.consultation_id = c.id
+                               and cr.id = (
+                                   select max(t.id)
+                                   from consultation_reply t
+                                   where t.consultation_id = c.id
+                               )
+        order by c.id desc
+    </select>
+
+    <select id="listRepliesByConsultationId" resultType="java.util.HashMap">
+        select id as id,
+               consultation_id as consultationId,
+               reply_content as replyContent,
+               reply_images as replyImages,
+               doctor_id as doctorId,
+               doctor_name as doctorName,
+               is_official as isOfficial,
+               likes as likes,
+               create_time as createTime,
+               update_time as updateTime
+        from consultation_reply
+        where consultation_id = #{consultationId}
+        order by id asc
+    </select>
+
+    <select id="listConsultLegacy" resultType="java.util.HashMap">
+        select id as id,
+               consult_no as consultNo,
+               owner_user_id as ownerUserId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               title as title,
+               content as content,
+               images as images,
+               reply_content as replyContent,
+               reply_images as replyImages,
+               reply_status as replyStatus,
+               rating as rating,
+               comment as comment,
+               consult_time as consultTime,
+               reply_time as replyTime,
+               status as status,
+               create_time as createTime,
+               update_time as updateTime,
+               is_deleted as isDeleted
+        from consult
+        where is_deleted = 0
+        order by id desc
+    </select>
+
+</mapper>

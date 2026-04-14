@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.AppointmentMapper">
+
+    <select id="getById" resultType="com.pethospital.pet_hospital.entity.Reserve">
+        select id as id,
+               appointment_no as appointmentNo,
+               owner_user_id as ownerUserId,
+               owner_id as ownerId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               service_item_id as serviceItemId,
+               service_type as serviceType,
+               appointment_time as appointmentTime,
+               symptom_desc as symptomDesc,
+               remark as remark,
+               source_type as sourceType,
+               status as status,
+               status_text as statusText,
+               cancel_reason as cancelReason,
+               verified_by as verifiedBy,
+               verified_time as verifiedTime,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from appointment
+        where id = #{id}
+    </select>
+
+    <select id="listAll" resultType="com.pethospital.pet_hospital.entity.Reserve">
+        select id as id,
+               appointment_no as appointmentNo,
+               owner_user_id as ownerUserId,
+               owner_id as ownerId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               service_item_id as serviceItemId,
+               service_type as serviceType,
+               appointment_time as appointmentTime,
+               symptom_desc as symptomDesc,
+               remark as remark,
+               source_type as sourceType,
+               status as status,
+               status_text as statusText,
+               cancel_reason as cancelReason,
+               verified_by as verifiedBy,
+               verified_time as verifiedTime,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from appointment
+        order by id desc
+    </select>
+
+    <select id="listByStatus" resultType="com.pethospital.pet_hospital.entity.Reserve">
+        select id as id,
+               appointment_no as appointmentNo,
+               owner_user_id as ownerUserId,
+               owner_id as ownerId,
+               pet_id as petId,
+               doctor_id as doctorId,
+               service_item_id as serviceItemId,
+               service_type as serviceType,
+               appointment_time as appointmentTime,
+               symptom_desc as symptomDesc,
+               remark as remark,
+               source_type as sourceType,
+               status as status,
+               status_text as statusText,
+               cancel_reason as cancelReason,
+               verified_by as verifiedBy,
+               verified_time as verifiedTime,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from appointment
+        where is_deleted = 0
+        <if test="status != null">
+            and status = #{status}
+        </if>
+        order by id desc
+    </select>
+
+    <select id="listAppointmentView" resultType="java.util.HashMap">
+        select a.id as id,
+               a.appointment_no as appointmentNo,
+               a.appointment_time as appointmentTime,
+               a.service_type as serviceType,
+               a.status as status,
+               a.status_text as statusText,
+               p.name as petName,
+               p.species as petSpecies,
+               su.real_name as ownerName,
+               su.phone as ownerPhone,
+               dp.name as doctorName
+        from appointment a
+                 left join pet p on p.id = a.pet_id
+                 left join sys_user su on su.id = ifnull(a.owner_user_id, a.owner_id)
+                 left join doctor_profile dp on dp.id = a.doctor_id
+        where a.is_deleted = 0
+        order by a.id desc
+    </select>
+
+</mapper>

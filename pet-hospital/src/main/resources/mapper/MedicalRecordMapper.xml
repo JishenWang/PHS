@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pethospital.pet_hospital.mapper.MedicalRecordMapper">
+
+    <select id="getById" resultType="com.pethospital.pet_hospital.entity.MedicalRecord">
+        select
+               id as id,
+               record_no as recordNo,
+               register_id as registerId,
+               pet_id as petId,
+               owner_id as ownerId,
+               doctor_id as doctorId,
+               doctor_name as doctorName,
+               type as type,
+               title as title,
+               content as content,
+               chief_complaint as chiefComplaint,
+               symptoms as symptoms,
+               present_illness as presentIllness,
+               past_history as pastHistory,
+               physical_exam as physicalExam,
+               auxiliary_exam as auxiliaryExam,
+               diagnosis as diagnosis,
+               prescription as prescription,
+               treatment_plan as treatmentPlan,
+               doctor_advice as doctorAdvice,
+               hospital as hospital,
+               attachments as attachments,
+               record_date as recordDate,
+               status as status,
+               remark as remark,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from medical_record
+        where id = #{id}
+    </select>
+
+    <select id="listAll" resultType="com.pethospital.pet_hospital.entity.MedicalRecord">
+        select
+               id as id,
+               record_no as recordNo,
+               register_id as registerId,
+               pet_id as petId,
+               owner_id as ownerId,
+               doctor_id as doctorId,
+               doctor_name as doctorName,
+               type as type,
+               title as title,
+               content as content,
+               chief_complaint as chiefComplaint,
+               symptoms as symptoms,
+               present_illness as presentIllness,
+               past_history as pastHistory,
+               physical_exam as physicalExam,
+               auxiliary_exam as auxiliaryExam,
+               diagnosis as diagnosis,
+               prescription as prescription,
+               treatment_plan as treatmentPlan,
+               doctor_advice as doctorAdvice,
+               hospital as hospital,
+               attachments as attachments,
+               record_date as recordDate,
+               status as status,
+               remark as remark,
+               create_time as createTime,
+               update_time as updateTime,
+               created_time as createdTime,
+               updated_time as updatedTime,
+               is_deleted as isDeleted
+        from medical_record
+        order by id desc
+    </select>
+
+</mapper>
