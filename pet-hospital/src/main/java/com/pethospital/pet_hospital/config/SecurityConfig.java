@@ -36,10 +36,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // 关键：启用 CORS！！！
+            .cors().and()
+            // 禁用 CSRF
             .csrf(csrf -> csrf.disable())
+            // 无状态会话
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // 授权配置
             .authorizeHttpRequests(auth -> auth
+                // 关键：修正登录路径！！！
                 .requestMatchers(
+                    "/auth/**",           // ← 添加这个，匹配 /auth/login
                     "/api/login/**",
                     "/api/register/**",
                     "/api/common/**",

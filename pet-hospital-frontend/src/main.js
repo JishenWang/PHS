@@ -11,9 +11,9 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
 const app = createApp(App)
 
-// 全局挂载路由、Pinia
-app.use(router)
-app.use(createPinia())
+// ========== 关键修改：先 Pinia，再 Router ==========
+app.use(createPinia())  
+app.use(router)         // 后注册，确保路由守卫能使用 store
 
 // 全局挂载 Element Plus（中文）
 app.use(ElementPlus, { locale: zhCn })

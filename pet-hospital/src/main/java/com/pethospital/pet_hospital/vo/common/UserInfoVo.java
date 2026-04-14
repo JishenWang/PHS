@@ -66,6 +66,16 @@ public class UserInfoVo {
     private Integer status;
     
     /**
+     * 状态描述
+     */
+    private String statusDesc;
+    
+    /**
+     * JWT令牌
+     */
+    private String token;           // ✅ 添加 token 字段
+    
+    /**
      * 可访问路由列表
      */
     private List<String> routes;
@@ -81,7 +91,6 @@ public class UserInfoVo {
     private Long doctorId;
     private String title;        // 职称
     private String department;   // 科室
-    private String statusDesc;   // 接诊状态描述
     
     /**
      * 前台专属字段（仅当角色为前台时返回）
