@@ -1,26 +1,26 @@
 import request from '@/utils/request'
 
-// 通用测试接口（验证前后端连通）
-export function testConnect() {
+// 登录
+export function login(data) {
   return request({
-    url: '/test',
-    method: 'get'
+    url: '/api/auth/login',
+    method: 'post',
+    data
   })
 }
 
-// 登录接口（通用，所有角色共用）
-export function login(data) {
+// 获取用户信息
+export function getUserInfo() {
   return request({
-    url: '/auth/login',
-    method: 'post',
-    data
+    url: '/api/auth/info',
+    method: 'get'
   })
 }
 
 // 退出登录
 export function logout() {
   return request({
-    url: '/auth/logout',
+    url: '/api/auth/logout',
     method: 'post'
   })
 }
