@@ -1,19 +1,30 @@
 package com.pethospital.pet_hospital.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethospital.pet_hospital.common.constant.HttpStatus;
-import com.pethospital.pet_hospital.entity.*;
+import com.pethospital.pet_hospital.entity.Appointment;
+import com.pethospital.pet_hospital.entity.Consultation;
+import com.pethospital.pet_hospital.entity.MedicalRecord;
+import com.pethospital.pet_hospital.entity.Order;
+import com.pethospital.pet_hospital.entity.OwnerHealthRecord;
+import com.pethospital.pet_hospital.entity.Pet;
+import com.pethospital.pet_hospital.entity.User;
 import com.pethospital.pet_hospital.service.IOwnerService;
-import com.pethospital.pet_hospital.vo.ResultVo;
 import com.pethospital.pet_hospital.vo.common.PageResultVo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.pethospital.pet_hospital.vo.common.ResultVo;
 
 /**
  * 客户自助端控制器
@@ -29,16 +40,12 @@ public class OwnerController {
      * 获取当前登录用户ID
      */
     private Long getCurrentUserId() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        // 从UserDetails中获取userId，需要自定义实现
-        return 1L; // 临时返回，实际应从token中获取
+        // 临时返回，实际应从token中获取
+        return 1L;
     }
 
     // ==================== 宠物管理 ====================
 
-    /**
-     * 获取宠物列表
-     */
     @GetMapping("/pet/list")
     public ResultVo<PageResultVo<Pet>> getPetList(
             @RequestParam(defaultValue = "1") Integer page,
@@ -47,12 +54,13 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Page<Pet> pageParam = new Page<>(page, pageSize);
         Page<Pet> result = ownerService.getPetList(pageParam, userId, keyword);
-        return ResultVo.success(new PageResultVo<>(result.getTotal(), result.getRecords()));
+        return ResultVo.success(PageResultVo.success(
+            result.getRecords(), 
+            result.getTotal(), 
+            (long)page, 
+            (long)pageSize));
     }
 
-    /**
-     * 获取宠物详情
-     */
     @GetMapping("/pet/{petId}")
     public ResultVo<Pet> getPetDetail(@PathVariable Long petId) {
         Long userId = getCurrentUserId();
@@ -63,9 +71,6 @@ public class OwnerController {
         return ResultVo.success(pet);
     }
 
-    /**
-     * 添加宠物
-     */
     @PostMapping("/pet")
     public ResultVo<Void> addPet(@RequestBody Pet pet) {
         Long userId = getCurrentUserId();
@@ -74,9 +79,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("添加失败");
     }
 
-    /**
-     * 更新宠物信息
-     */
     @PutMapping("/pet/{petId}")
     public ResultVo<Void> updatePet(@PathVariable Long petId, @RequestBody Pet pet) {
         Long userId = getCurrentUserId();
@@ -85,9 +87,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("更新失败");
     }
 
-    /**
-     * 删除宠物
-     */
     @DeleteMapping("/pet/{petId}")
     public ResultVo<Void> deletePet(@PathVariable Long petId) {
         Long userId = getCurrentUserId();
@@ -97,9 +96,6 @@ public class OwnerController {
 
     // ==================== 健康记录（就诊记录） ====================
 
-    /**
-     * 获取就诊记录列表
-     */
     @GetMapping("/health/list")
     public ResultVo<PageResultVo<MedicalRecord>> getHealthRecords(
             @RequestParam(defaultValue = "1") Integer page,
@@ -109,12 +105,13 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Page<MedicalRecord> pageParam = new Page<>(page, pageSize);
         Page<MedicalRecord> result = ownerService.getHealthRecords(pageParam, userId, petId, type);
-        return ResultVo.success(new PageResultVo<>(result.getTotal(), result.getRecords()));
+        return ResultVo.success(PageResultVo.success(
+            result.getRecords(), 
+            result.getTotal(), 
+            (long)page, 
+            (long)pageSize));
     }
 
-    /**
-     * 获取就诊记录详情
-     */
     @GetMapping("/health/{recordId}")
     public ResultVo<MedicalRecord> getHealthRecordDetail(@PathVariable Long recordId) {
         Long userId = getCurrentUserId();
@@ -127,9 +124,6 @@ public class OwnerController {
 
     // ==================== 自填记录 ====================
 
-    /**
-     * 获取自填记录列表
-     */
     @GetMapping("/owner-health/list")
     public ResultVo<PageResultVo<OwnerHealthRecord>> getOwnerHealthRecords(
             @RequestParam(defaultValue = "1") Integer page,
@@ -138,12 +132,13 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Page<OwnerHealthRecord> pageParam = new Page<>(page, pageSize);
         Page<OwnerHealthRecord> result = ownerService.getOwnerHealthRecords(pageParam, userId, petId);
-        return ResultVo.success(new PageResultVo<>(result.getTotal(), result.getRecords()));
+        return ResultVo.success(PageResultVo.success(
+            result.getRecords(), 
+            result.getTotal(), 
+            (long)page, 
+            (long)pageSize));
     }
 
-    /**
-     * 添加自填记录
-     */
     @PostMapping("/owner-health")
     public ResultVo<Void> addOwnerHealthRecord(@RequestBody OwnerHealthRecord record) {
         Long userId = getCurrentUserId();
@@ -152,9 +147,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("添加失败");
     }
 
-    /**
-     * 删除自填记录
-     */
     @DeleteMapping("/owner-health/{recordId}")
     public ResultVo<Void> deleteOwnerHealthRecord(@PathVariable Long recordId) {
         Long userId = getCurrentUserId();
@@ -164,9 +156,6 @@ public class OwnerController {
 
     // ==================== 预约管理 ====================
 
-    /**
-     * 获取预约列表
-     */
     @GetMapping("/reserve/list")
     public ResultVo<PageResultVo<Appointment>> getReserveList(
             @RequestParam(defaultValue = "1") Integer page,
@@ -175,12 +164,13 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Page<Appointment> pageParam = new Page<>(page, pageSize);
         Page<Appointment> result = ownerService.getReserveList(pageParam, userId, status);
-        return ResultVo.success(new PageResultVo<>(result.getTotal(), result.getRecords()));
+        return ResultVo.success(PageResultVo.success(
+            result.getRecords(), 
+            result.getTotal(), 
+            (long)page, 
+            (long)pageSize));
     }
 
-    /**
-     * 获取预约详情
-     */
     @GetMapping("/reserve/{reserveId}")
     public ResultVo<Appointment> getReserveDetail(@PathVariable Long reserveId) {
         Long userId = getCurrentUserId();
@@ -191,9 +181,6 @@ public class OwnerController {
         return ResultVo.success(appointment);
     }
 
-    /**
-     * 创建预约
-     */
     @PostMapping("/reserve")
     public ResultVo<Void> createReserve(@RequestBody Appointment appointment) {
         Long userId = getCurrentUserId();
@@ -202,9 +189,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("创建失败");
     }
 
-    /**
-     * 取消预约
-     */
     @PutMapping("/reserve/{reserveId}/cancel")
     public ResultVo<Void> cancelReserve(@PathVariable Long reserveId, @RequestBody(required = false) Map<String, String> body) {
         Long userId = getCurrentUserId();
@@ -213,20 +197,13 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("取消失败");
     }
 
-    /**
-     * 获取可预约医生列表
-     */
     @GetMapping("/reserve/doctors")
     public ResultVo<Object> getAvailableDoctors(
             @RequestParam(required = false) String serviceType,
             @RequestParam(required = false) String date) {
-        // 返回医生列表
         return ResultVo.success(ownerService.getAvailableDoctors(serviceType, date));
     }
 
-    /**
-     * 获取可预约时间段
-     */
     @GetMapping("/reserve/timeslots")
     public ResultVo<Object> getAvailableTimeSlots(
             @RequestParam Long doctorId,
@@ -236,9 +213,6 @@ public class OwnerController {
 
     // ==================== 在线咨询 ====================
 
-    /**
-     * 获取咨询列表
-     */
     @GetMapping("/consult/list")
     public ResultVo<PageResultVo<Consultation>> getConsultList(
             @RequestParam(defaultValue = "1") Integer page,
@@ -247,12 +221,13 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Page<Consultation> pageParam = new Page<>(page, pageSize);
         Page<Consultation> result = ownerService.getConsultList(pageParam, userId, status);
-        return ResultVo.success(new PageResultVo<>(result.getTotal(), result.getRecords()));
+        return ResultVo.success(PageResultVo.success(
+            result.getRecords(), 
+            result.getTotal(), 
+            (long)page, 
+            (long)pageSize));
     }
 
-    /**
-     * 获取咨询详情
-     */
     @GetMapping("/consult/{consultId}")
     public ResultVo<Consultation> getConsultDetail(@PathVariable Long consultId) {
         Long userId = getCurrentUserId();
@@ -263,9 +238,6 @@ public class OwnerController {
         return ResultVo.success(consultation);
     }
 
-    /**
-     * 发起咨询
-     */
     @PostMapping("/consult")
     public ResultVo<Void> createConsult(@RequestBody Consultation consultation) {
         Long userId = getCurrentUserId();
@@ -274,9 +246,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("发起失败");
     }
 
-    /**
-     * 追加回复
-     */
     @PostMapping("/consult/{consultId}/reply")
     public ResultVo<Void> replyConsult(@PathVariable Long consultId, @RequestBody Map<String, String> body) {
         Long userId = getCurrentUserId();
@@ -285,9 +254,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("回复失败");
     }
 
-    /**
-     * 评价咨询
-     */
     @PostMapping("/consult/{consultId}/rate")
     public ResultVo<Void> rateConsult(@PathVariable Long consultId, @RequestBody Map<String, Object> body) {
         Long userId = getCurrentUserId();
@@ -299,9 +265,6 @@ public class OwnerController {
 
     // ==================== 订单管理 ====================
 
-    /**
-     * 获取订单列表
-     */
     @GetMapping("/order/list")
     public ResultVo<PageResultVo<Order>> getOrderList(
             @RequestParam(defaultValue = "1") Integer page,
@@ -310,12 +273,13 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Page<Order> pageParam = new Page<>(page, pageSize);
         Page<Order> result = ownerService.getOrderList(pageParam, userId, payStatus);
-        return ResultVo.success(new PageResultVo<>(result.getTotal(), result.getRecords()));
+        return ResultVo.success(PageResultVo.success(
+            result.getRecords(), 
+            result.getTotal(), 
+            (long)page, 
+            (long)pageSize));
     }
 
-    /**
-     * 获取订单详情
-     */
     @GetMapping("/order/{orderId}")
     public ResultVo<Order> getOrderDetail(@PathVariable Long orderId) {
         Long userId = getCurrentUserId();
@@ -328,9 +292,6 @@ public class OwnerController {
 
     // ==================== 个人中心 ====================
 
-    /**
-     * 获取用户信息
-     */
     @GetMapping("/profile")
     public ResultVo<User> getUserInfo() {
         Long userId = getCurrentUserId();
@@ -338,9 +299,6 @@ public class OwnerController {
         return ResultVo.success(user);
     }
 
-    /**
-     * 更新用户信息
-     */
     @PutMapping("/profile")
     public ResultVo<Void> updateUserInfo(@RequestBody User user) {
         Long userId = getCurrentUserId();
@@ -349,9 +307,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("更新失败");
     }
 
-    /**
-     * 修改密码
-     */
     @PostMapping("/profile/password")
     public ResultVo<Void> changePassword(@RequestBody Map<String, String> body) {
         Long userId = getCurrentUserId();
@@ -361,9 +316,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("修改失败");
     }
 
-    /**
-     * 绑定手机
-     */
     @PostMapping("/profile/phone")
     public ResultVo<Void> bindPhone(@RequestBody Map<String, String> body) {
         Long userId = getCurrentUserId();
@@ -373,9 +325,6 @@ public class OwnerController {
         return success ? ResultVo.success() : ResultVo.error("绑定失败");
     }
 
-    /**
-     * 绑定邮箱
-     */
     @PostMapping("/profile/email")
     public ResultVo<Void> bindEmail(@RequestBody Map<String, String> body) {
         Long userId = getCurrentUserId();

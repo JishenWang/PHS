@@ -14,8 +14,11 @@ public class Pet {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long ownerId;
+    private String ownerName;
     private String name;
+    private String type;
     private String breed;
+    private Integer age;
     private Integer gender;
     private LocalDate birthday;
     private Double weight;
@@ -23,6 +26,7 @@ public class Pet {
     private Integer neutered;
     private String avatar;
     private String description;
+    private String vaccines;
     private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
@@ -34,11 +38,20 @@ public class Pet {
     public Long getOwnerId() { return ownerId; }
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
 
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
     public String getBreed() { return breed; }
     public void setBreed(String breed) { this.breed = breed; }
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
 
     public Integer getGender() { return gender; }
     public void setGender(Integer gender) { this.gender = gender; }
@@ -60,6 +73,9 @@ public class Pet {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getVaccines() { return vaccines; }
+    public void setVaccines(String vaccines) { this.vaccines = vaccines; }
 
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }

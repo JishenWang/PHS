@@ -3,11 +3,19 @@ package com.pethospital.pet_hospital.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 @Data
+@TableName("doctor")
 public class Doctor {
     // 数据库字段：id
+    @TableId(type = IdType.AUTO)
     private Long id;
     // 数据库字段：user_id
     private Long userId;
@@ -18,7 +26,8 @@ public class Doctor {
     // 数据库字段：name
     private String name;
     // 数据库字段：department
-    private String dept;
+    @TableField("department")
+    private String department;
     // 数据库字段：title
     private String title;
     // 数据库字段：phone
@@ -34,6 +43,7 @@ public class Doctor {
     // 数据库字段：consultation_fee
     private BigDecimal consultationFee;
     // 数据库字段：work_status
+    @TableField("work_status")
     private Integer workStatusCode;
     // 兼容前端状态字符串字段
     private String workStatus;
@@ -54,5 +64,6 @@ public class Doctor {
     // 数据库字段：updated_time
     private LocalDateTime updatedTime;
     // 数据库字段：is_deleted
+    @TableField("is_deleted")
     private Integer isDeleted;
 }
