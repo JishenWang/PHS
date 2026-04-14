@@ -1,51 +1,432 @@
 <template>
-  <div class="dashboard-page">
-    <h1>宠物医院管理系统 - 管理端首页</h1>
-    <el-card style="margin-top: 30px; padding: 20px;">
-      <h3>前后端连通状态</h3>
-      <p v-if="loading" style="font-size: 16px;">正在连接后端服务...</p>
-      <p v-else-if="success" style="color: #67C23A; font-size: 18px; font-weight: bold;">{{ backendMsg }}</p>
-      <p v-else style="color: #F56C6C; font-size: 18px; font-weight: bold;">❌ 后端连接失败，请检查服务</p>
-    </el-card>
+  <div class="dashboard">
+    <!-- 统计卡片 -->
+    <el-row :gutter="20" class="stat-row">
+      <el-col :span="6" v-for="(item, index) in statistics" :key="index">
+        <el-card class="stat-card" :body-style="{ padding: '0' }" shadow="hover">
+          <div class="stat-content" :class="`stat-${item.type}`">
+            <div class="stat-icon">
+              <el-icon :size="40">
+                <component :is="item.icon" />
+              </el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-title">{{ item.title }}</div>
+              <div class="stat-value">{{ item.value }}</div>
+              <div class="stat-change" :class="item.change > 0 ? 'up' : 'down'">
+                <el-icon><ArrowUp v-if="item.change > 0" /><ArrowDown v-else /></el-icon>
+                {{ Math.abs(item.change) }}% 较上月
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 图表区域 -->
+    <el-row :gutter="20" class="chart-row">
+      <el-col :span="16">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>预约趋势</span>
+              <el-radio-group v-model="trendPeriod" size="small" @change="handlePeriodChange">
+                <el-radio-button label="week">本周</el-radio-button>
+                <el-radio-button label="month">本月</el-radio-button>
+                <el-radio-button label="year">全年</el-radio-button>
+              </el-radio-group>
+            </div>
+          </template>
+          <div ref="trendChartRef" class="chart-container" v-loading="trendLoading"></div>
+        </el-card>
+      </el-col>
+      
+      <el-col :span="8">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>宠物种类分布</span>
+            </div>
+          </template>
+          <div ref="pieChartRef" class="chart-container" v-loading="pieLoading"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 快捷入口和最近活动 -->
+    <el-row :gutter="20" class="bottom-row">
+      <el-col :span="12">
+        <el-card shadow="hover">
+          <template #header>
+            <span>快捷入口</span>
+          </template>
+          <div class="quick-actions">
+            <div 
+              v-for="action in quickActions" 
+              :key="action.path"
+              class="action-item"
+              @click="$router.push(action.path)"
+            >
+              <div class="action-icon" :style="{ background: action.color }">
+                <el-icon :size="24"><component :is="action.icon" /></el-icon>
+              </div>
+              <span class="action-name">{{ action.name }}</span>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      
+      <el-col :span="12">
+        <el-card shadow="hover">
+          <template #header>
+            <span>最近活动</span>
+          </template>
+          <el-timeline v-loading="activityLoading">
+            <el-timeline-item 
+              v-for="(activity, index) in activities" 
+              :key="index"
+              :type="activity.type"
+              :timestamp="activity.time"
+            >
+              {{ activity.content }}
+            </el-timeline-item>
+          </el-timeline>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
-<script>
-import { getAdminTest } from '@/api/admin/admin.js'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { User, FirstAidKit, Calendar, TrendCharts, ArrowUp, ArrowDown, Plus, Edit, Search, Setting } from '@element-plus/icons-vue'
+import { getDashboardData, getTrendData, getPetTypeDistribution, getRecentActivities } from '@/api/admin/admin'
+import * as echarts from 'echarts'
 
-export default {
-  name: 'AdminDashboard',
-  data() {
-    return {
-      backendMsg: '',
-      loading: true,
-      success: false
-    }
-  },
-  mounted() {
-    this.testBackendConnect()
-  },
-  methods: {
-    async testBackendConnect() {
-      try {
-        const res = await getAdminTest()
-        this.backendMsg = res
-        this.success = true
-        console.log('✅ 管理端前后端连通成功！')
-      } catch (err) {
-        console.error('❌ 管理端连接后端失败', err)
-        this.success = false
-      } finally {
-        this.loading = false
+const trendPeriod = ref('week')
+const trendLoading = ref(false)
+const pieLoading = ref(false)
+const activityLoading = ref(false)
+const trendChartRef = ref(null)
+const pieChartRef = ref(null)
+let trendChart = null
+let pieChart = null
+
+const statistics = ref([
+  { title: '总用户数', value: 0, change: 0, type: 'primary', icon: 'User' },
+  { title: '医生数量', value: 0, change: 0, type: 'success', icon: 'FirstAidKit' },
+  { title: '宠物档案', value: 0, change: 0, type: 'warning', icon: 'Calendar' },
+  { title: '今日预约', value: 0, change: 0, type: 'danger', icon: 'TrendCharts' }
+])
+
+const activities = ref([])
+
+const quickActions = ref([
+  { name: '新增用户', path: '/admin/user', icon: 'Plus', color: '#409EFF' },
+  { name: '编辑医生', path: '/admin/doctor', icon: 'Edit', color: '#67C23A' },
+  { name: '查询宠物', path: '/admin/pet', icon: 'Search', color: '#E6A23C' },
+  { name: '系统设置', path: '/admin/system', icon: 'Setting', color: '#909399' }
+])
+
+// 初始化趋势图表
+const initTrendChart = (data) => {
+  if (!trendChartRef.value) return
+  trendChart = echarts.init(trendChartRef.value)
+  const option = {
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: data.map(item => item.date),
+      axisLine: { lineStyle: { color: '#ccc' } },
+      axisLabel: { color: '#666' }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: '#eee' } }
+    },
+    series: [{
+      data: data.map(item => item.count),
+      type: 'bar',
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#409EFF' },
+          { offset: 1, color: '#a0cfff' }
+        ]),
+        borderRadius: [4, 4, 0, 0]
       }
+    }]
+  }
+  trendChart.setOption(option)
+}
+
+// 初始化饼图
+const initPieChart = (data) => {
+  if (!pieChartRef.value) return
+  pieChart = echarts.init(pieChartRef.value)
+  const option = {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: '5%', left: 'center' },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: { show: false },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      },
+      data: data.map(item => ({
+        value: item.value,
+        name: item.name,
+        itemStyle: { color: item.color }
+      }))
+    }]
+  }
+  pieChart.setOption(option)
+}
+
+// 获取统计数据
+const fetchDashboardData = async () => {
+  try {
+    const res = await getDashboardData()
+    if (res.code === 200) {
+      const data = res.data
+      statistics.value[0].value = data.userCount
+      statistics.value[0].change = data.userChange || 0
+      statistics.value[1].value = data.doctorCount
+      statistics.value[1].change = data.doctorChange || 0
+      statistics.value[2].value = data.petCount
+      statistics.value[2].change = data.petChange || 0
+      statistics.value[3].value = data.todayReserve
+      statistics.value[3].change = data.reserveChange || 0
     }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
   }
 }
+
+// 获取趋势数据
+const fetchTrendData = async () => {
+  trendLoading.value = true
+  try {
+    const res = await getTrendData(trendPeriod.value)
+    if (res.code === 200) {
+      initTrendChart(res.data)
+    }
+  } catch (error) {
+    console.error('获取趋势数据失败:', error)
+  } finally {
+    trendLoading.value = false
+  }
+}
+
+// 获取宠物分布数据
+const fetchPetDistribution = async () => {
+  pieLoading.value = true
+  try {
+    const res = await getPetTypeDistribution()
+    if (res.code === 200) {
+      initPieChart(res.data)
+    }
+  } catch (error) {
+    console.error('获取宠物分布失败:', error)
+  } finally {
+    pieLoading.value = false
+  }
+}
+
+// 获取最近活动
+const fetchActivities = async () => {
+  activityLoading.value = true
+  try {
+    const res = await getRecentActivities()
+    if (res.code === 200) {
+      activities.value = res.data
+    }
+  } catch (error) {
+    console.error('获取活动记录失败:', error)
+  } finally {
+    activityLoading.value = false
+  }
+}
+
+const handlePeriodChange = () => {
+  fetchTrendData()
+}
+
+// 窗口大小改变时重绘图表
+const handleResize = () => {
+  trendChart?.resize()
+  pieChart?.resize()
+}
+
+onMounted(() => {
+  fetchDashboardData()
+  fetchTrendData()
+  fetchPetDistribution()
+  fetchActivities()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  trendChart?.dispose()
+  pieChart?.dispose()
+})
 </script>
 
 <style scoped>
-.dashboard-page {
-  padding: 30px;
-  text-align: center;
+.dashboard {
+  padding: 0;
+}
+
+.stat-row {
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  border-radius: var(--radius-large);
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-dark);
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-content::before {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  opacity: 0.1;
+}
+
+.stat-primary::before { background: var(--primary-color); }
+.stat-success::before { background: var(--success-color); }
+.stat-warning::before { background: var(--warning-color); }
+.stat-danger::before { background: var(--danger-color); }
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  color: #fff;
+}
+
+.stat-primary .stat-icon { background: var(--primary-color); }
+.stat-success .stat-icon { background: var(--success-color); }
+.stat-warning .stat-icon { background: var(--warning-color); }
+.stat-danger .stat-icon { background: var(--danger-color); }
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-title {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.stat-change {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-change.up { color: var(--success-color); }
+.stat-change.down { color: var(--danger-color); }
+
+.chart-row {
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.chart-container {
+  height: 300px;
+}
+
+.bottom-row {
+  margin-bottom: 20px;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 10px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid var(--border-lighter);
+}
+
+.action-item:hover {
+  background: var(--bg-color);
+  border-color: var(--primary-color);
+  transform: translateX(4px);
+}
+
+.action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.action-name {
+  font-size: 14px;
+  color: var(--text-regular);
+  font-weight: 500;
 }
 </style>
