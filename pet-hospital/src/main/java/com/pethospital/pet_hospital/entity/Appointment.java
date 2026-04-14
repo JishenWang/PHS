@@ -1,34 +1,30 @@
 package com.pethospital.pet_hospital.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-
-@TableName("consultation")
-public class Consultation {
+@TableName("appointment")
+public class Appointment {
 
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String consultationNo;
+    private String appointmentNo;
     private Long ownerId;
     private Long petId;
     private Long doctorId;
-    private String title;
-    private String content;
-    private String images;
+    private String serviceType;
+    private LocalDateTime appointmentTime;
     private String status;
-    private Integer rating;
-    private String ratingComment;
+    private String remark;
+    private String cancelReason;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getConsultationNo() { return consultationNo; }
-    public void setConsultationNo(String consultationNo) { this.consultationNo = consultationNo; }
+    public String getAppointmentNo() { return appointmentNo; }
+    public void setAppointmentNo(String appointmentNo) { this.appointmentNo = appointmentNo; }
 
     public Long getOwnerId() { return ownerId; }
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
@@ -39,23 +35,20 @@ public class Consultation {
     public Long getDoctorId() { return doctorId; }
     public void setDoctorId(Long doctorId) { this.doctorId = doctorId; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getServiceType() { return serviceType; }
+    public void setServiceType(String serviceType) { this.serviceType = serviceType; }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-
-    public String getImages() { return images; }
-    public void setImages(String images) { this.images = images; }
+    public LocalDateTime getAppointmentTime() { return appointmentTime; }
+    public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public Integer getRating() { return rating; }
-    public void setRating(Integer rating) { this.rating = rating; }
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
 
-    public String getRatingComment() { return ratingComment; }
-    public void setRatingComment(String ratingComment) { this.ratingComment = ratingComment; }
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
 
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }

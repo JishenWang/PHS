@@ -1,30 +1,22 @@
 package com.pethospital.pet_hospital.entity;
 
+import com.baomidou.mybatisplus.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-
-@TableName("medical_record")
-public class MedicalRecord {
+@TableName("owner_health_record")
+public class OwnerHealthRecord {
 
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long petId;
     private Long ownerId;
-    private Long doctorId;
-    private String doctorName;
     private String type;
     private String title;
     private String content;
-    private String diagnosis;
-    private String prescription;
     private LocalDate recordDate;
-    private String hospital;
-    private String attachments;
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -35,12 +27,6 @@ public class MedicalRecord {
     public Long getOwnerId() { return ownerId; }
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
 
-    public Long getDoctorId() { return doctorId; }
-    public void setDoctorId(Long doctorId) { this.doctorId = doctorId; }
-
-    public String getDoctorName() { return doctorName; }
-    public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
-
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
 
@@ -50,21 +36,12 @@ public class MedicalRecord {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
-    public String getDiagnosis() { return diagnosis; }
-    public void setDiagnosis(String diagnosis) { this.diagnosis = diagnosis; }
-
-    public String getPrescription() { return prescription; }
-    public void setPrescription(String prescription) { this.prescription = prescription; }
-
     public LocalDate getRecordDate() { return recordDate; }
     public void setRecordDate(LocalDate recordDate) { this.recordDate = recordDate; }
 
-    public String getHospital() { return hospital; }
-    public void setHospital(String hospital) { this.hospital = hospital; }
-
-    public String getAttachments() { return attachments; }
-    public void setAttachments(String attachments) { this.attachments = attachments; }
-
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+
+    public LocalDateTime getUpdateTime() { return updateTime; }
+    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 }

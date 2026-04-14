@@ -1,52 +1,58 @@
 // 提示词：全字段映射必须严格来源于 pet_hospital.sql，字段名不得猜测。
 package com.pethospital.pet_hospital.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.Data;
 
-@Data
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+
+@TableName("user")
 public class User {
-    // 数据库字段：id
+
+    @TableId(type = IdType.AUTO)
     private Long id;
-    // 数据库字段：username
     private String username;
-    // 数据库字段：password
     private String password;
-    // 数据库字段：real_name
-    private String realName;
-    // 数据库字段：phone
     private String phone;
-    // 数据库字段：email
     private String email;
-    // 数据库字段：role
     private String role;
-    // 数据库字段：role_code
-    private String roleCode;
-    // 数据库字段：primary_role_code
-    private String primaryRoleCode;
-    // 数据库字段：avatar
     private String avatar;
-    // 数据库字段：avatar_url
-    private String avatarUrl;
-    // 数据库字段：gender
-    private Integer gender;
-    // 数据库字段：birthday
-    private LocalDate birthday;
-    // 数据库字段：status
     private Integer status;
-    // 数据库字段：remark
-    private String remark;
-    // 数据库字段：last_login_time
     private LocalDateTime lastLoginTime;
-    // 数据库字段：create_time
     private LocalDateTime createTime;
-    // 数据库字段：update_time
     private LocalDateTime updateTime;
-    // 数据库字段：created_time
-    private LocalDateTime createdTime;
-    // 数据库字段：updated_time
-    private LocalDateTime updatedTime;
-    // 数据库字段：is_deleted
-    private Integer isDeleted;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
+
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
+
+    public LocalDateTime getLastLoginTime() { return lastLoginTime; }
+    public void setLastLoginTime(LocalDateTime lastLoginTime) { this.lastLoginTime = lastLoginTime; }
+
+    public LocalDateTime getCreateTime() { return createTime; }
+    public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+
+    public LocalDateTime getUpdateTime() { return updateTime; }
+    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 }
