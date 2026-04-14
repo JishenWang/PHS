@@ -23,16 +23,13 @@ export const constantRoutes = [
   },
   {
     path: '/',
-    redirect: '/owner/pet',
+    redirect: '/login',
     hidden: true
   }
 ]
 
 // 异步路由（根据角色动态加载）
-import { asyncRouteModules } from './modules'
-
-// 异步路由（根据角色动态加载）- 合并所有模块
-export const asyncRoutes = asyncRouteModules[
+export const asyncRoutes = [
   // 管理员路由
   {
     path: '/admin',
@@ -87,6 +84,12 @@ export const asyncRoutes = asyncRouteModules[
         meta: { title: '我的宠物', icon: 'pet' }
       },
       {
+        path: 'pet/:id',
+        name: 'OwnerPetDetail',
+        component: () => import('../views/owner/pet/detail.vue'),
+        meta: { title: '宠物详情', hidden: true }
+      },
+      {
         path: 'health',
         name: 'OwnerHealth',
         component: () => import('../views/owner/health/index.vue'),
@@ -99,10 +102,40 @@ export const asyncRoutes = asyncRouteModules[
         meta: { title: '预约申请', icon: 'reserve' }
       },
       {
+        path: 'reserve/:id',
+        name: 'OwnerReserveDetail',
+        component: () => import('../views/owner/reserve/detail.vue'),
+        meta: { title: '预约详情', hidden: true }
+      },
+      {
         path: 'consult',
         name: 'OwnerConsult',
         component: () => import('../views/owner/consult/index.vue'),
         meta: { title: '在线咨询', icon: 'consult' }
+      },
+      {
+        path: 'consult/:id',
+        name: 'OwnerConsultDetail',
+        component: () => import('../views/owner/consult/detail.vue'),
+        meta: { title: '咨询详情', hidden: true }
+      },
+      {
+        path: 'profile',
+        name: 'OwnerProfile',
+        component: () => import('../views/owner/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
+      },
+      {
+        path: 'orders',
+        name: 'OwnerOrders',
+        component: () => import('../views/owner/order/index.vue'),
+        meta: { title: '我的订单', hidden: true }
+      },
+      {
+        path: 'order/:id',
+        name: 'OwnerOrderDetail',
+        component: () => import('../views/owner/order/detail.vue'),
+        meta: { title: '订单详情', hidden: true }
       }
     ]
   },
