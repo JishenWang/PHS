@@ -28,10 +28,10 @@ public class AdminServiceImpl implements IAdminService {
 
     @Autowired
     private UserMapper userMapper;
-    
+
     @Autowired
     private DoctorMapper doctorMapper;
-    
+
     @Autowired
     private PetMapper petMapper;
 
@@ -49,15 +49,15 @@ public class AdminServiceImpl implements IAdminService {
     @Override
     public List<UserVo> getUserList(String keyword) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(keyword)) {
             wrapper.like(User::getRealName, keyword)
                    .or()
                    .like(User::getPhone, keyword);
         }
-        
+
         List<User> users = userMapper.selectList(wrapper);
-        
+
         return users.stream().map(user -> {
             UserVo vo = new UserVo();
             BeanUtils.copyProperties(user, vo);
@@ -69,7 +69,7 @@ public class AdminServiceImpl implements IAdminService {
     public UserVo addUser(UserVo userVo) {
         User user = new User();
         BeanUtils.copyProperties(userVo, user);
-        
+
         // 设置默认值（数据库字段要求非空）
         LocalDateTime now = LocalDateTime.now();
         user.setStatus(1);
@@ -77,12 +77,12 @@ public class AdminServiceImpl implements IAdminService {
         user.setUpdateTime(now);
         user.setCreatedTime(now);
         user.setUpdatedTime(now);
-        
+
         // 如果有密码，设置密码（生产环境需要加密）
         if (StringUtils.hasText(userVo.getPassword())) {
             user.setPassword(userVo.getPassword()); // TODO: 添加加密
         }
-        
+
         userMapper.insert(user);
         userVo.setId(user.getId());
         return userVo;
@@ -92,17 +92,17 @@ public class AdminServiceImpl implements IAdminService {
     public UserVo updateUser(UserVo userVo) {
         User user = new User();
         BeanUtils.copyProperties(userVo, user);
-        
+
         // 更新时间
         LocalDateTime now = LocalDateTime.now();
         user.setUpdateTime(now);
         user.setUpdatedTime(now);
-        
+
         // 编辑时不更新密码和时间字段（由数据库管理）
         user.setPassword(null);
         user.setCreateTime(null);
         user.setCreatedTime(null);
-        
+
         userMapper.updateById(user);
         return userVo;
     }
@@ -126,7 +126,7 @@ public class AdminServiceImpl implements IAdminService {
     @Override
     public List<DoctorVo> getDoctorList(String name, String department, String title) {
         LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(name)) {
             wrapper.like(Doctor::getName, name);
         }
@@ -136,9 +136,9 @@ public class AdminServiceImpl implements IAdminService {
         if (StringUtils.hasText(title)) {
             wrapper.eq(Doctor::getTitle, title);
         }
-        
+
         List<Doctor> doctors = doctorMapper.selectList(wrapper);
-        
+
         return doctors.stream().map(doctor -> {
             DoctorVo vo = new DoctorVo();
             BeanUtils.copyProperties(doctor, vo);
@@ -150,20 +150,21 @@ public class AdminServiceImpl implements IAdminService {
     public DoctorVo addDoctor(DoctorVo doctorVo) {
         Doctor doctor = new Doctor();
         BeanUtils.copyProperties(doctorVo, doctor);
-        
+
         // 设置默认值
         LocalDateTime now = LocalDateTime.now();
-        doctor.setStatus(1);
-        doctor.setWorkStatus(1);
-        doctor.setAuthStatus(1);
-        doctor.setPatientCount(0);
+        // 修复：将 int 转换为 Integer，避免类型不匹配
+        doctor.setStatus(Integer.valueOf(1));
+        doctor.setWorkStatus(Integer.valueOf(1));
+        doctor.setAuthStatus(Integer.valueOf(1));
+        doctor.setPatientCount(Integer.valueOf(0));
         doctor.setRating(BigDecimal.valueOf(5.0));
         doctor.setCreateTime(now);
         doctor.setUpdateTime(now);
         doctor.setCreatedTime(now);
         doctor.setUpdatedTime(now);
-        doctor.setIsDeleted(0);
-        
+        doctor.setIsDeleted(Integer.valueOf(0));
+
         doctorMapper.insert(doctor);
         doctorVo.setId(doctor.getId());
         return doctorVo;
@@ -173,15 +174,15 @@ public class AdminServiceImpl implements IAdminService {
     public DoctorVo updateDoctor(DoctorVo doctorVo) {
         Doctor doctor = new Doctor();
         BeanUtils.copyProperties(doctorVo, doctor);
-        
+
         LocalDateTime now = LocalDateTime.now();
         doctor.setUpdateTime(now);
         doctor.setUpdatedTime(now);
-        
+
         // 不更新创建时间
         doctor.setCreateTime(null);
         doctor.setCreatedTime(null);
-        
+
         doctorMapper.updateById(doctor);
         return doctorVo;
     }
@@ -205,15 +206,15 @@ public class AdminServiceImpl implements IAdminService {
     @Override
     public List<PetVo> getPetList(String keyword) {
         LambdaQueryWrapper<Pet> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(keyword)) {
             wrapper.like(Pet::getName, keyword)
                    .or()
                    .like(Pet::getOwnerName, keyword);
         }
-        
+
         List<Pet> pets = petMapper.selectList(wrapper);
-        
+
         return pets.stream().map(pet -> {
             PetVo vo = new PetVo();
             BeanUtils.copyProperties(pet, vo);
@@ -229,19 +230,19 @@ public class AdminServiceImpl implements IAdminService {
     public PetVo addPet(PetVo petVo) {
         Pet pet = new Pet();
         BeanUtils.copyProperties(petVo, pet);
-        
+
         LocalDateTime now = LocalDateTime.now();
-        pet.setStatus(1);
+        pet.setStatus(Integer.valueOf(1));
         pet.setCreateTime(now);
         pet.setUpdateTime(now);
         pet.setCreatedTime(now);
         pet.setUpdatedTime(now);
-        
+
         // 处理疫苗数组转字符串（数据库存储）
         if (petVo.getVaccines() != null && !petVo.getVaccines().isEmpty()) {
             pet.setVaccines(String.join(",", petVo.getVaccines()));
         }
-        
+
         petMapper.insert(pet);
         petVo.setId(pet.getId());
         return petVo;
@@ -251,19 +252,19 @@ public class AdminServiceImpl implements IAdminService {
     public PetVo updatePet(PetVo petVo) {
         Pet pet = new Pet();
         BeanUtils.copyProperties(petVo, pet);
-        
+
         LocalDateTime now = LocalDateTime.now();
         pet.setUpdateTime(now);
         pet.setUpdatedTime(now);
-        
+
         pet.setCreateTime(null);
         pet.setCreatedTime(null);
-        
+
         // 处理疫苗数组转字符串
         if (petVo.getVaccines() != null && !petVo.getVaccines().isEmpty()) {
             pet.setVaccines(String.join(",", petVo.getVaccines()));
         }
-        
+
         petMapper.updateById(pet);
         return petVo;
     }
