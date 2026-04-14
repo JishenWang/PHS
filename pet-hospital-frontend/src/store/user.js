@@ -22,7 +22,7 @@ export const useUserStore = defineStore('user', {
   },
   
   actions: {
-    // 登录
+    // 登录（支持角色）
     async login(loginData) {
       try {
         const response = await request.post('/login', loginData)
@@ -41,9 +41,10 @@ export const useUserStore = defineStore('user', {
           
           return { success: true, role }
         }
-        return { success: false, message: response.message }
+        
+        return { success: false, message: '账号或密码错误' }
       } catch (error) {
-        return { success: false, message: error.message }
+        return { success: false, message: error.message || '登录失败' }
       }
     },
     
@@ -89,7 +90,7 @@ export const useUserStore = defineStore('user', {
         return null
       } catch (error) {
         console.error('获取用户信息失败:', error)
-        return null
+        return this.userInfo
       }
     },
     

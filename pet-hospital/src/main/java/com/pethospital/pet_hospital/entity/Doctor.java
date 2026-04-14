@@ -1,7 +1,5 @@
-// 提示词：全字段映射必须严格来源于 pet_hospital.sql，字段名不得猜测。
 package com.pethospital.pet_hospital.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;

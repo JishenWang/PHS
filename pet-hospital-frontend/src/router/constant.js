@@ -1,4 +1,4 @@
-// constant.js - 完整修复版
+
 
 // ==================== 常量路由（所有人可访问）====================
 export const constantRoutes = [
@@ -80,7 +80,7 @@ export const asyncRoutes = [
     ]
   },
   
-  // 客户自助端路由
+  // ==================== 客户自助端路由 ====================
   {
     path: '/owner',
     name: 'Owner',
@@ -119,6 +119,12 @@ export const asyncRoutes = [
         meta: { title: '预约详情', hidden: true }
       },
       {
+        path: 'reserve/create',
+        name: 'OwnerReserveCreate',
+        component: () => import('../views/owner/reserve/create.vue'),
+        meta: { title: '创建预约', hidden: true }
+      },
+      {
         path: 'consult',
         name: 'OwnerConsult',
         component: () => import('@/views/owner/consult/index.vue'),
@@ -151,7 +157,7 @@ export const asyncRoutes = [
     ]
   },
   
-  // 前台收银端路由
+  // ==================== 前台收银端路由 ====================
   {
     path: '/desk',
     name: 'Desk',
@@ -159,6 +165,12 @@ export const asyncRoutes = [
     redirect: '/desk/register',
     meta: { title: '前台收银端', roles: ['desk'] },
     children: [
+      {
+        path: 'customer',
+        name: 'DeskCustomer',
+        component: () => import('../views/desk/customer/index.vue'),
+        meta: { title: '客户查询', icon: 'customer' }
+      },
       {
         path: 'register',
         name: 'DeskRegister',
@@ -180,7 +192,7 @@ export const asyncRoutes = [
     ]
   },
   
-  // 医生端路由
+  // ==================== 医生端路由 ====================
   {
     path: '/doctor',
     name: 'Doctor',
@@ -217,7 +229,34 @@ export const asyncRoutes = [
         name: 'DoctorPet',
         component: () => import('@/views/doctor/pet/index.vue'),
         meta: { title: '宠物档案', icon: 'pet' }
+      },
+      {
+        path: 'record',
+        name: 'DoctorRecord',
+        component: () => import('../views/doctor/record/index.vue'),
+        meta: { title: '病历记录', icon: 'record' }
+      },
+      {
+        path: 'prescription',
+        name: 'DoctorPrescription',
+        component: () => import('../views/doctor/prescription/index.vue'),
+        meta: { title: '处方开具', icon: 'prescription' }
+      },
+      {
+        path: 'consult',
+        name: 'DoctorConsult',
+        component: () => import('../views/doctor/consult/index.vue'),
+        meta: { title: '咨询回复', icon: 'consult' }
+      },
+      {
+        path: 'profile',
+        name: 'DoctorProfile',
+        component: () => import('../views/doctor/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
       }
     ]
   }
 ]
+
+// 异步路由（暂时为空，因为所有路由已在常量路由中）
+export const asyncRoutes = []

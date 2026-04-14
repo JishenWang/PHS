@@ -1,14 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { constantRoutes } from './constant'
-import { getToken, removeToken, removeUserInfo, removeUserRole } from '@/utils/auth'
-import { useUserStore } from '@/store/user'
-import { usePermissionStore } from '@/store/permission'
+import { getToken } from '@/utils/auth'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: constantRoutes
 })
 
+// 白名单
 const whiteList = ['/login', '/403', '/404']
 let hasAddRoutes = false
 
@@ -33,31 +32,16 @@ function forceLogout() {
 router.beforeEach(async (to, from, next) => {
   const hasToken = getToken()
   
-  // 调试日志
-  console.log('路由守卫:', {
-    to: to.path,
-    hasToken: hasToken ? '有token' : '无token',
-    whiteList: whiteList.includes(to.path)
-  })
-
   if (hasToken) {
     // ========== 已登录状态 ==========
     
     // 如果访问登录页，根据角色跳转首页
     if (to.path === '/login') {
-      const userStore = useUserStore()
-      
-      // 如果没有角色信息，强制登出
-      if (!userStore.role) {
-        await userStore.getUserInfo().catch(() => {
-          forceLogout()
-          next('/login')
-          return
-        })
-      }
-      
-      next(getHomePathByRole(userStore.role))
-      return
+      const role = localStorage.getItem('pet_hospital_role') || 'owner'
+      const homePath = getHomePathByRole(role)
+      next(homePath)
+    } else {
+      next()
     }
     
     // 访问其他页面
@@ -105,8 +89,19 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
-export function resetRouter() {
-  hasAddRoutes = false
+function getHomePathByRole(role) {
+  switch (role) {
+    case 'admin':
+      return '/admin/dashboard'
+    case 'owner':
+      return '/owner/pet'
+    case 'desk':
+      return '/desk/customer'
+    case 'doctor':
+      return '/doctor/accept'
+    default:
+      return '/login'
+  }
 }
 
 export default router

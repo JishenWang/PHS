@@ -122,29 +122,7 @@
       />
     </div>
 
-    <!-- 底部导航 -->
-    <div class="bottom-nav">
-      <router-link to="/pet" class="nav-item">
-        <el-icon><Avatar /></el-icon>
-        <span>宠物</span>
-      </router-link>
-      <router-link to="/health" class="nav-item">
-        <el-icon><Notebook /></el-icon>
-        <span>健康</span>
-      </router-link>
-      <router-link to="/reserve" class="nav-item">
-        <el-icon><Calendar /></el-icon>
-        <span>预约</span>
-      </router-link>
-      <router-link to="/consult" class="nav-item">
-        <el-icon><ChatDotRound /></el-icon>
-        <span>咨询</span>
-      </router-link>
-      <router-link to="/profile" class="nav-item">
-        <el-icon><User /></el-icon>
-        <span>我的</span>
-      </router-link>
-    </div>
+  
   </div>
 </template>
 
