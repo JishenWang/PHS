@@ -1,5 +1,36 @@
 package com.pethospital.pet_hospital.vo.common;
 
-public class PageResultVo {
-    
+import java.util.List;
+
+/**
+ * 分页结果类（泛型）
+ */
+public class PageResultVo<T> {
+
+    private Long total;
+    private List<T> records;
+
+    public PageResultVo() {
+    }
+
+    public PageResultVo(Long total, List<T> records) {
+        this.total = total;
+        this.records = records;
+    }
+
+    public Long getTotal() {
+        return total;
+    }
+
+    public void setTotal(Long total) {
+        this.total = total;
+    }
+
+    public List<T> getRecords() {
+        return records;
+    }
+
+    public void setRecords(List<T> records) {
+        this.records = records;
+    }
 }
