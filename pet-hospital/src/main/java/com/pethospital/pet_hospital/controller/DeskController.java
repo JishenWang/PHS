@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/desk")
+@RequestMapping("/api/desk")
 public class DeskController {
     @Autowired
     private IDeskService deskService;

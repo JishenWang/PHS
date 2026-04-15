@@ -631,7 +631,7 @@ public class DeskServiceImpl implements IDeskService {
                 "left join doctor_profile dp on dp.id=oi.doctor_id " + where;
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
                 "select oi.id as id, oi.order_no as orderNo, su.real_name as customerName, ifnull(dp.name,'') as doctorName, " +
-                        "oi.pay_method as payMethod, oi.paid_amount as total, oi.created_time as createdAt " +
+                        "oi.pay_method as payMethod, ifnull(oi.paid_amount, oi.payable_amount) as total, oi.create_time as createdAt " +
                         baseSql + " order by oi.id desc limit ?,?",
                 mergeArgs(args, offset, pageSize)
         );

@@ -32,30 +32,40 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => {
     const res = response.data
-    
-    // 根据后端返回的code判断
-    if (res.code === 200) {
+
+    // 标准 ResultVo 风格：{ code, message, data }
+    if (typeof res?.code === 'number') {
+      if (res.code === 200) return res
+      const errMsg = res.msg || res.message || '请求失败'
+
+      if (res.code === 401) {
+        ElMessage.error(res.msg || res.message || '登录已过期，请重新登录')
+        clearAuth()
+        router.push('/login')
+        return Promise.reject(new Error(res.msg || res.message || '未授权'))
+      }
+
+      if (res.code === 403) {
+        ElMessage.error(res.msg || res.message || '权限不足')
+        router.push('/403')
+        return Promise.reject(new Error(res.msg || res.message || '权限不足'))
+      }
+
+      ElMessage.error(errMsg)
+      return Promise.reject(new Error(errMsg))
+    }
+
+    // Desk 模块大量接口返回：{ success, message, ... } 或直接分页对象
+    if (typeof res === 'object' && res !== null) {
+      if (res.success === false) {
+        const msg = res.message || '请求失败'
+        ElMessage.error(msg)
+        return Promise.reject(new Error(msg))
+      }
       return res
     }
-    
-    // 未登录或登录过期
-    if (res.code === 401) {
-      ElMessage.error(res.message || '登录已过期，请重新登录')
-      clearAuth()
-      router.push('/login')
-      return Promise.reject(new Error(res.message || '未授权'))
-    }
-    
-    // 权限不足
-    if (res.code === 403) {
-      ElMessage.error(res.message || '权限不足')
-      router.push('/403')
-      return Promise.reject(new Error(res.message || '权限不足'))
-    }
-    
-    // 其他错误
-    ElMessage.error(res.message || '请求失败')
-    return Promise.reject(new Error(res.message || '请求失败'))
+
+    return res
   },
   error => {
     console.error('响应错误:', error)

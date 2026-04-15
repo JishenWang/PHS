@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2026-04-05
  */
 @RestController
+@RequestMapping({"", "/api"})
 public class LoginController {
     
     private static final Logger log = LoggerFactory.getLogger(LoginController.class);
