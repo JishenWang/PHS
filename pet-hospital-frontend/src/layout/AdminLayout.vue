@@ -1,54 +1,47 @@
 <template>
   <el-container class="admin-layout">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar">
+    <el-aside width="220px" class="sidebar">
       <div class="logo">
         <span class="logo-icon">🐾</span>
-        <span class="logo-text" v-show="!isCollapse">宠物医院管理</span>
-      </div>
-      
-      <div class="collapse-btn" @click="toggleCollapse">
-        <el-icon>
-          <Fold v-if="!isCollapse" />
-          <Expand v-else />
-        </el-icon>
+        <span class="logo-text">宠物医院管理</span>
       </div>
       
       <el-menu
         :default-active="activeMenu"
-        :collapse="isCollapse"
-        :collapse-transition="false"
         router
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
         class="admin-menu"
       >
         <el-menu-item index="/admin/dashboard">
           <el-icon><DataLine /></el-icon>
-          <template #title>数据看板</template>
+          <span>数据看板</span>
         </el-menu-item>
         
         <el-menu-item index="/admin/user">
           <el-icon><User /></el-icon>
-          <template #title>用户管理</template>
+          <span>用户管理</span>
         </el-menu-item>
         
         <el-menu-item index="/admin/doctor">
           <el-icon><FirstAidKit /></el-icon>
-          <template #title>医生管理</template>
+          <span>医生管理</span>
         </el-menu-item>
         
         <el-menu-item index="/admin/pet">
-          <el-icon><Calendar /></el-icon>
-          <template #title>宠物管理</template>
+          <el-icon><Tickets /></el-icon>
+          <span>宠物管理</span>
         </el-menu-item>
         
         <el-menu-item index="/admin/system">
           <el-icon><Setting /></el-icon>
-          <template #title>系统配置</template>
+          <span>系统配置</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
     
-    <!-- 主内容区 -->
     <el-container class="main-container">
       <!-- 顶部导航 -->
       <el-header class="header">
@@ -60,21 +53,21 @@
             <el-icon class="header-icon" @click="toggleFullscreen"><FullScreen /></el-icon>
           </el-tooltip>
           
-          <el-dropdown trigger="click">
+          <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-info">
-              <el-avatar :size="32" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-              <span class="username">管理员</span>
+              <el-avatar :size="32" :src="userStore.avatar || defaultAvatar" />
+              <span class="username">{{ userStore.username || '管理员' }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>
+                <el-dropdown-item command="profile">
                   <el-icon><User /></el-icon>个人中心
                 </el-dropdown-item>
-                <el-dropdown-item>
+                <el-dropdown-item command="settings">
                   <el-icon><Setting /></el-icon>系统设置
                 </el-dropdown-item>
-                <el-dropdown-item divided @click="logout">
+                <el-dropdown-item divided command="logout">
                   <el-icon><SwitchButton /></el-icon>退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -82,18 +75,6 @@
           </el-dropdown>
         </div>
       </el-header>
-      
-      <!-- 标签页 -->
-      <div class="tabs-view">
-        <el-tabs v-model="activeTab" type="card" closable @tab-remove="removeTab">
-          <el-tab-pane 
-            v-for="item in tabs" 
-            :key="item.path" 
-            :label="item.title" 
-            :name="item.path"
-          />
-        </el-tabs>
-      </div>
       
       <!-- 内容区域 -->
       <el-main class="main-content">
@@ -108,51 +89,48 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataLine, User, FirstAidKit, Calendar, Setting, Fold, Expand, FullScreen, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
+import { useUserStore } from '@/store/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  DataLine, User, FirstAidKit, Tickets, Setting,
+  FullScreen, ArrowDown, SwitchButton
+} from '@element-plus/icons-vue'
 import Breadcrumb from '@/components/Breadcrumb/index.vue'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
-// 侧边栏折叠
-const isCollapse = ref(false)
-const toggleCollapse = () => {
-  isCollapse.value = !isCollapse.value
-}
+const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 
-// 当前菜单
 const activeMenu = computed(() => route.path)
 
-// 标签页
-const activeTab = ref(route.path)
-const tabs = ref([
-  { title: '数据看板', path: '/admin/dashboard' }
-])
-
-watch(() => route.path, (newPath) => {
-  activeTab.value = newPath
-  const exist = tabs.value.find(item => item.path === newPath)
-  if (!exist) {
-    tabs.value.push({ title: route.meta.title || '未命名', path: newPath })
-  }
-})
-
-const removeTab = (targetPath) => {
-  const index = tabs.value.findIndex(item => item.path === targetPath)
-  if (index > -1) {
-    tabs.value.splice(index, 1)
-    if (activeTab.value === targetPath) {
-      const nextTab = tabs.value[index] || tabs.value[index - 1]
-      if (nextTab) {
-        router.push(nextTab.path)
-      }
-    }
+const handleCommand = (command) => {
+  switch (command) {
+    case 'profile':
+      router.push('/admin/profile')
+      break
+    case 'settings':
+      router.push('/admin/settings')
+      break
+    case 'logout':
+      handleLogout()
+      break
   }
 }
 
-// 全屏
+const handleLogout = () => {
+  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    userStore.logout()
+  }).catch(() => {})
+}
+
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen()
@@ -160,26 +138,17 @@ const toggleFullscreen = () => {
     document.exitFullscreen()
   }
 }
-
-// 退出登录
-const logout = () => {
-  localStorage.removeItem('token')
-  router.push('/login')
-}
 </script>
 
 <style scoped>
 .admin-layout {
   height: 100vh;
-  background: var(--bg-color);
+  background: #f0f2f5;
 }
 
 .sidebar {
-  background: linear-gradient(180deg, #304156 0%, #263445 100%);
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  transition: width 0.3s;
-  position: relative;
-  z-index: 100;
+  background: #304156;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
@@ -187,8 +156,8 @@ const logout = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #2b3649;
+  border-bottom: 1px solid #1f2d3d;
 }
 
 .logo-icon {
@@ -203,59 +172,29 @@ const logout = () => {
   letter-spacing: 1px;
 }
 
-.collapse-btn {
-  position: absolute;
-  right: -12px;
-  top: 80px;
-  width: 24px;
-  height: 24px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #fff;
-  font-size: 12px;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
-  z-index: 101;
-  transition: transform 0.3s;
-}
-
-.collapse-btn:hover {
-  transform: scale(1.1);
-}
-
 .admin-menu {
   border-right: none;
-  background: transparent;
   padding-top: 10px;
 }
 
 :deep(.admin-menu .el-menu-item) {
-  color: rgba(255, 255, 255, 0.7);
+  height: 50px;
+  line-height: 50px;
   margin: 4px 10px;
-  border-radius: var(--radius-base);
-  height: 48px;
-  line-height: 48px;
-  transition: all 0.3s;
+  border-radius: 4px;
 }
 
 :deep(.admin-menu .el-menu-item:hover) {
-  color: #fff;
-  background: rgba(64, 158, 255, 0.2);
+  background: #263445;
 }
 
 :deep(.admin-menu .el-menu-item.is-active) {
-  color: #fff;
-  background: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+  background: #263445;
 }
 
 :deep(.admin-menu .el-icon) {
-  color: inherit;
   font-size: 18px;
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .main-container {
@@ -266,7 +205,7 @@ const logout = () => {
 
 .header {
   height: 64px;
-  background: var(--bg-white);
+  background: #fff;
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   display: flex;
   align-items: center;
@@ -287,16 +226,16 @@ const logout = () => {
 
 .header-icon {
   font-size: 20px;
-  color: var(--text-regular);
+  color: #606266;
   cursor: pointer;
   padding: 8px;
-  border-radius: var(--radius-small);
+  border-radius: 4px;
   transition: all 0.3s;
 }
 
 .header-icon:hover {
-  color: var(--primary-color);
-  background: var(--primary-light);
+  color: #409EFF;
+  background: #f5f7fa;
 }
 
 .user-info {
@@ -305,46 +244,22 @@ const logout = () => {
   gap: 8px;
   cursor: pointer;
   padding: 6px 12px;
-  border-radius: var(--radius-base);
+  border-radius: 4px;
   transition: all 0.3s;
 }
 
 .user-info:hover {
-  background: var(--bg-color);
+  background: #f5f7fa;
 }
 
 .username {
   font-size: 14px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.tabs-view {
-  background: var(--bg-white);
-  padding: 8px 24px 0;
-  border-bottom: 1px solid var(--border-lighter);
-}
-
-:deep(.tabs-view .el-tabs__header) {
-  margin: 0;
-}
-
-:deep(.tabs-view .el-tabs__item) {
-  border-radius: var(--radius-small) var(--radius-small) 0 0;
-  margin-right: 4px;
-  transition: all 0.3s;
-}
-
-:deep(.tabs-view .el-tabs__item.is-active) {
-  background: var(--primary-light);
-  border-bottom-color: var(--primary-light);
-  color: var(--primary-color);
+  color: #606266;
 }
 
 .main-content {
   padding: 20px;
   overflow-y: auto;
-  background: var(--bg-color);
 }
 
 /* 页面切换动画 */

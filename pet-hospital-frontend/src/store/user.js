@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { getToken, setToken, removeToken, getUserInfo, setUserInfo, removeUserInfo, getUserRole, setUserRole, removeUserRole, clearAuth } from '../utils/auth'
 import request from '../utils/request'
+import { usePermissionStore } from './permission'
+import { resetRouter } from '../router'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -23,36 +25,21 @@ export const useUserStore = defineStore('user', {
     // 登录（支持角色）
     async login(loginData) {
       try {
-        // 如果后端接口还没准备好，使用模拟登录
-        // 模拟不同角色的演示账号
-        const mockUsers = {
-          admin: { username: 'admin', password: '123456', role: 'admin', name: '系统管理员' },
-          owner: { username: 'owner', password: '123456', role: 'owner', name: '宠物主人' },
-          desk: { username: 'desk', password: '123456', role: 'desk', name: '前台工作人员' },
-          doctor: { username: 'doctor', password: '123456', role: 'doctor', name: '张医生' }
-        }
-        
-        const user = mockUsers[loginData.role]
-        if (user && loginData.username === user.username && loginData.password === user.password) {
-          const token = `mock-token-${user.role}-${Date.now()}`
-          const userInfo = {
-            id: 1,
-            username: user.name,
-            phone: '13800138000',
-            email: `${user.role}@example.com`,
-            role: user.role,
-            avatar: ''
-          }
+        const response = await request.post('/login', loginData)
+        if (response.code === 200) {
+          const { token, userInfo, role } = response.data
           
+          // 保存状态
           this.token = token
           this.userInfo = userInfo
-          this.role = user.role
+          this.role = role
           
+          // 保存到本地存储
           setToken(token)
           setUserInfo(userInfo)
-          setUserRole(user.role)
+          setUserRole(role)
           
-          return { success: true, role: user.role }
+          return { success: true, role }
         }
         
         return { success: false, message: '账号或密码错误' }
@@ -61,15 +48,24 @@ export const useUserStore = defineStore('user', {
       }
     },
     
-    // 登出
+    // 登出（关键：必须刷新页面清除动态路由）
     async logout() {
       try {
         await request.post('/logout')
       } catch (error) {
         console.error('登出请求失败:', error)
       } finally {
+        // 重置权限路由
+        const permissionStore = usePermissionStore()
+        permissionStore.resetRoutes()
+        resetRouter()
+        
+        // 清除用户状态
         this.clear()
         clearAuth()
+        
+        // 强制刷新页面，彻底清除动态路由
+        window.location.href = '/login'
       }
     },
     
@@ -86,7 +82,9 @@ export const useUserStore = defineStore('user', {
         const response = await request.get('/common/user/info')
         if (response.code === 200) {
           this.userInfo = response.data
+          this.role = response.data.role
           setUserInfo(response.data)
+          setUserRole(response.data.role)
           return response.data
         }
         return null

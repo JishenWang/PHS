@@ -2,6 +2,7 @@ package com.pethospital.pet_hospital.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.Base64;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,10 +16,41 @@ import org.springframework.stereotype.Component;
 public class EncryptUtil {
 
     private static final BCryptPasswordEncoder BCryptEncoder = new BCryptPasswordEncoder();
+    private static final SecureRandom secureRandom = new SecureRandom();
+
+    /**
+     * 生成随机盐值（16字节，Base64编码）
+     * @return 随机盐值字符串
+     */
+    public static String generateSalt() {
+        byte[] salt = new byte[16];
+        secureRandom.nextBytes(salt);
+        return Base64.getEncoder().encodeToString(salt);
+    }
+
+    /**
+     * 使用盐值加密密码（SHA-256 + Salt）
+     * @param password 原始密码
+     * @param salt 盐值
+     * @return 加密后的密码
+     */
+    public static String encryptPassword(String password, String salt) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            String saltedPassword = password + salt;
+            byte[] digest = md.digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("密码加密失败", e);
+        }
+    }
 
     /**
      * BCrypt加密密码
-     * 用于用户密码存储
      */
     public static String encodePassword(String rawPassword) {
         return BCryptEncoder.encode(rawPassword);
