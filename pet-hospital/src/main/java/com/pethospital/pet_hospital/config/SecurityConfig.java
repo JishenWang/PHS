@@ -47,9 +47,18 @@ public class SecurityConfig {
                 // 关键：修正登录路径！！！
                 .requestMatchers(
                     "/auth/**",           // ← 添加这个，匹配 /auth/login
+                    "/api/auth/**",// ← 添加这个，匹配 /api/auth/login
                     "/api/login/**",
                     "/api/register/**",
                     "/api/common/**",
+                    "/desk/**",
+                    "/register/**",       // ← 添加这个，挂号相关
+                    "/order/**",          // ← 添加这个，订单相关
+                    "/charge/**",         // ← 添加这个，收费相关
+                    "/reserve/**",        // ← 添加这个，预约相关
+                    "/pet/**",            // ← 添加这个，宠物相关
+                    "/doctor/**",         // ← 添加这个，医生相关
+                    "/admin/**", 
                     "/doc.html",
                     "/swagger-ui/**",
                     "/swagger-resources/**",

@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8080', // 后端SpringBoot端口（按你要求修改）
-        changeOrigin: true,
+        changeOrigin: true
         
       }
     }
