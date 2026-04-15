@@ -258,5 +258,3 @@ export const asyncRoutes = [
   }
 ]
 
-// 异步路由（暂时为空，因为所有路由已在常量路由中）
-export const asyncRoutes = []

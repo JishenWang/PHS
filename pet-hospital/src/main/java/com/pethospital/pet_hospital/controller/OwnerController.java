@@ -30,7 +30,7 @@ import com.pethospital.pet_hospital.vo.common.ResultVo;
  * 客户自助端控制器
  */
 @RestController
-@RequestMapping("/api/owner")
+@RequestMapping("/owner")
 public class OwnerController {
 
     @Autowired

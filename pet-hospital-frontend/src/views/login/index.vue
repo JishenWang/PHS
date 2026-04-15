@@ -39,7 +39,7 @@
           <div class="role-item" @click="selectRole('OWNER')">
             <span class="role-icon">🐕</span>
             <div class="role-info">
-              <h3>宠物主端</h3>
+              <h3>客户端</h3>
               <p>预约挂号、查看病历</p>
             </div>
           </div>
@@ -110,7 +110,8 @@
         </form>
         
         <div class="form-tips">
-          <p>任意手机号/密码均可登录</p>
+          <p>🐾 欢迎使用宠物医院管理系统</p>
+          <p class="sub-tip">请使用已注册的账号登录</p>
         </div>
       </div>
     </div>
@@ -120,6 +121,7 @@
 <script>
 import axios from 'axios'
 import { setToken, setUserInfo, setUserRole } from '@/utils/auth'
+import { usePermissionStore } from '@/store/permission'
 
 axios.defaults.baseURL = ''
 axios.defaults.timeout = 10000
@@ -149,7 +151,7 @@ export default {
         'ADMIN': '管理端',
         'DOCTOR': '医生端',
         'DESK': '前台端',
-        'OWNER': '宠物主端'
+        'OWNER': '客户端'
       }
       return names[this.role] || ''
     }
@@ -255,17 +257,21 @@ export default {
           setUserInfo(result)
           setUserRole(this.role.toLowerCase())
           
-          // ========== 关键修改：直接跳转到对应角色首页 ==========
           const role = this.role.toLowerCase()
+          const permissionStore = usePermissionStore()
+          
+          await permissionStore.generateRoutes(role)
+          
           const homePathMap = {
             'admin': '/admin/dashboard',
             'doctor': '/doctor/accept',
-            'desk': '/desk/register',
+            'desk': '/desk/customer',
             'owner': '/owner/pet'
           }
           const homePath = homePathMap[role] || '/login'
           
-          // 使用 Vue Router 跳转，避免页面刷新
+          console.log('登录成功，准备跳转到:', homePath)
+          
           this.$router.replace(homePath)
           
         } else {
@@ -545,5 +551,11 @@ export default {
 
 .form-tips p {
   margin: 5px 0;
+}
+
+.form-tips .sub-tip {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 2px;
 }
 </style>
