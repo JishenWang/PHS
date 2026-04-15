@@ -3,18 +3,29 @@
     <div class="error-content">
       <div class="error-code">404</div>
       <div class="error-message">抱歉，您访问的页面不存在</div>
-      <el-button type="primary" @click="goBack">返回首页</el-button>
+      <el-button type="primary" @click="goHome">返回首页</el-button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { getUserRole } from '@/utils/auth'
 
 const router = useRouter()
 
-const goBack = () => {
-  router.push('/')
+const goHome = () => {
+  const role = getUserRole()
+  
+  const homePathMap = {
+    'admin': '/admin/dashboard',
+    'doctor': '/doctor/accept',
+    'desk': '/desk/customer',
+    'owner': '/owner/pet'
+  }
+  
+  const homePath = homePathMap[role] || '/login'
+  router.push(homePath)
 }
 </script>
 

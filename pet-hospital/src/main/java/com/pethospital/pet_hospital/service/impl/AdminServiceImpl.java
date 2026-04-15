@@ -80,7 +80,7 @@ public class AdminServiceImpl implements IAdminService {
         
         // 如果有密码，设置密码（生产环境需要加密）
         if (StringUtils.hasText(userVo.getPassword())) {
-            // ✅ 修复：添加 BCrypt 加密
+            //添加 BCrypt 加密
             user.setPassword(com.pethospital.pet_hospital.utils.EncryptUtil.encodePassword(userVo.getPassword()));
         }
         
@@ -155,7 +155,7 @@ public class AdminServiceImpl implements IAdminService {
         // 设置默认值
         LocalDateTime now = LocalDateTime.now();
         doctor.setStatus(1);
-        // ✅ 修复：使用 workStatus 而非 workStatusCode
+        // 使用 workStatus 而非 workStatusCode
         doctor.setWorkStatus(1); 
         doctor.setAuthStatus(1);
         doctor.setPatientCount(0);

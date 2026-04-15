@@ -1,5 +1,6 @@
 package com.pethospital.pet_hospital.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -53,7 +54,7 @@ public class Doctor {
     private BigDecimal consultationFee;
     
     // 数据库字段：work_status
-    private Integer workStatus;       // ✅ 修正：直接使用 workStatus，不要 workStatusCode
+    private Integer workStatus;      
     
     // 数据库字段：auth_status
     private Integer authStatus;

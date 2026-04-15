@@ -1,56 +1,59 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { constantRoutes } from './constant'
-import { getToken } from '@/utils/auth'
+import { getToken, removeToken, removeUserInfo, removeUserRole } from '@/utils/auth'
+import { useUserStore } from '@/store/user'
+import { usePermissionStore } from '@/store/permission'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: constantRoutes
 })
 
-// 白名单
 const whiteList = ['/login', '/403', '/404']
-let hasAddRoutes = false
 
+//  根据角色获取首页路径 
 function getHomePathByRole(role) {
   const pathMap = {
     admin: '/admin/dashboard',
-    owner: '/owner/pet',
-    desk: '/desk/register',
-    doctor: '/doctor/accept'
+    doctor: '/doctor/accept',
+    desk: '/desk/customer',
+    owner: '/owner/pet'
   }
   return pathMap[role] || '/login'
 }
 
-// ========== 新增：强制清理函数 ==========
+// 强制清理函数
 function forceLogout() {
   removeToken()
   removeUserInfo()
   removeUserRole()
+}
+
+let hasAddRoutes = false
+
+export function resetRouter() {
   hasAddRoutes = false
 }
 
 router.beforeEach(async (to, from, next) => {
   const hasToken = getToken()
   
+  console.log('路由守卫:', { to: to.path, hasToken: !!hasToken, hasAddRoutes })
+
   if (hasToken) {
-    // ========== 已登录状态 ==========
-    
-    // 如果访问登录页，根据角色跳转首页
+
     if (to.path === '/login') {
-      const role = localStorage.getItem('pet_hospital_role') || 'owner'
-      const homePath = getHomePathByRole(role)
-      next(homePath)
-    } else {
-      next()
+      const userStore = useUserStore()
+      const role = userStore.role || localStorage.getItem('pet_hospital_role')
+      next(getHomePathByRole(role))
+      return
     }
-    
-    // 访问其他页面
+
     if (!hasAddRoutes) {
       const userStore = useUserStore()
       const permissionStore = usePermissionStore()
       
       try {
-        // 获取用户信息
         if (!userStore.role) {
           const userInfo = await userStore.getUserInfo()
           if (!userInfo?.role) {
@@ -58,12 +61,17 @@ router.beforeEach(async (to, from, next) => {
           }
         }
 
-        // 生成动态路由
-        await permissionStore.generateRoutes(userStore.role)
+        const accessRoutes = await permissionStore.generateRoutes(userStore.role)
+
+        accessRoutes.forEach(route => {
+          if (!router.hasRoute(route.name)) {
+            router.addRoute(route)
+          }
+        })
+        
         hasAddRoutes = true
 
-        // 关键修复：访问根路径直接跳转首页
-        if (to.path === '/') {
+        if (to.path === '/' || to.matched.length === 0) {
           next(getHomePathByRole(userStore.role))
         } else {
           next({ ...to, replace: true })
@@ -79,7 +87,6 @@ router.beforeEach(async (to, from, next) => {
     }
     
   } else {
-    // ========== 未登录状态 ==========
     
     if (whiteList.includes(to.path)) {
       next()
@@ -88,20 +95,5 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 })
-
-function getHomePathByRole(role) {
-  switch (role) {
-    case 'admin':
-      return '/admin/dashboard'
-    case 'owner':
-      return '/owner/pet'
-    case 'desk':
-      return '/desk/customer'
-    case 'doctor':
-      return '/doctor/accept'
-    default:
-      return '/login'
-  }
-}
 
 export default router
