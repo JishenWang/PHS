@@ -2,6 +2,7 @@ package com.pethospital.pet_hospital.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,7 +46,7 @@ public class AdminServiceImpl implements IAdminService {
         return vo;
     }
 
-    // ==================== 用户管理（不分页）====================
+    //用户管理
     @Override
     public List<UserVo> getUserList(String keyword) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -123,7 +124,7 @@ public class AdminServiceImpl implements IAdminService {
         userMapper.updateById(user);
     }
 
-    // ==================== 医生管理（不分页）====================
+    //  医生管理
     @Override
     public List<DoctorVo> getDoctorList(String name, String department, String title) {
         LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
@@ -203,26 +204,50 @@ public class AdminServiceImpl implements IAdminService {
         doctorMapper.deleteById(id);
     }
 
-    // ==================== 宠物管理（不分页）====================
+    //宠物管理
     @Override
     public List<PetVo> getPetList(String keyword) {
         LambdaQueryWrapper<Pet> wrapper = new LambdaQueryWrapper<>();
-        
+    
+    // 关键：过滤软删除的数据
+        wrapper.eq(Pet::getIsDeleted, 0);
+    
+    // 状态正常的宠物
+        wrapper.eq(Pet::getStatus, 1);
+    
         if (StringUtils.hasText(keyword)) {
-            wrapper.like(Pet::getName, keyword)
-                   .or()
-                   .like(Pet::getOwnerName, keyword);
+            wrapper.and(w -> w
+                .like(Pet::getName, keyword)
+                .or()
+                .like(Pet::getOwnerName, keyword)
+                .or()
+                .like(Pet::getOwnerPhone, keyword)
+            );
         }
-        
+    
+    // 按创建时间倒序
+        wrapper.orderByDesc(Pet::getCreateTime);
+    
         List<Pet> pets = petMapper.selectList(wrapper);
-        
+    
         return pets.stream().map(pet -> {
             PetVo vo = new PetVo();
             BeanUtils.copyProperties(pet, vo);
-            // 处理疫苗字符串转数组（如果数据库是逗号分隔的字符串）
+        
+        // 处理疫苗字符串转数组（数据库是逗号分隔的字符串）
             if (StringUtils.hasText(pet.getVaccines())) {
                 vo.setVaccines(List.of(pet.getVaccines().split(",")));
+            } else {
+                vo.setVaccines(new ArrayList<>()); // 空数组而非null
             }
+        
+        // 处理健康状态映射（数据库可能是英文，前端需要映射）
+            if (StringUtils.hasText(pet.getHealthStatus())) {
+                vo.setHealthStatus(pet.getHealthStatus());
+            } else {
+                vo.setHealthStatus("healthy"); // 默认健康
+            }
+        
             return vo;
         }).collect(Collectors.toList());
     }

@@ -23,18 +23,6 @@ export const constantRoutes = [
     hidden: true,
     meta: { title: '页面不存在' }
   },
-  {
-    path: '/',
-    redirect: '/login',
-    hidden: true
-  },
-  // 404通配符路由放在常量路由最后
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    redirect: '/404',
-    hidden: true
-  }
 ]
 
 // ==================== 异步路由（根据角色动态加载）====================

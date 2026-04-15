@@ -4,102 +4,72 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pethospital.pet_hospital.mapper.PetMapper">
 
-    <select id="getById" resultType="com.pethospital.pet_hospital.entity.Pet">
-        select id as id,
-               owner_user_id as ownerUserId,
-               owner_id as ownerId,
-               owner_name as ownerName,
-               owner_phone as ownerPhone,
-               owner_address as ownerAddress,
-               owner_is_temp as ownerIsTemp,
-               name as name,
-               avatar as avatar,
-               type as type,
-               species as species,
-               breed as breed,
-               gender as gender,
-               gender_code as genderCode,
-               birthday as birthday,
-               age as age,
-               weight as weight,
-               color as color,
-               chip_number as chipNumber,
-               neutered as neutered,
-               health_status as healthStatus,
-               status as status,
-               vaccines as vaccines,
-               allergies as allergies,
-               allergy as allergy,
-               allergy_history as allergyHistory,
-               description as description,
-               remark as remark,
-               last_visit as lastVisit,
-               create_time as createTime,
-               update_time as updateTime,
-               created_time as createdTime,
-               updated_time as updatedTime,
-               is_deleted as isDeleted
-        from pet
-        where id = #{id}
+    <!-- 通用结果映射 -->
+    <resultMap id="PetResultMap" type="com.pethospital.pet_hospital.entity.Pet">
+        <id column="id" property="id"/>
+        <result column="owner_user_id" property="ownerUserId"/>
+        <result column="owner_id" property="ownerId"/>
+        <result column="owner_name" property="ownerName"/>
+        <result column="owner_phone" property="ownerPhone"/>
+        <result column="owner_address" property="ownerAddress"/>
+        <result column="owner_is_temp" property="ownerIsTemp"/>
+        <result column="name" property="name"/>
+        <result column="avatar" property="avatar"/>
+        <result column="type" property="type"/>
+        <result column="species" property="species"/>
+        <result column="breed" property="breed"/>
+        <result column="gender" property="gender"/>
+        <result column="gender_code" property="genderCode"/>
+        <result column="birthday" property="birthday"/>
+        <result column="age" property="age"/>
+        <result column="weight" property="weight"/>
+        <result column="color" property="color"/>
+        <result column="chip_number" property="chipNumber"/>
+        <result column="neutered" property="neutered"/>
+        <result column="health_status" property="healthStatus"/>
+        <result column="status" property="status"/>
+        <result column="vaccines" property="vaccines"/>
+        <result column="allergies" property="allergies"/>
+        <result column="allergy" property="allergy"/>
+        <result column="allergy_history" property="allergyHistory"/>
+        <result column="description" property="description"/>
+        <result column="remark" property="remark"/>
+        <result column="last_visit" property="lastVisit"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <select id="getById" resultMap="PetResultMap">
+        SELECT * FROM pet WHERE id = #{id} AND is_deleted = 0
     </select>
 
-    <select id="listAllFull" resultType="com.pethospital.pet_hospital.entity.Pet">
-        select id as id,
-               owner_user_id as ownerUserId,
-               owner_id as ownerId,
-               owner_name as ownerName,
-               owner_phone as ownerPhone,
-               owner_address as ownerAddress,
-               owner_is_temp as ownerIsTemp,
-               name as name,
-               avatar as avatar,
-               type as type,
-               species as species,
-               breed as breed,
-               gender as gender,
-               gender_code as genderCode,
-               birthday as birthday,
-               age as age,
-               weight as weight,
-               color as color,
-               chip_number as chipNumber,
-               neutered as neutered,
-               health_status as healthStatus,
-               status as status,
-               vaccines as vaccines,
-               allergies as allergies,
-               allergy as allergy,
-               allergy_history as allergyHistory,
-               description as description,
-               remark as remark,
-               last_visit as lastVisit,
-               create_time as createTime,
-               update_time as updateTime,
-               created_time as createdTime,
-               updated_time as updatedTime,
-               is_deleted as isDeleted
-        from pet
-        order by id desc
+    <select id="listAllFull" resultMap="PetResultMap">
+        SELECT * FROM pet 
+        WHERE is_deleted = 0 
+        ORDER BY id DESC
     </select>
 
-    <select id="listByOwnerId" resultType="com.pethospital.pet_hospital.entity.Pet">
-        select id,
-               owner_user_id as ownerUserId,
-               owner_user_id as ownerId,
-               owner_name as ownerName,
-               owner_phone as ownerPhone,
-               name,
-               species,
-               gender,
-               age,
-               allergy_history as allergyHistory,
-               '' as healthRecords,
-               created_time as createdTime,
-               updated_time as updatedTime
-        from pet
-        where is_deleted = 0
-          and (owner_user_id = #{ownerId} or owner_id = #{ownerId})
-        order by id desc 
+    <select id="listByOwnerId" resultMap="PetResultMap">
+        SELECT 
+            id,
+            owner_user_id,
+            owner_id,
+            owner_name,
+            owner_phone,
+            name,
+            species,
+            gender,
+            age,
+            allergy_history,
+            created_time,
+            updated_time
+        FROM pet
+        WHERE is_deleted = 0
+          AND (owner_user_id = #{ownerId} OR owner_id = #{ownerId})
+        ORDER BY id DESC 
     </select>
 
 </mapper>

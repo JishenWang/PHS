@@ -11,23 +11,42 @@
             prefix-icon="User"
           />
         </el-form-item>
+        
+        <!-- 修复：科室选项值改为中文，与数据库匹配 -->
         <el-form-item label="科室">
-          <el-select v-model="searchForm.department" placeholder="请选择科室" clearable>
-            <el-option label="内科" value="internal" />
-            <el-option label="外科" value="surgery" />
-            <el-option label="皮肤科" value="dermatology" />
-            <el-option label="眼科" value="ophthalmology" />
-            <el-option label="牙科" value="dental" />
+          <el-select 
+            v-model="searchForm.department" 
+            placeholder="请选择科室" 
+            clearable
+            style="width: 140px"
+          >
+            <el-option label="内科" value="内科" />
+            <el-option label="外科" value="外科" />
+            <el-option label="皮肤科" value="皮肤科" />
+            <el-option label="眼科" value="眼科" />
+            <el-option label="牙科" value="牙科" />
+            <el-option label="影像科" value="影像科" />
+            <el-option label="口腔科" value="口腔科" />
+            <el-option label="检验科" value="检验科" />
           </el-select>
         </el-form-item>
+        
         <el-form-item label="职称">
-          <el-select v-model="searchForm.title" placeholder="请选择职称" clearable>
+          <el-select 
+            v-model="searchForm.title" 
+            placeholder="请选择职称" 
+            clearable
+            style="width: 140px"
+          >
             <el-option label="主任医师" value="主任医师" />
             <el-option label="副主任医师" value="副主任医师" />
             <el-option label="主治医师" value="主治医师" />
+            <el-option label="执业医师" value="执业医师" />
+            <el-option label="检验医师" value="检验医师" />
             <el-option label="医师" value="医师" />
           </el-select>
         </el-form-item>
+        
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :icon="Search">搜索</el-button>
           <el-button @click="handleReset" :icon="RefreshRight">重置</el-button>
@@ -35,7 +54,7 @@
       </el-form>
     </el-card>
 
-    <!-- 数据表格 -->
+    <!-- 数据表格（保持不变） -->
     <el-card class="table-card" shadow="never">
       <template #header>
         <div class="card-header">
@@ -61,7 +80,7 @@
                   <el-tag :type="getTitleType(doctor.title)" size="small" effect="light">
                     {{ doctor.title }}
                   </el-tag>
-                  <el-tag type="info" size="small" effect="plain">{{ getDepartmentName(doctor.department) }}</el-tag>
+                  <el-tag type="info" size="small" effect="plain">{{ doctor.department }}</el-tag>
                 </div>
               </div>
               <el-switch 
@@ -96,11 +115,10 @@
         </el-col>
       </el-row>
 
-      <!-- 无数据提示 -->
       <el-empty v-if="tableData.length === 0 && !loading" description="暂无医生数据" />
     </el-card>
 
-    <!-- 新增/编辑对话框 -->
+    <!-- 新增/编辑对话框 - 同样修复科室选项 -->
     <el-dialog 
       :title="dialogTitle" 
       v-model="dialogVisible" 
@@ -123,11 +141,14 @@
           <el-col :span="12">
             <el-form-item label="科室" prop="department">
               <el-select v-model="formData.department" placeholder="请选择科室" style="width: 100%">
-                <el-option label="内科" value="internal" />
-                <el-option label="外科" value="surgery" />
-                <el-option label="皮肤科" value="dermatology" />
-                <el-option label="眼科" value="ophthalmology" />
-                <el-option label="牙科" value="dental" />
+                <el-option label="内科" value="内科" />
+                <el-option label="外科" value="外科" />
+                <el-option label="皮肤科" value="皮肤科" />
+                <el-option label="眼科" value="眼科" />
+                <el-option label="牙科" value="牙科" />
+                <el-option label="影像科" value="影像科" />
+                <el-option label="口腔科" value="口腔科" />
+                <el-option label="检验科" value="检验科" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -140,6 +161,8 @@
                 <el-option label="主任医师" value="主任医师" />
                 <el-option label="副主任医师" value="副主任医师" />
                 <el-option label="主治医师" value="主治医师" />
+                <el-option label="执业医师" value="执业医师" />
+                <el-option label="检验医师" value="检验医师" />
                 <el-option label="医师" value="医师" />
               </el-select>
             </el-form-item>
@@ -238,13 +261,24 @@ const formRules = {
 
 const tableData = ref([])
 
-// 获取医生列表（不分页）
+// 获取医生列表 - 修复参数传递
 const fetchDoctorList = async () => {
   loading.value = true
   try {
-    const res = await getDoctorList(searchForm)
+    // 只传递非空参数
+    const params = {}
+    if (searchForm.name?.trim()) params.name = searchForm.name.trim()
+    if (searchForm.department) params.department = searchForm.department
+    if (searchForm.title) params.title = searchForm.title
+    
+    console.log('搜索参数:', params)
+    
+    const res = await getDoctorList(params)
     if (res.code === 200) {
       tableData.value = res.data || []
+      console.log('获取到医生数据:', tableData.value.length, '条')
+    } else {
+      ElMessage.error(res.message || '获取医生列表失败')
     }
   } catch (error) {
     console.error('获取医生列表失败:', error)
@@ -255,13 +289,15 @@ const fetchDoctorList = async () => {
 }
 
 const getTitleType = (title) => {
-  const types = { '主任医师': 'danger', '副主任医师': 'warning', '主治医师': 'success', '医师': 'info' }
+  const types = { 
+    '主任医师': 'danger', 
+    '副主任医师': 'warning', 
+    '主治医师': 'success', 
+    '执业医师': 'success',
+    '检验医师': 'info',
+    '医师': 'info' 
+  }
   return types[title] || 'info'
-}
-
-const getDepartmentName = (dept) => {
-  const names = { internal: '内科', surgery: '外科', dermatology: '皮肤科', ophthalmology: '眼科', dental: '牙科' }
-  return names[dept] || dept
 }
 
 const handleSearch = () => {
@@ -277,7 +313,12 @@ const handleReset = () => {
 
 const handleExport = async () => {
   try {
-    const res = await exportDoctors(searchForm)
+    const params = {}
+    if (searchForm.name?.trim()) params.name = searchForm.name.trim()
+    if (searchForm.department) params.department = searchForm.department
+    if (searchForm.title) params.title = searchForm.title
+    
+    const res = await exportDoctors(params)
     const blob = new Blob([res], { type: 'application/vnd.ms-excel' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
@@ -306,7 +347,7 @@ const handleAdd = () => {
 
 const handleEdit = (doctor) => {
   dialogTitle.value = '编辑医生'
-  Object.assign(formData, doctor)
+  Object.assign(formData, { ...doctor })
   dialogVisible.value = true
 }
 
@@ -431,6 +472,11 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
+/* 修复 el-select 宽度 */
+.search-form :deep(.el-select) {
+  width: 140px;
+}
+
 .table-card {
   border-radius: var(--radius-large);
 }
@@ -463,7 +509,6 @@ onMounted(() => {
   gap: 10px;
 }
 
-/* 医生卡片网格 */
 .doctor-grid {
   margin-top: 10px;
 }
@@ -542,7 +587,6 @@ onMounted(() => {
   border-top: 1px solid var(--border-lighter);
 }
 
-/* 头像上传 */
 .avatar-uploader {
   border: 1px dashed var(--border-color);
   border-radius: var(--radius-base);
@@ -574,7 +618,6 @@ onMounted(() => {
   object-fit: cover;
 }
 
-/* 对话框 */
 .doctor-dialog :deep(.el-dialog__header) {
   margin-right: 0;
   padding: 20px;

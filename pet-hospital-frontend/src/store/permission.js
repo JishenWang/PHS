@@ -7,11 +7,9 @@ function filterRoutesByRole(routes, role) {
   const filtered = []
   for (const route of routes) {
     const routeCopy = { ...route }
-    // 检查当前路由是否有权限限制
     if (routeCopy.meta?.roles && !routeCopy.meta.roles.includes(role)) {
       continue
     }
-    // 递归筛选子路由
     if (routeCopy.children) {
       routeCopy.children = filterRoutesByRole(routeCopy.children, role)
     }
@@ -20,33 +18,38 @@ function filterRoutesByRole(routes, role) {
   return filtered
 }
 
+// 404路由（必须放在所有路由最后）
+const notFoundRoute = {
+  path: '/:pathMatch(.*)*',
+  name: 'NotFound',
+  redirect: '/404',
+  hidden: true
+}
+
 export const usePermissionStore = defineStore('permission', {
   state: () => ({
-    routes: [],        // 所有路由（常量 + 动态）
-    addRoutes: []      // 仅动态路由
+    routes: [],
+    addRoutes: []
   }),
   
   getters: {
-    // 获取侧边栏路由（用于菜单渲染，过滤 hidden）
     sidebarRoutes: (state) => {
       return state.routes.filter(route => !route.hidden && route.path !== '/')
     }
   },
   
   actions: {
-    // 生成动态路由
     generateRoutes(role) {
       return new Promise((resolve) => {
-        // 根据角色筛选路由
         const accessedRoutes = filterRoutesByRole(asyncRoutes, role)
         
-        // 保存到状态
+        // ✅ 在动态路由最后添加404通配符
+        accessedRoutes.push(notFoundRoute)
+        
         this.addRoutes = accessedRoutes
         this.routes = constantRoutes.concat(accessedRoutes)
         
-        // 动态添加到 router
         accessedRoutes.forEach(route => {
-          // 避免重复添加
           if (!router.hasRoute(route.name)) {
             router.addRoute(route)
             console.log('已添加路由:', route.path)
@@ -58,7 +61,6 @@ export const usePermissionStore = defineStore('permission', {
       })
     },
     
-    // 重置路由
     resetRoutes() {
       this.routes = []
       this.addRoutes = []

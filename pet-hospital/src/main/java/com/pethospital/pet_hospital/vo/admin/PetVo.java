@@ -14,13 +14,14 @@ public class PetVo {
     private String breed;
     private String gender;
     private Integer age;
-    private BigDecimal weight;      // 新增：体重
+    private BigDecimal weight;
     private String ownerName;
     private String ownerPhone;
-    private String ownerAddress;    // 新增：主人地址
-    private String healthStatus;    // 新增：健康状态
-    private List<String> vaccines;  // 新增：疫苗记录（前端传数组）
-    private String allergies;       // 新增：过敏史
-    private String remark;          // 新增：备注
+    private String ownerAddress;
+    private String healthStatus;
+    private List<String> vaccines;
+    private String allergies;
+    private String remark;
+    private LocalDateTime lastVisit; 
     private LocalDateTime createTime;
 }

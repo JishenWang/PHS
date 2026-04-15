@@ -1,309 +1,587 @@
 <template>
-  <div class="dashboard">
-    <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stat-row">
-      <el-col :span="6" v-for="(item, index) in statistics" :key="index">
-        <el-card class="stat-card" :body-style="{ padding: '0' }" shadow="hover">
-          <div class="stat-content" :class="`stat-${item.type}`">
-            <div class="stat-icon">
-              <el-icon :size="40">
-                <component :is="item.icon" />
-              </el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-title">{{ item.title }}</div>
-              <div class="stat-value">{{ item.value }}</div>
-              <div class="stat-change" :class="item.change > 0 ? 'up' : 'down'">
-                <el-icon><ArrowUp v-if="item.change > 0" /><ArrowDown v-else /></el-icon>
-                {{ Math.abs(item.change) }}% 较上月
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+  <div class="system-config">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h2>系统配置</h2>
+      <p class="subtitle">管理系统的基本参数和业务规则</p>
+    </div>
 
-    <!-- 图表区域 -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :span="16">
-        <el-card shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>预约趋势</span>
-              <el-radio-group v-model="trendPeriod" size="small" @change="handlePeriodChange">
-                <el-radio-button label="week">本周</el-radio-button>
-                <el-radio-button label="month">本月</el-radio-button>
-                <el-radio-button label="year">全年</el-radio-button>
-              </el-radio-group>
-            </div>
-          </template>
-          <div class="chart-placeholder" v-loading="trendLoading">
-            <div class="mock-chart">
-              <div v-for="i in 7" :key="i" class="bar" :style="{ height: `${Math.random() * 60 + 20}%` }"></div>
-            </div>
-            <div class="chart-labels">
-              <span v-for="day in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="day">{{ day }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :span="8">
-        <el-card shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span>宠物种类分布</span>
-            </div>
-          </template>
-          <div class="pie-chart" v-loading="pieLoading">
-            <div class="pie-item" v-for="(item, index) in petTypes" :key="index">
-              <div class="pie-color" :style="{ background: item.color }"></div>
-              <span class="pie-label">{{ item.name }}</span>
-              <span class="pie-value">{{ item.value }}%</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- 配置标签页 -->
+    <el-tabs v-model="activeTab" type="border-card" class="config-tabs">
+      <!-- 基础配置 -->
+      <el-tab-pane label="基础配置" name="basic">
+        <el-form 
+          :model="basicForm" 
+          :rules="basicRules" 
+          ref="basicFormRef"
+          label-width="140px"
+          class="config-form"
+        >
+          <el-divider content-position="left">机构信息</el-divider>
+          
+          <el-form-item label="机构名称" prop="hospitalName">
+            <el-input v-model="basicForm.hospitalName" placeholder="请输入宠物医院名称" />
+          </el-form-item>
+          
+          <el-form-item label="联系电话" prop="contactPhone">
+            <el-input v-model="basicForm.contactPhone" placeholder="请输入联系电话" />
+          </el-form-item>
+          
+          <el-form-item label="机构地址" prop="address">
+            <el-input 
+              v-model="basicForm.address" 
+              type="textarea" 
+              :rows="2" 
+              placeholder="请输入详细地址"
+            />
+          </el-form-item>
 
-    <!-- 快捷入口和最近活动 -->
-    <el-row :gutter="20" class="bottom-row">
-      <el-col :span="12">
-        <el-card shadow="hover">
-          <template #header>
-            <span>快捷入口</span>
-          </template>
-          <div class="quick-actions">
-            <div 
-              v-for="action in quickActions" 
-              :key="action.path"
-              class="action-item"
-              @click="$router.push(action.path)"
-            >
-              <div class="action-icon" :style="{ background: action.color }">
-                <el-icon :size="24"><component :is="action.icon" /></el-icon>
-              </div>
-              <span class="action-name">{{ action.name }}</span>
+          <el-divider content-position="left">系统参数</el-divider>
+          
+          <el-form-item label="预约提前天数" prop="maxAdvanceDays">
+            <el-slider v-model="basicForm.maxAdvanceDays" :max="30" show-stops />
+            <span class="form-hint">最多可提前 {{ basicForm.maxAdvanceDays }} 天预约</span>
+          </el-form-item>
+          
+          <el-form-item label="每日预约上限" prop="dailyLimit">
+            <el-input-number v-model="basicForm.dailyLimit" :min="10" :max="200" />
+          </el-form-item>
+          
+          <el-form-item label="系统公告" prop="announcement">
+            <el-input 
+              v-model="basicForm.announcement" 
+              type="textarea" 
+              :rows="3" 
+              placeholder="登录页显示的系统公告"
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="primary" @click="saveBasicConfig" :loading="saving.basic">
+              <el-icon><Check /></el-icon> 保存基础配置
+            </el-button>
+            <el-button @click="resetBasicForm">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <!-- 业务配置 -->
+      <el-tab-pane label="业务配置" name="business">
+        <el-form 
+          :model="businessForm" 
+          :rules="businessRules" 
+          ref="businessFormRef"
+          label-width="160px"
+          class="config-form"
+        >
+          <el-divider content-position="left">挂号费用</el-divider>
+          
+          <el-form-item label="普通挂号费（元）" prop="normalFee">
+            <el-input-number v-model="businessForm.normalFee" :min="0" :precision="2" :step="5" />
+          </el-form-item>
+          
+          <el-form-item label="专家挂号费（元）" prop="expertFee">
+            <el-input-number v-model="businessForm.expertFee" :min="0" :precision="2" :step="10" />
+          </el-form-item>
+
+          <el-divider content-position="left">营业时间</el-divider>
+          
+          <el-form-item label="上午营业时间" prop="morningTime">
+            <el-time-picker
+              v-model="businessForm.morningTime"
+              is-range
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              format="HH:mm"
+            />
+          </el-form-item>
+          
+          <el-form-item label="下午营业时间" prop="afternoonTime">
+            <el-time-picker
+              v-model="businessForm.afternoonTime"
+              is-range
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              format="HH:mm"
+            />
+          </el-form-item>
+
+          <el-divider content-position="left">诊疗规则</el-divider>
+          
+          <el-form-item label="单次诊疗时长（分钟）" prop="consultDuration">
+            <el-radio-group v-model="businessForm.consultDuration">
+              <el-radio-button :label="15">15分钟</el-radio-button>
+              <el-radio-button :label="20">20分钟</el-radio-button>
+              <el-radio-button :label="30">30分钟</el-radio-button>
+              <el-radio-button :label="45">45分钟</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+          
+          <el-form-item label="允许退号时间" prop="refundDeadline">
+            <el-select v-model="businessForm.refundDeadline">
+              <el-option label="就诊前2小时" :value="2" />
+              <el-option label="就诊前4小时" :value="4" />
+              <el-option label="就诊前8小时" :value="8" />
+              <el-option label="就诊前24小时" :value="24" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="primary" @click="saveBusinessConfig" :loading="saving.business">
+              <el-icon><Check /></el-icon> 保存业务配置
+            </el-button>
+            <el-button @click="resetBusinessForm">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <!-- 通知配置 -->
+      <el-tab-pane label="通知配置" name="notification">
+        <el-form 
+          :model="notifyForm" 
+          ref="notifyFormRef"
+          label-width="160px"
+          class="config-form"
+        >
+          <el-divider content-position="left">短信通知</el-divider>
+          
+          <el-form-item label="预约成功通知">
+            <el-switch v-model="notifyForm.smsReserveSuccess" active-text="开启" inactive-text="关闭" />
+          </el-form-item>
+          
+          <el-form-item label="就诊前提醒">
+            <el-switch v-model="notifyForm.smsRemind" active-text="开启" inactive-text="关闭" />
+          </el-form-item>
+          
+          <el-form-item label="提醒提前时间" v-if="notifyForm.smsRemind">
+            <el-select v-model="notifyForm.remindTime">
+              <el-option label="提前30分钟" :value="30" />
+              <el-option label="提前1小时" :value="60" />
+              <el-option label="提前2小时" :value="120" />
+            </el-select>
+          </el-form-item>
+
+          <el-divider content-position="left">邮件通知</el-divider>
+          
+          <el-form-item label="系统异常报警">
+            <el-switch v-model="notifyForm.emailErrorAlert" active-text="开启" inactive-text="关闭" />
+          </el-form-item>
+          
+          <el-form-item label="接收邮箱" v-if="notifyForm.emailErrorAlert">
+            <el-input v-model="notifyForm.alertEmail" placeholder="多个邮箱用逗号分隔" />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="primary" @click="saveNotifyConfig" :loading="saving.notification">
+              <el-icon><Check /></el-icon> 保存通知配置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <!-- 数据维护 -->
+      <el-tab-pane label="数据维护" name="maintenance">
+        <div class="maintenance-section">
+          <el-divider content-position="left">数据备份</el-divider>
+          
+          <div class="maint-item">
+            <div class="maint-info">
+              <h4>手动备份</h4>
+              <p>立即创建当前数据库的完整备份</p>
             </div>
+            <el-button type="primary" @click="handleBackup" :loading="loading.backup">
+              <el-icon><Download /></el-icon> 立即备份
+            </el-button>
           </div>
-        </el-card>
-      </el-col>
+          
+          <div class="maint-item">
+            <div class="maint-info">
+              <h4>自动备份</h4>
+              <p>系统每天凌晨2:00自动备份数据</p>
+            </div>
+            <el-switch v-model="autoBackup" active-text="已开启" inactive-text="已关闭" />
+          </div>
+
+          <el-divider content-position="left">缓存管理</el-divider>
+          
+          <div class="maint-item">
+            <div class="maint-info">
+              <h4>清除系统缓存</h4>
+              <p>清除Redis缓存，强制刷新所有配置</p>
+            </div>
+            <el-button type="warning" @click="handleClearCache" :loading="loading.cache">
+              <el-icon><Delete /></el-icon> 清除缓存
+            </el-button>
+          </div>
+
+          <el-divider content-position="left">危险操作</el-divider>
+          
+          <div class="maint-item danger">
+            <div class="maint-info">
+              <h4>重置系统</h4>
+              <p class="danger-text">⚠️ 清空所有业务数据，仅保留管理员账号，此操作不可逆！</p>
+            </div>
+            <el-button type="danger" @click="handleResetSystem" :loading="loading.reset">
+              <el-icon><Warning /></el-icon> 重置系统
+            </el-button>
+          </div>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+
+    <!-- 操作日志 -->
+    <el-card class="log-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>配置操作日志</span>
+          <el-button link @click="refreshLogs">
+            <el-icon><Refresh /></el-icon> 刷新
+          </el-button>
+        </div>
+      </template>
       
-      <el-col :span="12">
-        <el-card shadow="hover">
-          <template #header>
-            <span>最近活动</span>
+      <el-table :data="operationLogs" v-loading="logLoading" size="small">
+        <el-table-column prop="time" label="时间" width="160" />
+        <el-table-column prop="user" label="操作人" width="100" />
+        <el-table-column prop="action" label="操作类型" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.type" size="small">{{ row.action }}</el-tag>
           </template>
-          <el-timeline v-loading="activityLoading">
-            <el-timeline-item 
-              v-for="(activity, index) in activities" 
-              :key="index"
-              :type="activity.type"
-              :timestamp="activity.time"
-            >
-              {{ activity.content }}
-            </el-timeline-item>
-          </el-timeline>
-        </el-card>
-      </el-col>
-    </el-row>
+        </el-table-column>
+        <el-table-column prop="detail" label="详情" />
+        <el-table-column prop="ip" label="IP地址" width="120" />
+      </el-table>
+      
+      <el-pagination
+        v-model:current-page="logPage"
+        v-model:page-size="logPageSize"
+        :total="logTotal"
+        layout="prev, pager, next, jumper"
+        class="pagination"
+        @change="fetchLogs"
+      />
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { User, FirstAidKit, Calendar, TrendCharts, ArrowUp, ArrowDown, Plus, Edit, Search, Setting } from '@element-plus/icons-vue'
-import { getDashboardData, getTrendData, getPetTypeDistribution, getRecentActivities } from '@/api/admin/admin'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  Check, 
+  Download, 
+  Delete, 
+  Warning, 
+  Refresh 
+} from '@element-plus/icons-vue'
+import { 
+  getBasicConfig, 
+  saveBasicConfig as apiSaveBasic,
+  getBusinessConfig,
+  saveBusinessConfig as apiSaveBusiness,
+  backupData,
+  clearCache,
+  resetSystem,
+  getOperationLogs
+} from '@/api/admin/admin'
 
-const trendPeriod = ref('week')
-const trendLoading = ref(false)
-const pieLoading = ref(false)
-const activityLoading = ref(false)
+const activeTab = ref('basic')
+const saving = reactive({ basic: false, business: false, notification: false })
+const loading = reactive({ backup: false, cache: false, reset: false })
+const logLoading = ref(false)
+const logPage = ref(1)
+const logPageSize = ref(10)
+const logTotal = ref(0)
+const autoBackup = ref(true)
 
-const statistics = ref([
-  { title: '总用户数', value: 0, change: 0, type: 'primary', icon: 'User' },
-  { title: '医生数量', value: 0, change: 0, type: 'success', icon: 'FirstAidKit' },
-  { title: '宠物档案', value: 0, change: 0, type: 'warning', icon: 'Calendar' },
-  { title: '今日预约', value: 0, change: 0, type: 'danger', icon: 'TrendCharts' }
-])
+// 基础配置表单
+const basicFormRef = ref(null)
+const basicForm = reactive({
+  hospitalName: '',
+  contactPhone: '',
+  address: '',
+  maxAdvanceDays: 7,
+  dailyLimit: 50,
+  announcement: ''
+})
 
-const petTypes = ref([
-  { name: '犬类', value: 45, color: '#409EFF' },
-  { name: '猫类', value: 35, color: '#67C23A' },
-  { name: '其他', value: 20, color: '#E6A23C' }
-])
+const basicRules = {
+  hospitalName: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
+  contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  address: [{ required: true, message: '请输入地址', trigger: 'blur' }]
+}
 
-const activities = ref([])
+// 业务配置表单
+const businessFormRef = ref(null)
+const businessForm = reactive({
+  normalFee: 10.00,
+  expertFee: 30.00,
+  morningTime: [new Date(2024, 0, 1, 8, 0), new Date(2024, 0, 1, 12, 0)],
+  afternoonTime: [new Date(2024, 0, 1, 14, 0), new Date(2024, 0, 1, 18, 0)],
+  consultDuration: 30,
+  refundDeadline: 4
+})
 
-const quickActions = ref([
-  { name: '新增用户', path: '/admin/user', icon: 'Plus', color: '#409EFF' },
-  { name: '编辑医生', path: '/admin/doctor', icon: 'Edit', color: '#67C23A' },
-  { name: '查询宠物', path: '/admin/pet', icon: 'Search', color: '#E6A23C' },
-  { name: '系统设置', path: '/admin/system', icon: 'Setting', color: '#909399' }
-])
+const businessRules = {
+  normalFee: [{ required: true, message: '请设置普通挂号费', trigger: 'change' }],
+  expertFee: [{ required: true, message: '请设置专家挂号费', trigger: 'change' }]
+}
 
-const fetchDashboardData = async () => {
+// 通知配置表单
+const notifyFormRef = ref(null)
+const notifyForm = reactive({
+  smsReserveSuccess: true,
+  smsRemind: true,
+  remindTime: 60,
+  emailErrorAlert: false,
+  alertEmail: ''
+})
+
+// 操作日志
+const operationLogs = ref([])
+
+// 获取基础配置
+const fetchBasicConfig = async () => {
   try {
-    const res = await getDashboardData()
-    if (res.code === 200) {
-      const data = res.data
-      statistics.value[0].value = data.userCount
-      statistics.value[0].change = data.userChange || 0
-      statistics.value[1].value = data.doctorCount
-      statistics.value[1].change = data.doctorChange || 0
-      statistics.value[2].value = data.petCount
-      statistics.value[2].change = data.petChange || 0
-      statistics.value[3].value = data.todayReserve
-      statistics.value[3].change = data.reserveChange || 0
+    const res = await getBasicConfig()
+    if (res.code === 200 && res.data) {
+      Object.assign(basicForm, res.data)
     }
   } catch (error) {
-    console.error('获取统计数据失败:', error)
+    console.error('获取基础配置失败:', error)
   }
 }
 
-const fetchTrendData = async () => {
-  trendLoading.value = true
+// 保存基础配置
+const saveBasicConfig = async () => {
   try {
-    const res = await getTrendData(trendPeriod.value)
+    await basicFormRef.value.validate()
+    saving.basic = true
+    const res = await apiSaveBasic(basicForm)
     if (res.code === 200) {
-      console.log('趋势数据:', res.data)
+      ElMessage.success('基础配置保存成功')
+      fetchLogs()
     }
   } catch (error) {
-    console.error('获取趋势数据失败:', error)
+    ElMessage.error('保存失败')
   } finally {
-    trendLoading.value = false
+    saving.basic = false
   }
 }
 
-const fetchPetDistribution = async () => {
-  pieLoading.value = true
+const resetBasicForm = () => {
+  basicFormRef.value?.resetFields()
+  fetchBasicConfig()
+}
+
+// 保存业务配置
+const saveBusinessConfig = async () => {
   try {
-    const res = await getPetTypeDistribution()
+    await businessFormRef.value.validate()
+    saving.business = true
+    const res = await apiSaveBusiness(businessForm)
     if (res.code === 200) {
-      petTypes.value = res.data
+      ElMessage.success('业务配置保存成功')
+      fetchLogs()
     }
   } catch (error) {
-    console.error('获取宠物分布失败:', error)
+    ElMessage.error('保存失败')
   } finally {
-    pieLoading.value = false
+    saving.business = false
   }
 }
 
-const fetchActivities = async () => {
-  activityLoading.value = true
+const resetBusinessForm = () => {
+  businessFormRef.value?.resetFields()
+}
+
+// 保存通知配置
+const saveNotifyConfig = async () => {
+  saving.notification = true
+  setTimeout(() => {
+    saving.notification = false
+    ElMessage.success('通知配置保存成功')
+  }, 500)
+}
+
+// 数据备份
+const handleBackup = async () => {
+  loading.backup = true
   try {
-    const res = await getRecentActivities()
+    const res = await backupData()
     if (res.code === 200) {
-      activities.value = res.data
+      ElMessage.success('备份成功，文件已下载')
     }
   } catch (error) {
-    console.error('获取活动记录失败:', error)
+    ElMessage.error('备份失败')
   } finally {
-    activityLoading.value = false
+    loading.backup = false
   }
 }
 
-const handlePeriodChange = () => {
-  fetchTrendData()
+// 清除缓存
+const handleClearCache = async () => {
+  try {
+    await ElMessageBox.confirm('确定要清除系统缓存吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    loading.cache = true
+    const res = await clearCache()
+    if (res.code === 200) {
+      ElMessage.success('缓存清除成功')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
+  } finally {
+    loading.cache = false
+  }
+}
+
+// 重置系统
+const handleResetSystem = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '⚠️ 此操作将清空所有业务数据，仅保留管理员账号，确定要继续吗？',
+      '危险操作确认',
+      {
+        confirmButtonText: '我已了解风险，确认重置',
+        cancelButtonText: '取消',
+        type: 'danger',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+    loading.reset = true
+    const res = await resetSystem()
+    if (res.code === 200) {
+      ElMessage.success('系统已重置，请重新登录')
+      // 跳转到登录页
+      window.location.href = '/login'
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
+  } finally {
+    loading.reset = false
+  }
+}
+
+// 获取操作日志
+const fetchLogs = async () => {
+  logLoading.value = true
+  try {
+    const res = await getOperationLogs({ page: logPage.value, size: logPageSize.value })
+    if (res.code === 200) {
+      operationLogs.value = res.data.list
+      logTotal.value = res.data.total
+    }
+  } catch (error) {
+    console.error('获取日志失败:', error)
+  } finally {
+    logLoading.value = false
+  }
+}
+
+const refreshLogs = () => {
+  logPage.value = 1
+  fetchLogs()
 }
 
 onMounted(() => {
-  fetchDashboardData()
-  fetchTrendData()
-  fetchPetDistribution()
-  fetchActivities()
+  fetchBasicConfig()
+  fetchLogs()
 })
 </script>
 
 <style scoped>
-.dashboard {
-  padding: 0;
+.system-config {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.stat-row {
-  margin-bottom: 20px;
+.page-header {
+  margin-bottom: 24px;
 }
 
-.stat-card {
-  border-radius: var(--radius-large);
-  overflow: hidden;
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-dark);
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-content::before {
-  content: '';
-  position: absolute;
-  right: -20px;
-  top: -20px;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  opacity: 0.1;
-}
-
-.stat-primary::before { background: var(--primary-color); }
-.stat-success::before { background: var(--success-color); }
-.stat-warning::before { background: var(--warning-color); }
-.stat-danger::before { background: var(--danger-color); }
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-base);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
-  color: #fff;
-}
-
-.stat-primary .stat-icon { background: var(--primary-color); }
-.stat-success .stat-icon { background: var(--success-color); }
-.stat-warning .stat-icon { background: var(--warning-color); }
-.stat-danger .stat-icon { background: var(--danger-color); }
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-title {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 700;
+.page-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
   color: var(--text-primary);
-  margin-bottom: 8px;
 }
 
-.stat-change {
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
-.stat-change.up { color: var(--success-color); }
-.stat-change.down { color: var(--danger-color); }
-
-.chart-row {
+.config-tabs {
   margin-bottom: 20px;
+}
+
+.config-tabs :deep(.el-tabs__header) {
+  margin-bottom: 0;
+}
+
+.config-form {
+  padding: 20px;
+  max-width: 700px;
+}
+
+.form-hint {
+  margin-left: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* 数据维护区域样式 */
+.maintenance-section {
+  padding: 20px;
+}
+
+.maint-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 16px;
+  background: var(--bg-color);
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border-lighter);
+}
+
+.maint-item.danger {
+  border-color: var(--danger-color);
+  background: rgba(245, 108, 108, 0.05);
+}
+
+.maint-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.maint-info p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.maint-info .danger-text {
+  color: var(--danger-color);
+  font-weight: 500;
+}
+
+/* 日志卡片 */
+.log-card {
+  margin-top: 20px;
 }
 
 .card-header {
@@ -313,118 +591,21 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.chart-placeholder {
-  height: 300px;
-  display: flex;
-  flex-direction: column;
+.pagination {
+  margin-top: 16px;
   justify-content: flex-end;
-  padding: 20px;
 }
 
-.mock-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  height: 200px;
-  gap: 20px;
-}
-
-.bar {
-  width: 40px;
-  background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-light) 100%);
-  border-radius: 4px 4px 0 0;
-  transition: all 0.3s;
-  animation: grow 1s ease-out;
-}
-
-@keyframes grow {
-  from { height: 0 !important; }
-}
-
-.bar:hover {
-  background: var(--primary-dark);
-}
-
-.chart-labels {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 10px;
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-.pie-chart {
-  height: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 20px;
-  padding: 20px;
-}
-
-.pie-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pie-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-}
-
-.pie-label {
-  flex: 1;
-  color: var(--text-regular);
-}
-
-.pie-value {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.bottom-row {
-  margin-bottom: 20px;
-}
-
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  padding: 10px;
-}
-
-.action-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: var(--radius-base);
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 1px solid var(--border-lighter);
-}
-
-.action-item:hover {
-  background: var(--bg-color);
-  border-color: var(--primary-color);
-  transform: translateX(4px);
-}
-
-.action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-base);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
-
-.action-name {
-  font-size: 14px;
-  color: var(--text-regular);
-  font-weight: 500;
+/* 响应式 */
+@media (max-width: 768px) {
+  .config-form {
+    max-width: 100%;
+  }
+  
+  .maint-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 </style>

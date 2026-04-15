@@ -324,12 +324,20 @@ const fetchPetList = async () => {
   loading.value = true
   try {
     const res = await getPetList(searchForm.keyword)
+    console.log('宠物列表响应:', res)  // 添加调试日志
+    
     if (res.code === 200) {
-      tableData.value = res.data
+      tableData.value = res.data || []
+      if (tableData.value.length === 0) {
+        console.log('返回数据为空数组，检查数据库是否有数据')
+      }
+    } else {
+      ElMessage.error(res.message || '获取数据失败')
     }
   } catch (error) {
     console.error('获取宠物列表失败:', error)
-    ElMessage.error('获取宠物列表失败')
+    console.error('错误详情:', error.response?.data || error.message)
+    ElMessage.error(error.response?.data?.message || '获取宠物列表失败')
   } finally {
     loading.value = false
   }

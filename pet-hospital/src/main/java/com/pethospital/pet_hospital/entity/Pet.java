@@ -1,10 +1,10 @@
-// 提示词：全字段映射必须严格来源于 pet_hospital.sql，字段名不得猜测。
 package com.pethospital.pet_hospital.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
@@ -14,9 +14,7 @@ public class Pet {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 主人相关字段（为了兼容历史字段，ownerUserId/ownerId 两套都保留）
-     */
+    // 主人相关字段
     private Long ownerUserId;
     private Long ownerId;
     private String ownerName;
@@ -24,16 +22,14 @@ public class Pet {
     private String ownerAddress;
     private Integer ownerIsTemp;
 
-    /**
-     * 宠物基础信息
-     */
+    // 宠物基础信息
     private String name;
     private String avatar;
     private String type;
     private String species;
     private String breed;
     private String gender;
-    private String genderCode;
+    private Integer genderCode;
     private LocalDate birthday;
     private Integer age;
     private Double weight;
@@ -41,9 +37,7 @@ public class Pet {
     private String chipNumber;
     private Integer neutered;
 
-    /**
-     * 健康/状态信息
-     */
+    // 健康/状态信息
     private String healthStatus;
     private Integer status;
     private String vaccines;
@@ -54,27 +48,19 @@ public class Pet {
     private String remark;
     private LocalDateTime lastVisit;
 
-    /**
-     * 兼容多套时间字段（项目里既有 create_time/update_time，也有 created_time/updated_time）
-     * 说明：desk 接口返回里会带 createdTime/updatedTime
-     */
+    // 时间字段
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
 
-    /**
-     * 软删除标记
-     */
+
     private Integer isDeleted;
 
-    /**
-     * 前端 desk 页面展示用的扩展字段（XML 中可能用 '' 占位）
-     * 例如：健康记录列表序列化后的字符串
-     */
+    @TableField(exist = false) 
     private String healthRecords;
 
-    // Getters and Setters
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -114,8 +100,8 @@ public class Pet {
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
-    public String getGenderCode() { return genderCode; }
-    public void setGenderCode(String genderCode) { this.genderCode = genderCode; }
+    public Integer getGenderCode() { return genderCode; }
+    public void setGenderCode(Integer genderCode) { this.genderCode = genderCode; }
 
     public LocalDate getBirthday() { return birthday; }
     public void setBirthday(LocalDate birthday) { this.birthday = birthday; }
@@ -138,8 +124,8 @@ public class Pet {
     public String getHealthStatus() { return healthStatus; }
     public void setHealthStatus(String healthStatus) { this.healthStatus = healthStatus; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
 
     public String getVaccines() { return vaccines; }
     public void setVaccines(String vaccines) { this.vaccines = vaccines; }
@@ -153,14 +139,14 @@ public class Pet {
     public String getAllergyHistory() { return allergyHistory; }
     public void setAllergyHistory(String allergyHistory) { this.allergyHistory = allergyHistory; }
 
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
 
     public LocalDateTime getLastVisit() { return lastVisit; }
     public void setLastVisit(LocalDateTime lastVisit) { this.lastVisit = lastVisit; }
-
-    public Integer getStatus() { return status; }
-    public void setStatus(Integer status) { this.status = status; }
 
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
