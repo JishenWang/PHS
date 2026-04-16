@@ -1,10 +1,14 @@
 package com.pethospital.pet_hospital.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@TableName("order")
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+
+@TableName("order_info")
 public class Order {
 
     @TableId(type = IdType.AUTO)

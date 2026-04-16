@@ -1,125 +1,91 @@
 <template>
-  <div class="page-content">
-    <!-- 头部 -->
-    <div class="header" style="background: linear-gradient(135deg, #ff6b6b 0%, #f5a623 100%); padding: 30px 20px; border-radius: 0 0 30px 30px;">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <el-button circle :icon="ArrowLeft" style="background: rgba(255,255,255,0.2); border: none; color: white;" @click="goBack" />
-        <div>
-          <h2 style="color: white; font-size: 20px;">订单详情</h2>
-        </div>
-      </div>
+  <div class="order-detail-page">
+    <div class="page-nav">
+      <el-button link @click="goBack" class="back-btn">
+        <el-icon><ArrowLeft /></el-icon>
+        返回
+      </el-button>
     </div>
 
-    <div style="padding: 20px;" v-loading="loading">
-      <!-- 订单状态 -->
-      <div style="background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <div :style="{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          background: getStatusBg(detail.payStatus),
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '30px',
-          marginBottom: '12px'
-        }">
+    <div v-loading="loading">
+      <!-- 订单状态卡片 -->
+      <div class="status-card">
+        <div class="status-icon" :class="detail.payStatus">
           {{ getStatusIcon(detail.payStatus) }}
         </div>
-        <div :style="{ color: getStatusColor(detail.payStatus), fontWeight: 'bold', fontSize: '18px' }">
-          {{ getStatusText(detail.payStatus) }}
-        </div>
-        <div style="color: #999; font-size: 12px; margin-top: 8px;">
-          订单号：{{ detail.orderNo }}
-        </div>
-      </div>
-
-      <!-- 订单信息 -->
-      <div style="background: white; border-radius: 20px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #f8f9fc; font-weight: bold;">
-          订单信息
-        </div>
-        <div style="padding: 16px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-            <span style="color: #999;">创建时间</span>
-            <span>{{ detail.createTime }}</span>
+        <div class="status-info">
+          <div class="status-title" :class="detail.payStatus">
+            {{ getStatusText(detail.payStatus) }}
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-            <span style="color: #999;">支付方式</span>
-            <span>{{ getPayMethodText(detail.payMethod) }}</span>
-          </div>
-          <div v-if="detail.payTime" style="display: flex; justify-content: space-between;">
-            <span style="color: #999;">支付时间</span>
-            <span>{{ detail.payTime }}</span>
-          </div>
+          <div class="status-desc">{{ getStatusDesc(detail.payStatus) }}</div>
         </div>
       </div>
 
-      <!-- 商品信息 -->
-      <div style="background: white; border-radius: 20px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #f8f9fc; font-weight: bold;">
-          商品信息
+      <!-- 订单信息卡片 -->
+      <div class="info-card">
+        <div class="card-header">
+          <span class="card-title">订单信息</span>
         </div>
-        <div style="padding: 16px;">
-          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-            <div style="width: 50px; height: 50px; background: #f8f9fc; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
-              🐾
-            </div>
-            <div>
-              <div style="font-weight: bold;">{{ detail.petName || '未指定宠物' }}</div>
-              <div style="color: #999; font-size: 12px;">宠物</div>
-            </div>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="label">订单号</span>
+            <span class="value">{{ detail.orderNo }}</span>
           </div>
-          
-          <div v-for="item in detail.orderItems" :key="item.itemName" 
-               style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #f5f5f5;">
-            <div>
-              <div>{{ item.itemName }}</div>
-              <div style="color: #999; font-size: 12px;">单价 ¥{{ item.unitPrice }} x {{ item.quantity }}</div>
+          <div class="info-item">
+            <span class="label">创建时间</span>
+            <span class="value">{{ formatDate(detail.createTime) }}</span>
+          </div>
+          <div class="info-item" v-if="detail.payTime">
+            <span class="label">支付时间</span>
+            <span class="value">{{ formatDate(detail.payTime) }}</span>
+          </div>
+          <div class="info-item" v-if="detail.payMethod">
+            <span class="label">支付方式</span>
+            <span class="value">{{ getPayMethodText(detail.payMethod) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 商品信息卡片 -->
+      <div class="goods-card">
+        <div class="card-header">
+          <span class="card-title">商品信息</span>
+        </div>
+        <div class="goods-list">
+          <div v-for="item in detail.orderItems" :key="item.itemName" class="goods-item">
+            <div class="goods-icon">🐾</div>
+            <div class="goods-info">
+              <div class="goods-name">{{ item.itemName }}</div>
+              <div class="goods-spec">单价 ¥{{ item.unitPrice }} × {{ item.quantity }}</div>
             </div>
-            <div style="font-weight: bold;">¥{{ item.amount }}</div>
+            <div class="goods-price">¥{{ item.amount }}</div>
           </div>
-          
-          <div style="display: flex; justify-content: space-between; padding-top: 12px; margin-top: 8px; border-top: 1px solid #f0f0f0;">
-            <span>商品总额</span>
-            <span>¥{{ detail.totalAmount }}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 16px; font-weight: bold;">
-            <span>实付金额</span>
-            <span style="color: #f5a623;">¥{{ detail.totalAmount }}</span>
+        </div>
+        <div class="total-amount">
+          <span>合计</span>
+          <span class="total-price">¥{{ detail.totalAmount }}</span>
+        </div>
+      </div>
+
+      <!-- 宠物信息卡片 -->
+      <div class="pet-card" v-if="detail.petName">
+        <div class="card-header">
+          <span class="card-title">宠物信息</span>
+        </div>
+        <div class="pet-info">
+          <div class="pet-icon">🐾</div>
+          <div class="pet-detail">
+            <div class="pet-name">{{ detail.petName }}</div>
+            <div class="pet-id">ID: {{ detail.petId }}</div>
           </div>
         </div>
       </div>
 
       <!-- 底部按钮 -->
-      <div v-if="detail.payStatus === 'pending'" style="display: flex; gap: 12px; margin-top: 20px;">
-        <el-button type="primary" style="flex: 1;" @click="handlePay">去支付</el-button>
-        <el-button style="flex: 1;" @click="handleCancel">取消订单</el-button>
+      <div class="action-buttons" v-if="detail.payStatus === 'pending'">
+        <el-button type="primary" size="large" @click="handlePay">去支付</el-button>
+        <el-button size="large" @click="handleCancel">取消订单</el-button>
       </div>
-    </div>
-
-    <!-- 底部导航 -->
-    <div class="bottom-nav">
-      <router-link to="/pet" class="nav-item">
-        <el-icon><Avatar /></el-icon>
-        <span>宠物</span>
-      </router-link>
-      <router-link to="/health" class="nav-item">
-        <el-icon><Notebook /></el-icon>
-        <span>健康</span>
-      </router-link>
-      <router-link to="/reserve" class="nav-item">
-        <el-icon><Calendar /></el-icon>
-        <span>预约</span>
-      </router-link>
-      <router-link to="/consult" class="nav-item">
-        <el-icon><ChatDotRound /></el-icon>
-        <span>咨询</span>
-      </router-link>
-      <router-link to="/profile" class="nav-item active">
-        <el-icon><User /></el-icon>
-        <span>我的</span>
-      </router-link>
     </div>
   </div>
 </template>
@@ -128,7 +94,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Avatar, Notebook, Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOrderDetail } from '@/api/owner/owner'
 
 const route = useRoute()
@@ -148,19 +114,30 @@ const detail = ref({
   orderItems: []
 })
 
-const getStatusBg = (status) => {
-  const bg = { pending: '#fff3e8', paid: '#e8f8e8', cancelled: '#f0f0f0' }
-  return bg[status] || '#f0f0f0'
+// 获取 token
+const getToken = () => {
+  return localStorage.getItem('pet_hospital_token')
 }
 
-const getStatusColor = (status) => {
-  const colors = { pending: '#f5a623', paid: '#67c23a', cancelled: '#999' }
-  return colors[status] || '#999'
+// 格式化日期
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 const getStatusText = (status) => {
   const texts = { pending: '待支付', paid: '已支付', cancelled: '已取消' }
   return texts[status] || status
+}
+
+const getStatusDesc = (status) => {
+  const descs = { 
+    pending: '订单已提交，请尽快完成支付', 
+    paid: '订单已支付成功，感谢您的信任', 
+    cancelled: '订单已取消' 
+  }
+  return descs[status] || ''
 }
 
 const getStatusIcon = (status) => {
@@ -169,34 +146,45 @@ const getStatusIcon = (status) => {
 }
 
 const getPayMethodText = (method) => {
-  const methods = { cash: '现金', wechat: '微信支付', alipay: '支付宝' }
+  const methods = { cash: '现金', wechat: '微信支付', alipay: '支付宝', card: '刷卡' }
   return methods[method] || method || '未支付'
 }
 
 const goBack = () => {
-  // 返回到订单列表页
-  router.push('/orders')
+  router.push('/owner/orders')
 }
 
 const loadDetail = async () => {
   loading.value = true
   try {
-    const res = await getOrderDetail(orderId)
+    const token = getToken()
+    const response = await fetch(`/api/owner/order/${orderId}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    const res = await response.json()
+    console.log('订单详情响应:', res)
+    
     if (res.code === 200) {
-      detail.value = res.data
+      const data = res.data?.data || res.data
+      detail.value = {
+        ...data,
+        orderItems: data.orderItems || []
+      }
+    } else {
+      ElMessage.error(res.message || res.msg || '加载失败')
     }
   } catch (error) {
     console.error('加载订单详情失败:', error)
     // 模拟数据
     detail.value = {
       id: orderId,
-      orderNo: 'ORD202401150001',
+      orderNo: 'ORD202404160001',
       petName: '旺财',
       totalAmount: 95,
       payStatus: 'pending',
       payMethod: '',
       payTime: '',
-      createTime: '2024-01-15 14:30',
+      createTime: new Date().toISOString(),
       orderItems: [
         { itemName: '挂号费', unitPrice: 10, quantity: 1, amount: 10 },
         { itemName: '诊疗费', unitPrice: 50, quantity: 1, amount: 50 },
@@ -214,7 +202,7 @@ const handlePay = () => {
 
 const handleCancel = () => {
   ElMessageBox.confirm('确定要取消该订单吗？', '提示', { type: 'warning' }).then(() => {
-    ElMessage.success('已取消订单')
+    ElMessage.success('订单已取消')
     loadDetail()
   })
 }
@@ -224,43 +212,213 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.page-content {
-  padding-bottom: 80px;
-  min-height: 100vh;
-  background: #f8f9fc;
-}
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 20px 20px;
-  box-shadow: 0 -2px 15px rgba(0,0,0,0.05);
-  border-radius: 20px 20px 0 0;
-  z-index: 100;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  text-decoration: none;
-  color: #999;
-  font-size: 12px;
-  transition: all 0.3s;
-}
-
-.nav-item.active {
-  color: #ff6b6b;
-}
-
-.nav-item .el-icon {
-  font-size: 22px;
+<style scoped lang="scss">
+.order-detail-page {
+  .page-nav {
+    margin-bottom: 20px;
+    
+    .back-btn {
+      color: #64748b;
+      font-size: 14px;
+      
+      &:hover {
+        color: #3b82f6;
+      }
+    }
+  }
+  
+  .status-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      background: #f8fafc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      
+      &.pending {
+        background: #fef3c7;
+      }
+      &.paid {
+        background: #d1fae5;
+      }
+      &.cancelled {
+        background: #fee2e2;
+      }
+    }
+    
+    .status-info {
+      flex: 1;
+      
+      .status-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        
+        &.pending { color: #d97706; }
+        &.paid { color: #059669; }
+        &.cancelled { color: #dc2626; }
+      }
+      
+      .status-desc {
+        font-size: 13px;
+        color: #64748b;
+      }
+    }
+  }
+  
+  .info-card, .goods-card, .pet-card {
+    background: white;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    
+    .card-header {
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      
+      .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+    }
+  }
+  
+  .info-list {
+    padding: 16px 20px;
+    
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .label {
+        font-size: 14px;
+        color: #64748b;
+      }
+      
+      .value {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+      }
+    }
+  }
+  
+  .goods-list {
+    padding: 0 20px;
+    
+    .goods-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f1f5f9;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .goods-icon {
+        font-size: 32px;
+      }
+      
+      .goods-info {
+        flex: 1;
+        
+        .goods-name {
+          font-size: 15px;
+          font-weight: 500;
+          color: #1e293b;
+          margin-bottom: 4px;
+        }
+        
+        .goods-spec {
+          font-size: 12px;
+          color: #94a3b8;
+        }
+      }
+      
+      .goods-price {
+        font-size: 15px;
+        font-weight: 600;
+        color: #f59e0b;
+      }
+    }
+  }
+  
+  .total-amount {
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    
+    .total-price {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f59e0b;
+    }
+  }
+  
+  .pet-card {
+    .pet-info {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      .pet-icon {
+        font-size: 40px;
+      }
+      
+      .pet-detail {
+        .pet-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 4px;
+        }
+        
+        .pet-id {
+          font-size: 12px;
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    
+    .el-button {
+      flex: 1;
+    }
+  }
 }
 </style>
