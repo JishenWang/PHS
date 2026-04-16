@@ -3,6 +3,8 @@ package com.pethospital.pet_hospital.controller;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,22 +15,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethospital.pet_hospital.common.constant.HttpStatus;
 import com.pethospital.pet_hospital.entity.Appointment;
 import com.pethospital.pet_hospital.entity.Consultation;
 import com.pethospital.pet_hospital.entity.MedicalRecord;
-import com.pethospital.pet_hospital.entity.Order;
+import com.pethospital.pet_hospital.entity.OrderInfo;
 import com.pethospital.pet_hospital.entity.OwnerHealthRecord;
 import com.pethospital.pet_hospital.entity.Pet;
 import com.pethospital.pet_hospital.entity.User;
+import com.pethospital.pet_hospital.mapper.UserMapper;
 import com.pethospital.pet_hospital.service.IOwnerService;
 import com.pethospital.pet_hospital.vo.common.PageResultVo;
 import com.pethospital.pet_hospital.vo.common.ResultVo;
 
-/**
- * 客户自助端控制器
- */
 @RestController
 @RequestMapping("/owner")
 public class OwnerController {
@@ -36,12 +37,26 @@ public class OwnerController {
     @Autowired
     private IOwnerService ownerService;
 
-    /**
-     * 获取当前登录用户ID
-     */
+    @Autowired
+    private UserMapper userMapper; 
+
     private Long getCurrentUserId() {
-        // 临时返回，实际应从token中获取
-        return 1L;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("用户未登录");
+        }
+        
+        String username = authentication.getName();
+        
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username);
+        User user = userMapper.selectOne(wrapper);
+        
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        return user.getId();
     }
 
     // ==================== 宠物管理 ====================
@@ -75,6 +90,7 @@ public class OwnerController {
     public ResultVo<Void> addPet(@RequestBody Pet pet) {
         Long userId = getCurrentUserId();
         pet.setOwnerId(userId);
+        pet.setOwnerUserId(userId);
         boolean success = ownerService.addPet(pet);
         return success ? ResultVo.success() : ResultVo.error("添加失败");
     }
@@ -266,13 +282,13 @@ public class OwnerController {
     // ==================== 订单管理 ====================
 
     @GetMapping("/order/list")
-    public ResultVo<PageResultVo<Order>> getOrderList(
+    public ResultVo<PageResultVo<OrderInfo>> getOrderList(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String payStatus) {
         Long userId = getCurrentUserId();
-        Page<Order> pageParam = new Page<>(page, pageSize);
-        Page<Order> result = ownerService.getOrderList(pageParam, userId, payStatus);
+        Page<OrderInfo> pageParam = new Page<>(page, pageSize);
+        Page<OrderInfo> result = ownerService.getOrderList(pageParam, userId, payStatus);
         return ResultVo.success(PageResultVo.success(
             result.getRecords(), 
             result.getTotal(), 
@@ -281,9 +297,9 @@ public class OwnerController {
     }
 
     @GetMapping("/order/{orderId}")
-    public ResultVo<Order> getOrderDetail(@PathVariable Long orderId) {
+    public ResultVo<OrderInfo> getOrderDetail(@PathVariable Long orderId) {
         Long userId = getCurrentUserId();
-        Order order = ownerService.getOrderDetail(orderId, userId);
+        OrderInfo order = ownerService.getOrderDetail(orderId, userId);
         if (order == null) {
             return ResultVo.error(HttpStatus.NOT_FOUND, "订单不存在");
         }
