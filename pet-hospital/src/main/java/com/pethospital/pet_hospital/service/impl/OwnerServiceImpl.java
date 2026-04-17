@@ -16,7 +16,7 @@ import com.pethospital.pet_hospital.entity.Appointment;
 import com.pethospital.pet_hospital.entity.Consultation;
 import com.pethospital.pet_hospital.entity.ConsultationReply;
 import com.pethospital.pet_hospital.entity.MedicalRecord;
-import com.pethospital.pet_hospital.entity.Order;
+import com.pethospital.pet_hospital.entity.OrderInfo;
 import com.pethospital.pet_hospital.entity.OrderItem;
 import com.pethospital.pet_hospital.entity.OwnerHealthRecord;
 import com.pethospital.pet_hospital.entity.Pet;
@@ -25,8 +25,8 @@ import com.pethospital.pet_hospital.mapper.AppointmentMapper;
 import com.pethospital.pet_hospital.mapper.ConsultationMapper;
 import com.pethospital.pet_hospital.mapper.ConsultationReplyMapper;
 import com.pethospital.pet_hospital.mapper.MedicalRecordMapper;
+import com.pethospital.pet_hospital.mapper.OrderInfoMapper;
 import com.pethospital.pet_hospital.mapper.OrderItemMapper;
-import com.pethospital.pet_hospital.mapper.OrderMapper;
 import com.pethospital.pet_hospital.mapper.OwnerHealthRecordMapper;
 import com.pethospital.pet_hospital.mapper.PetMapper;
 import com.pethospital.pet_hospital.mapper.UserMapper;
@@ -49,7 +49,7 @@ public class OwnerServiceImpl implements IOwnerService {
     @Autowired
     private ConsultationReplyMapper consultationReplyMapper;
     @Autowired
-    private OrderMapper orderMapper;
+    private OrderInfoMapper orderInfoMapper;
     @Autowired
     private OrderItemMapper orderItemMapper;
     @Autowired
@@ -59,7 +59,7 @@ public class OwnerServiceImpl implements IOwnerService {
     @Override
     public Page<Pet> getPetList(Page<Pet> page, Long userId, String keyword) {
         LambdaQueryWrapper<Pet> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Pet::getOwnerId, userId);
+        wrapper.and(w -> w.eq(Pet::getOwnerId, userId).or().eq(Pet::getOwnerUserId, userId));
         wrapper.eq(Pet::getStatus, 1);
         if (StringUtils.hasText(keyword)) {
             wrapper.like(Pet::getName, keyword);
@@ -72,7 +72,7 @@ public class OwnerServiceImpl implements IOwnerService {
     public Pet getPetDetail(Long petId, Long userId) {
         LambdaQueryWrapper<Pet> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Pet::getId, petId);
-        wrapper.eq(Pet::getOwnerId, userId);
+        wrapper.and(w -> w.eq(Pet::getOwnerId, userId).or().eq(Pet::getOwnerUserId, userId));
         return petMapper.selectOne(wrapper);
     }
 
@@ -180,7 +180,7 @@ public class OwnerServiceImpl implements IOwnerService {
     @Override
     public boolean createReserve(Appointment appointment) {
         appointment.setAppointmentNo(generateReserveNo());
-        appointment.setStatus("pending");
+        appointment.setStatus("0");
         appointment.setCreateTime(LocalDateTime.now());
         appointment.setUpdateTime(LocalDateTime.now());
         return appointmentMapper.insert(appointment) > 0;
@@ -203,7 +203,6 @@ public class OwnerServiceImpl implements IOwnerService {
 
     @Override
     public List<Map<String, Object>> getAvailableDoctors(String serviceType, String date) {
-        // 返回模拟数据，不依赖数据库
         List<Map<String, Object>> result = new ArrayList<>();
         Map<String, Object> doctor1 = new HashMap<>();
         doctor1.put("id", 1L);
@@ -312,25 +311,49 @@ public class OwnerServiceImpl implements IOwnerService {
     }
 
     // ==================== 订单管理 ====================
+    // ==================== 订单管理 ====================
     @Override
-    public Page<Order> getOrderList(Page<Order> page, Long userId, String payStatus) {
-        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Order::getOwnerId, userId);
+    public Page<OrderInfo> getOrderList(Page<OrderInfo> page, Long userId, String payStatus) {
+        LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(OrderInfo::getOwnerUserId, userId);
         if (StringUtils.hasText(payStatus)) {
-            wrapper.eq(Order::getPayStatus, payStatus);
+            wrapper.eq(OrderInfo::getPayStatusText, payStatus);
         }
-        wrapper.orderByDesc(Order::getCreateTime);
-        return orderMapper.selectPage(page, wrapper);
+        wrapper.orderByDesc(OrderInfo::getCreateTime);
+        Page<OrderInfo> orderPage = orderInfoMapper.selectPage(page, wrapper);
+        
+        // 为每个订单补充宠物名称
+        if (orderPage.getRecords() != null && !orderPage.getRecords().isEmpty()) {
+            for (OrderInfo order : orderPage.getRecords()) {
+                if (order.getPetId() != null) {
+                    Pet pet = petMapper.selectById(order.getPetId());
+                    if (pet != null) {
+                        order.setPetName(pet.getName());
+                    }
+                }
+            }
+        }
+        
+        return orderPage;
     }
 
     @Override
-    public Order getOrderDetail(Long orderId, Long userId) {
-        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Order::getId, orderId);
-        wrapper.eq(Order::getOwnerId, userId);
-        Order order = orderMapper.selectOne(wrapper);
+    public OrderInfo getOrderDetail(Long orderId, Long userId) {
+        LambdaQueryWrapper<OrderInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(OrderInfo::getId, orderId);
+        wrapper.eq(OrderInfo::getOwnerUserId, userId);
+        OrderInfo order = orderInfoMapper.selectOne(wrapper);
         
         if (order != null) {
+            // 补充宠物名称
+            if (order.getPetId() != null) {
+                Pet pet = petMapper.selectById(order.getPetId());
+                if (pet != null) {
+                    order.setPetName(pet.getName());
+                }
+            }
+            
+            // 查询订单明细
             LambdaQueryWrapper<OrderItem> itemWrapper = new LambdaQueryWrapper<>();
             itemWrapper.eq(OrderItem::getOrderId, orderId);
             List<OrderItem> items = orderItemMapper.selectList(itemWrapper);

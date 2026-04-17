@@ -1,169 +1,140 @@
 <template>
-  <div class="page-content">
-    <!-- 头部 -->
-    <div class="header" style="background: linear-gradient(135deg, #4cd964 0%, #2ecc71 100%); padding: 40px 20px 60px; border-radius: 0 0 40px 40px;">
+  <div class="health-page">
+    <div class="page-header">
       <div>
-        <h2 style="color: white; font-size: 28px; margin-bottom: 8px;">健康记录</h2>
-        <p style="color: rgba(255,255,255,0.9); font-size: 14px;">查看毛孩子的完整健康档案</p>
+        <h2 class="page-title">健康记录</h2>
+        <p class="page-subtitle">记录毛孩子的健康数据</p>
       </div>
+      <el-button type="primary" size="large" @click="quickAdd" class="add-btn">
+        <el-icon><Plus /></el-icon>
+        添加记录
+      </el-button>
     </div>
 
     <!-- 宠物筛选 -->
-    <div style="padding: 0 20px; margin-top: -20px; overflow-x: auto;">
-      <div style="display: flex; gap: 12px; padding-bottom: 8px;">
+    <div class="pet-filter-section">
+      <div class="filter-title">选择宠物</div>
+      <div class="pet-filter">
         <div 
           v-for="pet in petList" 
           :key="pet.id"
-          :style="{
-            flexShrink: 0,
-            background: selectedPetId === pet.id ? '#f5a623' : 'white',
-            color: selectedPetId === pet.id ? 'white' : '#666',
-            padding: '10px 24px',
-            borderRadius: '30px',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            fontWeight: selectedPetId === pet.id ? 'bold' : 'normal'
-          }"
+          class="pet-chip"
+          :class="{ active: selectedPetId === pet.id }"
           @click="selectPet(pet.id)"
         >
-          {{ pet.name }}
+          <span class="pet-emoji">{{ pet.gender === 'male' ? '🐕' : '🐱' }}</span>
+          <span>{{ pet.name }}</span>
         </div>
-      </div>
-    </div>
-
-    <!-- 记录分类Tab -->
-    <div style="padding: 20px 20px 0 20px;">
-      <div style="display: flex; gap: 8px; border-bottom: 1px solid #f0f0f0;">
         <div 
-          v-for="tab in recordTabs" 
-          :key="tab.key"
-          :style="{
-            padding: '10px 16px',
-            cursor: 'pointer',
-            color: activeRecordTab === tab.key ? '#4cd964' : '#999',
-            borderBottom: activeRecordTab === tab.key ? '2px solid #4cd964' : 'none',
-            fontWeight: activeRecordTab === tab.key ? 'bold' : 'normal'
-          }"
-          @click="activeRecordTab = tab.key; loadRecords()"
+          class="pet-chip"
+          :class="{ active: selectedPetId === null }"
+          @click="selectPet(null)"
         >
-          {{ tab.label }}
+          <span>📋</span>
+          <span>全部</span>
         </div>
       </div>
     </div>
 
-    <!-- 快捷添加提示（仅自填类型显示） -->
-    <div v-if="activeRecordTab === 'owner'" style="padding: 12px 20px;">
-      <div style="background: #e8f8e8; border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <span style="font-size: 14px;">📝 记录日常健康数据</span>
-          <p style="font-size: 12px; color: #666; margin-top: 4px;">如体重变化、在家驱虫等</p>
-        </div>
-        <el-button type="success" size="small" @click="quickAdd">+ 添加记录</el-button>
+    <!-- 记录类型Tab -->
+    <div class="type-tabs">
+      <div 
+        v-for="tab in recordTabs" 
+        :key="tab.key"
+        class="type-tab"
+        :class="{ active: activeRecordTab === tab.key }"
+        @click="activeRecordTab = tab.key; loadRecords()"
+      >
+        {{ tab.label }}
       </div>
     </div>
 
     <!-- 就诊记录列表 -->
-    <div style="padding: 0 20px 20px;" v-loading="loading">
-      <div v-if="activeRecordTab === 'hospital'">
-        <div v-for="record in hospitalRecords" :key="record.id" 
-             style="background: white; border-radius: 16px; margin-bottom: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <div>
-              <span :style="{ background: getRecordBg(record.type), padding: '2px 10px', borderRadius: '20px', fontSize: '11px', color: getRecordColor(record.type) }">
-                {{ getTypeName(record.type) }}
-              </span>
-              <span style="margin-left: 8px; font-size: 12px; color: #999;">医院记录</span>
+    <div v-if="activeRecordTab === 'hospital'" class="records-container" v-loading="loading">
+      <div v-for="record in hospitalRecords" :key="record.id" class="medical-card">
+        <div class="card-header">
+          <div class="header-left">
+            <div class="type-badge" :class="record.type">
+              {{ getTypeName(record.type) }}
             </div>
-            <span style="color: #999; font-size: 12px;">{{ record.createTime }}</span>
+            <span class="date">{{ formatDate(record.createTime) }}</span>
           </div>
-          <!-- 显示宠物名 -->
-          <div style="margin-bottom: 8px;">
-            <span style="background: #f0f0f0; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #666;">
-              🐾 {{ record.petName }}
-            </span>
-          </div>
-          <div style="font-weight: bold; margin-bottom: 4px;">{{ record.title }}</div>
-          <p style="color: #666; font-size: 13px; line-height: 1.5;">{{ record.content }}</p>
-          <div style="margin-top: 12px; display: flex; gap: 16px;">
-            <div style="color: #999; font-size: 12px;">
-              <el-icon><User /></el-icon>
-              <span style="margin-left: 4px;">医生：{{ record.doctorName }}</span>
-            </div>
-            <div style="color: #999; font-size: 12px;">
-              <el-icon><OfficeBuilding /></el-icon>
-              <span style="margin-left: 4px;">{{ record.hospital || '宠爱宠物医院' }}</span>
-            </div>
+          <div class="pet-info-tag">
+            <span>🐾 {{ record.petName || '未知宠物' }}</span>
           </div>
         </div>
-        <div v-if="hospitalRecords.length === 0" style="text-align: center; padding: 40px;">
-          <div style="font-size: 48px; margin-bottom: 12px;">🏥</div>
-          <p style="color: #999;">暂无就诊记录</p>
-          <p style="color: #ccc; font-size: 12px;">带宠物就诊后，医生会录入记录</p>
-        </div>
-      </div>
-
-      <!-- 自填记录列表 -->
-      <div v-if="activeRecordTab === 'owner'">
-        <div v-for="record in ownerRecords" :key="record.id" 
-             style="background: white; border-radius: 16px; margin-bottom: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <div>
-              <span :style="{ background: '#f0f0f0', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', color: '#666' }">
-                {{ getOwnerTypeName(record.type) }}
-              </span>
-              <span style="margin-left: 8px; font-size: 12px; color: #999;">我的记录</span>
+        
+        <div class="card-body">
+          <h4 class="title">{{ record.title }}</h4>
+          <p class="content">{{ record.content }}</p>
+          
+          <div v-if="record.diagnosis" class="diagnosis-box">
+            <div class="diagnosis-header">
+              <span>🏥 诊断结果</span>
             </div>
-            <span style="color: #999; font-size: 12px;">{{ record.createTime }}</span>
+            <p>{{ record.diagnosis }}</p>
           </div>
-          <!-- 显示宠物名 -->
-          <div style="margin-bottom: 8px;">
-            <span style="background: #f0f0f0; padding: 2px 8px; border-radius: 12px; font-size: 11px; color: #666;">
-              🐾 {{ record.petName }}
-            </span>
-          </div>
-          <div style="font-weight: bold; margin-bottom: 4px;">{{ record.title }}</div>
-          <p style="color: #666; font-size: 13px; line-height: 1.5;">{{ record.content }}</p>
-          <div v-if="record.recordDate" style="margin-top: 8px; color: #999; font-size: 12px;">
-            记录日期：{{ record.recordDate }}
-          </div>
-          <div style="margin-top: 12px; text-align: right;" @click.stop>
-            <el-button type="danger" size="small" plain @click="deleteRecord(record)">删除</el-button>
+          
+          <div v-if="record.prescription" class="prescription-box">
+            <div class="prescription-header">
+              <span>💊 用药方案</span>
+            </div>
+            <p>{{ record.prescription }}</p>
           </div>
         </div>
-        <div v-if="ownerRecords.length === 0" style="text-align: center; padding: 40px;">
-          <div style="font-size: 48px; margin-bottom: 12px;">📝</div>
-          <p style="color: #999;">暂无自填记录</p>
-          <el-button type="primary" plain size="small" @click="quickAdd">添加第一条记录</el-button>
+        
+        <div class="card-footer" v-if="record.doctorName">
+          <el-icon><User /></el-icon>
+          <span>医生：{{ record.doctorName }}</span>
         </div>
       </div>
+      
+      <el-empty v-if="hospitalRecords.length === 0" description="暂无就诊记录" />
     </div>
 
-    <!-- 底部导航 -->
-    <div class="bottom-nav">
-      <router-link to="/pet" class="nav-item">
-        <el-icon><Avatar /></el-icon>
-        <span>宠物</span>
-      </router-link>
-      <router-link to="/health" class="nav-item active">
-        <el-icon><Notebook /></el-icon>
-        <span>健康</span>
-      </router-link>
-      <router-link to="/reserve" class="nav-item">
-        <el-icon><Calendar /></el-icon>
-        <span>预约</span>
-      </router-link>
-      <router-link to="/consult" class="nav-item">
-        <el-icon><ChatDotRound /></el-icon>
-        <span>咨询</span>
-      </router-link>
-      <router-link to="/profile" class="nav-item">
-        <el-icon><User /></el-icon>
-        <span>我的</span>
-      </router-link>
+    <!-- 自填记录列表 -->
+    <div v-if="activeRecordTab === 'owner'" class="records-container" v-loading="loading">
+      <div class="quick-add-card" @click="quickAdd">
+        <div class="quick-add-icon">📝</div>
+        <div class="quick-add-text">
+          <div class="title">记录日常健康数据</div>
+          <div class="desc">如体重变化、在家驱虫等</div>
+        </div>
+        <el-button type="primary" size="small" circle>
+          <el-icon><Plus /></el-icon>
+        </el-button>
+      </div>
+
+      <div v-for="record in ownerRecords" :key="record.id" class="owner-card">
+        <div class="card-header">
+          <div class="header-left">
+            <div class="type-badge owner">
+              {{ getOwnerTypeName(record.type) }}
+            </div>
+            <span class="date">{{ formatDate(record.createTime) }}</span>
+          </div>
+          <div class="pet-info-tag">
+            <span>🐾 {{ record.petName || '未知宠物' }}</span>
+          </div>
+          <el-button type="danger" link class="delete-btn" @click="deleteRecord(record)">
+            <el-icon><Delete /></el-icon>
+          </el-button>
+        </div>
+        
+        <div class="card-body">
+          <h4 class="title">{{ record.title }}</h4>
+          <p class="content">{{ record.content }}</p>
+          <div v-if="record.recordDate" class="record-date">
+            📅 记录日期：{{ record.recordDate }}
+          </div>
+        </div>
+      </div>
+      
+      <el-empty v-if="ownerRecords.length === 0" description="暂无自填记录" />
     </div>
 
-    <!-- 添加自填记录弹窗 -->
-    <el-dialog v-model="dialogVisible" title="添加健康记录" width="90%" style="border-radius: 20px; max-width: 400px;">
+    <!-- 添加记录弹窗 -->
+    <el-dialog v-model="dialogVisible" title="添加健康记录" width="480px" class="add-dialog">
       <el-form :model="recordForm" label-width="80px" size="small">
         <el-form-item label="选择宠物">
           <el-select v-model="recordForm.petId" placeholder="请选择宠物" style="width: 100%">
@@ -171,18 +142,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="记录类型">
-          <el-select v-model="recordForm.type" placeholder="请选择类型" style="width: 100%">
-            <el-option label="体重记录" value="weight" />
-            <el-option label="驱虫记录" value="deworming" />
-            <el-option label="日常观察" value="daily" />
-            <el-option label="其他" value="other" />
-          </el-select>
+          <el-radio-group v-model="recordForm.type">
+            <el-radio value="weight">体重记录</el-radio>
+            <el-radio value="deworming">驱虫记录</el-radio>
+            <el-radio value="daily">日常观察</el-radio>
+            <el-radio value="other">其他</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="标题">
           <el-input v-model="recordForm.title" placeholder="请输入标题" />
         </el-form-item>
         <el-form-item label="内容">
-          <el-input type="textarea" v-model="recordForm.content" :rows="3" placeholder="请详细描述" />
+          <el-input type="textarea" v-model="recordForm.content" placeholder="请详细描述" :rows="4" />
         </el-form-item>
         <el-form-item label="记录日期">
           <el-date-picker v-model="recordForm.recordDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -199,23 +170,23 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Avatar, Notebook, Calendar, ChatDotRound, User, OfficeBuilding } from '@element-plus/icons-vue'
+import { Plus, Delete, User } from '@element-plus/icons-vue'
 import { getPetList } from '@/api/owner/owner'
+import { getHealthRecords, getOwnerHealthRecords, addOwnerHealthRecord, deleteOwnerHealthRecord } from '@/api/owner/owner'
 
 const loading = ref(false)
 const submitting = ref(false)
 const petList = ref([])
 const selectedPetId = ref(null)
 const activeRecordTab = ref('hospital')
+const hospitalRecords = ref([])
+const ownerRecords = ref([])
 const dialogVisible = ref(false)
 
 const recordTabs = ref([
   { key: 'hospital', label: '🏥 就诊记录' },
   { key: 'owner', label: '📝 自填记录' }
 ])
-
-const hospitalRecords = ref([])
-const ownerRecords = ref([])
 
 const recordForm = ref({
   petId: '',
@@ -225,14 +196,10 @@ const recordForm = ref({
   recordDate: ''
 })
 
-const getRecordBg = (type) => {
-  const bg = { vaccine: '#e8f8e8', deworming: '#fff3e8', exam: '#e8f0ff', treatment: '#ffe8e8' }
-  return bg[type] || '#f0f0f0'
-}
-
-const getRecordColor = (type) => {
-  const colors = { vaccine: '#4cd964', deworming: '#f5a623', exam: '#409eff', treatment: '#ff6b6b' }
-  return colors[type] || '#666'
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
 const getTypeName = (type) => {
@@ -249,43 +216,53 @@ const loadPets = async () => {
   try {
     const res = await getPetList({ page: 1, pageSize: 100 })
     if (res.code === 200) {
-      petList.value = res.data.records || []
+      petList.value = res.data?.data || res.data?.records || []
     }
-  } catch {
-    petList.value = [
-      { id: 1, name: '旺财' },
-      { id: 2, name: '咪咪' }
-    ]
+  } catch (error) {
+    console.error('加载宠物列表失败:', error)
   }
 }
 
-const loadRecords = () => {
+const loadRecords = async () => {
   loading.value = true
-  setTimeout(() => {
-    // 就诊记录
-    let hospitalData = [
-      { id: 1, type: 'vaccine', title: '狂犬疫苗', content: '接种狂犬疫苗，一切正常', doctorName: '张医生', hospital: '宠爱宠物医院', petId: 1, petName: '旺财', createTime: '2024-01-15' },
-      { id: 2, type: 'deworming', title: '体内驱虫', content: '服用驱虫药，无不良反应', doctorName: '李医生', hospital: '宠爱宠物医院', petId: 2, petName: '咪咪', createTime: '2024-01-10' },
-      { id: 3, type: 'treatment', title: '皮肤病治疗', content: '诊断为真菌感染，开具药膏', doctorName: '张医生', hospital: '宠爱宠物医院', petId: 1, petName: '旺财', createTime: '2024-01-05' }
-    ]
-    
-    // 自填记录
-    let ownerData = [
-      { id: 101, type: 'weight', title: '体重记录', content: '体重25.5kg，比上个月增加0.5kg', petId: 1, petName: '旺财', recordDate: '2024-01-20', createTime: '2024-01-20' },
-      { id: 102, type: 'daily', title: '日常观察', content: '精神状态良好，食欲正常', petId: 2, petName: '咪咪', recordDate: '2024-01-18', createTime: '2024-01-18' }
-    ]
-    
-    // 根据选中的宠物筛选
+  try {
+    const params = { page: 1, pageSize: 50 }
     if (selectedPetId.value) {
-      hospitalData = hospitalData.filter(r => r.petId === selectedPetId.value)
-      ownerData = ownerData.filter(r => r.petId === selectedPetId.value)
+      params.petId = selectedPetId.value
     }
     
-    hospitalRecords.value = hospitalData
-    ownerRecords.value = ownerData
+    // 并行请求就诊记录和自填记录
+    const [hospitalRes, ownerRes] = await Promise.all([
+      getHealthRecords(params),
+      getOwnerHealthRecords(params)
+    ])
     
+    if (hospitalRes.code === 200) {
+      let hospitalData = hospitalRes.data?.data || hospitalRes.data?.records || []
+      // 补充宠物名称
+      hospitalData = hospitalData.map(record => {
+        const pet = petList.value.find(p => p.id === record.petId)
+        return { ...record, petName: pet?.name || '未知宠物' }
+      })
+      hospitalRecords.value = hospitalData
+      console.log('就诊记录数:', hospitalRecords.value.length)
+    }
+    
+    if (ownerRes.code === 200) {
+      let ownerData = ownerRes.data?.data || ownerRes.data?.records || []
+      // 补充宠物名称
+      ownerData = ownerData.map(record => {
+        const pet = petList.value.find(p => p.id === record.petId)
+        return { ...record, petName: pet?.name || '未知宠物' }
+      })
+      ownerRecords.value = ownerData
+      console.log('自填记录数:', ownerRecords.value.length)
+    }
+  } catch (error) {
+    console.error('加载记录失败:', error)
+  } finally {
     loading.value = false
-  }, 300)
+  }
 }
 
 const selectPet = (petId) => {
@@ -308,7 +285,7 @@ const quickAdd = () => {
   dialogVisible.value = true
 }
 
-const submitRecord = () => {
+const submitRecord = async () => {
   if (!recordForm.value.petId) {
     ElMessage.warning('请选择宠物')
     return
@@ -321,33 +298,37 @@ const submitRecord = () => {
     ElMessage.warning('请输入内容')
     return
   }
-  
   submitting.value = true
-  setTimeout(() => {
-    const pet = petList.value.find(p => p.id === recordForm.value.petId)
-    
-    const newRecord = {
-      id: Date.now(),
-      type: recordForm.value.type,
-      title: recordForm.value.title,
-      content: recordForm.value.content,
-      recordDate: recordForm.value.recordDate || new Date().toLocaleDateString(),
-      createTime: new Date().toLocaleDateString(),
-      petId: pet?.id,
-      petName: pet?.name
+  try {
+    const res = await addOwnerHealthRecord(recordForm.value)
+    if (res.code === 200) {
+      ElMessage.success('添加成功')
+      dialogVisible.value = false
+      // 延迟刷新，确保数据库已提交
+      setTimeout(() => {
+        loadRecords()
+      }, 500)
+    } else {
+      ElMessage.error(res.message || res.msg || '添加失败')
     }
-    
-    ownerRecords.value = [newRecord, ...ownerRecords.value]
-    ElMessage.success('添加成功')
-    dialogVisible.value = false
+  } catch (error) {
+    console.error('添加失败:', error)
+    ElMessage.error('添加失败')
+  } finally {
     submitting.value = false
-  }, 300)
+  }
 }
 
 const deleteRecord = (record) => {
-  ElMessageBox.confirm('确定删除这条记录吗？', '提示', { type: 'warning' }).then(() => {
-    ownerRecords.value = ownerRecords.value.filter(r => r.id !== record.id)
-    ElMessage.success('删除成功')
+  ElMessageBox.confirm('确定删除这条记录吗？', '提示', { type: 'warning' }).then(async () => {
+    try {
+      await deleteOwnerHealthRecord(record.id)
+      ElMessage.success('删除成功')
+      loadRecords()
+    } catch (error) {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
+    }
   })
 }
 
@@ -357,43 +338,321 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.page-content {
-  padding-bottom: 80px;
-  min-height: 100vh;
-  background: #f8f9fc;
+<style scoped lang="scss">
+.health-page {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    
+    .page-subtitle {
+      font-size: 14px;
+      color: #64748b;
+    }
+    
+    .add-btn {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border: none;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+      }
+    }
+  }
+  
+  .pet-filter-section {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    
+    .filter-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    
+    .pet-filter {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      
+      .pet-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: #f8fafc;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+        color: #64748b;
+        
+        .pet-emoji {
+          font-size: 16px;
+        }
+        
+        &:hover {
+          background: #e2e8f0;
+        }
+        
+        &.active {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+      }
+    }
+  }
+  
+  .type-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: white;
+    padding: 8px;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    
+    .type-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748b;
+      
+      &:hover {
+        background: #f8fafc;
+      }
+      
+      &.active {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      }
+    }
+  }
+  
+  .records-container {
+    .medical-card, .owner-card {
+      background: white;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s;
+      
+      &:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      }
+      
+      .card-header {
+        padding: 16px 20px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          
+          .type-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            
+            &.vaccine {
+              background: #d1fae5;
+              color: #059669;
+            }
+            &.deworming {
+              background: #fed7aa;
+              color: #ea580c;
+            }
+            &.exam {
+              background: #dbeafe;
+              color: #2563eb;
+            }
+            &.treatment {
+              background: #fee2e2;
+              color: #dc2626;
+            }
+            &.owner {
+              background: #e0e7ff;
+              color: #4f46e5;
+            }
+          }
+          
+          .date {
+            font-size: 12px;
+            color: #94a3b8;
+          }
+        }
+        
+        .pet-info-tag {
+          span {
+            font-size: 12px;
+            padding: 4px 10px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            color: #64748b;
+          }
+        }
+        
+        .delete-btn {
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+      }
+      
+      &:hover .delete-btn {
+        opacity: 1;
+      }
+      
+      .card-body {
+        padding: 20px;
+        
+        .title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 8px;
+        }
+        
+        .content {
+          font-size: 14px;
+          color: #64748b;
+          line-height: 1.5;
+          margin-bottom: 12px;
+        }
+        
+        .record-date {
+          font-size: 12px;
+          color: #94a3b8;
+          margin-top: 8px;
+        }
+        
+        .diagnosis-box {
+          background: #fef3c7;
+          border-radius: 12px;
+          padding: 12px;
+          margin-top: 12px;
+          
+          .diagnosis-header {
+            font-size: 12px;
+            color: #d97706;
+            margin-bottom: 6px;
+          }
+          
+          p {
+            font-size: 13px;
+            color: #1e293b;
+          }
+        }
+        
+        .prescription-box {
+          background: #f0fdf4;
+          border-radius: 12px;
+          padding: 12px;
+          margin-top: 12px;
+          
+          .prescription-header {
+            font-size: 12px;
+            color: #059669;
+            margin-bottom: 6px;
+          }
+          
+          p {
+            font-size: 13px;
+            color: #1e293b;
+          }
+        }
+      }
+      
+      .card-footer {
+        padding: 12px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+    }
+    
+    .quick-add-card {
+      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      }
+      
+      .quick-add-icon {
+        font-size: 40px;
+      }
+      
+      .quick-add-text {
+        flex: 1;
+        
+        .title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #0369a1;
+        }
+        
+        .desc {
+          font-size: 12px;
+          color: #0c4a6e;
+          margin-top: 4px;
+        }
+      }
+    }
+  }
 }
 
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 20px 20px;
-  box-shadow: 0 -2px 15px rgba(0,0,0,0.05);
-  border-radius: 20px 20px 0 0;
-  z-index: 100;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  text-decoration: none;
-  color: #999;
-  font-size: 12px;
-  transition: all 0.3s;
-}
-
-.nav-item.active {
-  color: #4cd964;
-}
-
-.nav-item .el-icon {
-  font-size: 22px;
+.add-dialog {
+  :deep(.el-dialog) {
+    border-radius: 20px;
+  }
+  
+  :deep(.el-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
 }
 </style>

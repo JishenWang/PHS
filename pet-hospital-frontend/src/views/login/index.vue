@@ -272,6 +272,7 @@ export default {
           
           console.log('登录成功，准备跳转到:', homePath)
           
+
           this.$router.replace(homePath)
           
         } else {

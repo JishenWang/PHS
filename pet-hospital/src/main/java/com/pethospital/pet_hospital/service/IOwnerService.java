@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pethospital.pet_hospital.entity.Appointment;
 import com.pethospital.pet_hospital.entity.Consultation;
 import com.pethospital.pet_hospital.entity.MedicalRecord;
-import com.pethospital.pet_hospital.entity.Order;
+import com.pethospital.pet_hospital.entity.OrderInfo;
 import com.pethospital.pet_hospital.entity.OwnerHealthRecord;
 import com.pethospital.pet_hospital.entity.Pet;
 import com.pethospital.pet_hospital.entity.User;
@@ -46,8 +46,9 @@ public interface IOwnerService {
     boolean rateConsult(Long consultId, Long userId, Integer rating, String comment);
 
     // ==================== 订单管理 ====================
-    Page<Order> getOrderList(Page<Order> page, Long userId, String payStatus);
-    Order getOrderDetail(Long orderId, Long userId);
+    // ==================== 订单管理 ====================
+Page<OrderInfo> getOrderList(Page<OrderInfo> page, Long userId, String payStatus);
+OrderInfo getOrderDetail(Long orderId, Long userId);
 
     // ==================== 个人中心 ====================
     User getUserInfo(Long userId);

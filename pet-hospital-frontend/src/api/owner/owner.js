@@ -366,3 +366,64 @@ export function sendVerifyCode(data) {
     data
   })
 }
+
+
+// ==================== 消息通知 ====================
+
+/**
+ * 获取消息列表
+ * @param {Object} params - { page, pageSize, type }
+ */
+export function getMessageList(params) {
+  return request({
+    url: '/owner/messages/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取未读消息数量
+ */
+export function getUnreadCount() {
+  return request({
+    url: '/owner/messages/unread/count',
+    method: 'get'
+  })
+}
+
+/**
+ * 标记消息为已读
+ * @param {Number} messageId - 消息ID
+ */
+export function markMessageRead(messageId) {
+  return request({
+    url: `/owner/messages/${messageId}/read`,
+    method: 'put'
+  })
+}
+
+/**
+ * 标记所有消息为已读
+ */
+export function markAllMessagesRead() {
+  return request({
+    url: '/owner/messages/read/all',
+    method: 'put'
+  })
+}
+
+// ==================== 换头像 ====================
+
+/**
+ * 上传头像
+ * @param {FormData} formData - 包含头像文件的表单数据
+ */
+export function uploadAvatar(formData) {
+  return request({
+    url: '/owner/profile/avatar',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
