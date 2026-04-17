@@ -66,7 +66,7 @@
                   v-if="row.status === 0" 
                   type="success" 
                   link 
-                  @click="handleSubmit(row)"
+                  @click="handleSubmitPrescription(row)"
                 >
                   提交
                 </el-button>
@@ -99,9 +99,9 @@
                 </el-button>
                 <span class="title">开具处方</span>
               </div>
-              <div class="header-actions">
-                <el-button type="primary" @click="handleSave">保存草稿</el-button>
-                <el-button type="success" @click="handleSubmitPrescription">提交处方</el-button>
+              <div class="form-actions">
+                <el-button @click="handleSubmit(0)" :icon="Document">保存草稿</el-button>
+                <el-button type="primary" @click="handleSubmit(1)" :icon="Check">提交处方</el-button>
               </div>
             </div>
           </template>
@@ -274,10 +274,12 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Search, RefreshRight, Plus, ArrowLeft, Tickets
+  Search, RefreshRight, Plus, ArrowLeft, Tickets, Document, Check
 } from '@element-plus/icons-vue'
-import { prescriptionModule } from '@/api/doctor/doctor'
+import { prescriptionModule, acceptModule } from '@/api/doctor/doctor'
+import { useUserStore } from '@/store/user'
 
+const userStore = useUserStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -329,20 +331,91 @@ const totalAmount = computed(() => {
   return drugTotal + serviceTotal
 })
 
+
+// 计算总金额的函数
+const calculateTotal = () => {
+  const drugTotal = drugList.value.reduce((sum, item) => {
+    return sum + (item.price || 0) * (item.quantity || 0)
+  }, 0)
+  const serviceTotal = serviceList.value.reduce((sum, item) => {
+    return sum + (item.price || 0) * (item.quantity || 0)
+  }, 0)
+  return drugTotal + serviceTotal
+}
+
+// 获取列表
 // 获取列表
 const fetchList = async () => {
   loading.value = true
   try {
+    // 构建搜索关键词：组合宠物名称和处方号
+    let keyword = ''
+    if (searchForm.petName) {
+      keyword = searchForm.petName
+    }
+    if (searchForm.prescriptionNo) {
+      keyword = searchForm.prescriptionNo
+    }
+    // 如果两个都有，用空格连接
+    if (searchForm.petName && searchForm.prescriptionNo) {
+      keyword = `${searchForm.petName} ${searchForm.prescriptionNo}`
+    }
+    
     const params = {
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
-      petName: searchForm.petName,
-      prescriptionNo: searchForm.prescriptionNo
+      keyword: keyword,  // 使用 keyword 参数
+      petId: null        // 可选，如果需要按宠物筛选
     }
+    
+    console.log('请求参数:', params)
     const res = await prescriptionModule.getPrescriptionList(params)
-    tableData.value = res.data?.list || []
-    pagination.total = res.data?.total || 0
+    console.log('处方列表API返回:', res)
+    
+    if (res.code === 200 && res.data) {
+      let list = []
+      let total = 0
+      
+      const pageData = res.data
+      
+      // 兼容多种返回格式
+      if (pageData.data && Array.isArray(pageData.data)) {
+        list = pageData.data
+        total = pageData.total || list.length
+      } else if (pageData.list && Array.isArray(pageData.list)) {
+        list = pageData.list
+        total = pageData.total || list.length
+      } else if (pageData.records && Array.isArray(pageData.records)) {
+        list = pageData.records
+        total = pageData.total || list.length
+      } else if (Array.isArray(pageData)) {
+        list = pageData
+        total = list.length
+      }
+      
+      // 如果后端没有返回总数，但前端有宠物名称筛选，需要前端过滤
+      if (searchForm.petName && total > 0) {
+        list = list.filter(item => item.petName && item.petName.includes(searchForm.petName))
+        total = list.length
+      }
+      if (searchForm.prescriptionNo && total > 0) {
+        list = list.filter(item => item.prescriptionNo && item.prescriptionNo.includes(searchForm.prescriptionNo))
+        total = list.length
+      }
+      
+      if (total === 0 && list.length > 0) {
+        total = list.length
+      }
+      
+      tableData.value = list
+      pagination.total = total
+    } else {
+      tableData.value = []
+      pagination.total = 0
+    }
   } catch (error) {
+    console.error('获取处方列表失败:', error)
+    tableData.value = []
     ElMessage.error('获取列表失败')
   } finally {
     loading.value = false
@@ -350,16 +423,61 @@ const fetchList = async () => {
 }
 
 // 获取药品/服务选项
+// 获取药品/服务选项
 const fetchOptions = async () => {
   try {
-    const [drugRes, serviceRes] = await Promise.all([
-      prescriptionModule.getDrugList(),
-      prescriptionModule.getServiceList()
-    ])
-    drugOptions.value = drugRes.data || []
-    serviceOptions.value = serviceRes.data || []
+    console.log('开始获取药品和服务选项...')
+    
+    // 分别调用，便于调试
+    console.log('调用药品接口...')
+    const drugRes = await prescriptionModule.getDrugList()
+    console.log('药品接口返回:', drugRes)
+    
+    console.log('调用服务接口...')
+    const serviceRes = await prescriptionModule.getServiceList()
+    console.log('服务接口返回:', serviceRes)
+    
+    // 处理药品数据
+    let drugs = []
+    if (drugRes.code === 200) {
+      if (Array.isArray(drugRes.data)) {
+        drugs = drugRes.data
+        console.log('药品数据是数组，长度:', drugs.length)
+      } else {
+        console.error('药品数据不是数组:', drugRes.data)
+      }
+    } else {
+      console.error('药品接口返回错误:', drugRes.msg)
+    }
+    
+    // 处理服务数据
+    let services = []
+    if (serviceRes.code === 200) {
+      if (Array.isArray(serviceRes.data)) {
+        services = serviceRes.data
+        console.log('服务数据是数组，长度:', services.length)
+      } else {
+        console.error('服务数据不是数组:', serviceRes.data)
+      }
+    } else {
+      console.error('服务接口返回错误:', serviceRes.msg)
+    }
+    
+    drugOptions.value = drugs
+    serviceOptions.value = services
+    
+    console.log('最终药品选项:', drugOptions.value)
+    console.log('最终服务选项:', serviceOptions.value)
+    
+    if (drugOptions.value.length === 0) {
+      ElMessage.warning('没有获取到药品数据，请检查数据库')
+    }
+    if (serviceOptions.value.length === 0) {
+      ElMessage.warning('没有获取到服务数据，请检查数据库')
+    }
   } catch (error) {
-    console.error('获取选项失败', error)
+    console.error('获取选项失败:', error)
+    ElMessage.error('获取药品/服务数据失败: ' + (error.message || '未知错误'))
   }
 }
 
@@ -398,18 +516,117 @@ const handleView = (row) => {
 }
 
 // 提交处方
-const handleSubmit = async (row) => {
+// status: 0=保存草稿, 1=提交处方
+const handleSubmit = async (status = 1) => {
+  // 1. 过滤有效的药品和服务（已选择的）
+  const validDrugs = drugList.value.filter(item => item.drugId)
+  const validServices = serviceList.value.filter(item => item.serviceId)
+  
+  // 2. 验证：至少有一项药品或服务
+  if (validDrugs.length === 0 && validServices.length === 0) {
+    ElMessage.warning('请至少添加一项药品或服务')
+    return
+  }
+  
+  // 3. 验证：诊断结果不能为空
+  if (!formData.diagnosis || formData.diagnosis.trim() === '') {
+    ElMessage.warning('请输入诊断结果')
+    return
+  }
+  
+  // 4. 计算总金额
+  const totalAmount = calculateTotal()
+  
+  // 5. 获取医生ID
+  const doctorId = userStore.userInfo?.doctorId || userStore.userInfo?.id || 2006
+  
+  // 6. 验证必要字段
+  if (!formData.registerId) {
+    ElMessage.error('挂号ID不能为空，请从接诊列表重新进入')
+    return
+  }
+  if (!formData.petId) {
+    ElMessage.error('宠物ID不能为空，请从接诊列表重新进入')
+    return
+  }
+  
+  // 7. 构建提交数据（匹配后端 PrescriptionCreateDto）
+  const submitData = {
+    registerId: Number(formData.registerId),
+    petId: Number(formData.petId),
+    doctorId: Number(doctorId),
+    prescriptionType: 1,
+    diagnosis: formData.diagnosis.trim(),
+    totalAmount: totalAmount,
+    remark: formData.remark || '',
+    drugs: validDrugs.map(item => ({
+      drugId: item.drugId,
+      drugName: item.drugName,
+      quantity: item.quantity || 1,
+      dosage: item.dosage || '',
+      usage: item.usage || '',
+      frequency: item.frequency || '',
+      days: item.days || 1,
+      price: item.price || 0,
+      amount: (item.price || 0) * (item.quantity || 1)
+    })),
+    services: validServices.map(item => ({
+      serviceId: item.serviceId,
+      serviceName: item.serviceName,
+      quantity: item.quantity || 1,
+      price: item.price || 0,
+      amount: (item.price || 0) * (item.quantity || 1)
+    }))
+  }
+  
+  console.log('提交数据:', JSON.stringify(submitData, null, 2))
+  
   try {
-    await ElMessageBox.confirm('确定要提交该处方吗？提交后将同步至前台收银端', '提示', {
-      type: 'warning'
-    })
-    await prescriptionModule.submitPrescription(row.prescriptionId)
-    ElMessage.success('提交成功')
-    fetchList()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('提交失败')
+    if (status === 0) {
+      // ========== 保存草稿：只创建，不提交 ==========
+      const res = await prescriptionModule.createPrescription(submitData)
+      console.log('保存草稿返回:', res)
+      
+      if (res.code === 200) {
+        ElMessage.success('草稿保存成功')
+        showForm.value = false
+        fetchList()  // 刷新列表
+      } else {
+        ElMessage.error(res.msg || '草稿保存失败')
+      }
+    } else {
+      // ========== 提交处方：创建并立即提交 ==========
+      // 第一步：创建处方
+      const createRes = await prescriptionModule.createPrescription(submitData)
+      console.log('创建处方返回:', createRes)
+      
+      if (createRes.code !== 200) {
+        ElMessage.error(createRes.msg || '创建处方失败')
+        return
+      }
+      
+      const prescriptionId = createRes.data?.prescriptionId
+      if (!prescriptionId) {
+        ElMessage.error('创建处方成功但未获取到处方ID')
+        return
+      }
+      
+      // 第二步：提交处方（更新状态为已提交）
+      const submitRes = await prescriptionModule.submitPrescription(prescriptionId)
+      console.log('提交处方返回:', submitRes)
+      
+      if (submitRes.code === 200) {
+        ElMessage.success('处方提交成功')
+        showForm.value = false
+        fetchList()  // 刷新列表
+      } else {
+        ElMessage.error(submitRes.msg || '处方提交失败')
+      }
     }
+  } catch (error) {
+    console.error('操作失败:', error)
+    const errorMsg = error.response?.data?.msg || error.message || '操作失败'
+    ElMessage.error(errorMsg)
   }
 }
 
@@ -421,15 +638,16 @@ const handlePrint = (row) => {
 // 药品操作
 const addDrug = () => {
   drugList.value.push({
-    drugId: null,
-    drugName: '',
+    drugId: null,      // 用于选择
+    drugName: '',      // 用于显示
     specification: '',
     quantity: 1,
     dosage: '',
     usage: '',
     frequency: '',
     days: 1,
-    price: 0
+    price: 0,
+    id: null           // 可以删除或统一使用 drugId
   })
 }
 
@@ -438,15 +656,25 @@ const removeDrug = (index) => {
 }
 
 const handleDrugChange = (val, index) => {
+  console.log('药品选择变化:', val, index)
+  console.log('当前药品选项:', drugOptions.value)
+  
   const drug = drugOptions.value.find(d => d.drugId === val)
+  console.log('找到的药品:', drug)
+  
   if (drug) {
     drugList.value[index].drugName = drug.drugName
-    drugList.value[index].specification = drug.specification
-    drugList.value[index].price = drug.price
+    drugList.value[index].specification = drug.specification || ''
+    drugList.value[index].price = drug.price || 0
+    drugList.value[index].id = drug.drugId
     
-    if (petInfo.allergy && drug.drugName.includes(petInfo.allergy)) {
+    console.log('更新后的药品项:', drugList.value[index])
+    
+    if (petInfo.allergy && drug.drugName && drug.drugName.includes(petInfo.allergy)) {
       ElMessage.warning(`警告：该药品可能引发过敏反应（${petInfo.allergy}）`)
     }
+  } else {
+    console.warn('未找到药品, drugId:', val)
   }
 }
 
@@ -491,22 +719,28 @@ const handleSave = async () => {
 }
 
 // 提交处方
-const handleSubmitPrescription = async () => {
-  if (!formData.diagnosis) {
-    ElMessage.warning('请输入诊断结果')
-    return
-  }
-  if (drugList.value.length === 0 && serviceList.value.length === 0) {
-    ElMessage.warning('请至少添加一项药品或服务')
-    return
-  }
-  
+// 提交列表中已有的处方（用于状态为草稿的处方）
+const handleSubmitPrescription = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要提交处方吗？', '提示')
-    await handleSave()
+    await ElMessageBox.confirm('确定要提交该处方吗？提交后不可修改。', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const res = await prescriptionModule.submitPrescription(row.prescriptionId)
+    console.log('提交处方返回:', res)
+    
+    if (res.code === 200) {
+      ElMessage.success('提交成功')
+      fetchList()  // 刷新列表
+    } else {
+      ElMessage.error(res.msg || '提交失败')
+    }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error(error)
+      console.error('提交失败:', error)
+      ElMessage.error('提交失败')
     }
   }
 }
@@ -518,13 +752,79 @@ const resetForm = () => {
   formData.remark = ''
   drugList.value = []
   serviceList.value = []
+  
+  // 重置宠物信息为默认值
+  petInfo.name = ''
+  petInfo.type = ''
+  petInfo.breed = ''
+  petInfo.allergy = ''
 }
 
-onMounted(() => {
+// ========== 新增：获取宠物详情 ==========
+const fetchPetDetail = async (petId) => {
+  try {
+    console.log('获取宠物详情, petId:', petId)
+    const res = await acceptModule.getPetDetail(petId)
+    console.log('宠物详情返回:', res)
+    
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      // 更新宠物信息显示
+      petInfo.name = data.name || '未知'
+      petInfo.type = data.type || '-'
+      petInfo.breed = data.breed || '-'
+      petInfo.allergy = data.allergy || ''
+      
+      console.log('宠物信息已更新:', petInfo)
+    } else {
+      // 如果接口失败，使用URL传来的名称
+      if (route.query.petName) {
+        petInfo.name = route.query.petName
+      }
+    }
+  } catch (error) {
+    console.error('获取宠物详情失败:', error)
+    // 使用URL传来的名称作为兜底
+    if (route.query.petName) {
+      petInfo.name = route.query.petName
+    }
+  }
+}
+
+onMounted(async () => {
+  console.log('=== 处方页面启动 ===')
+  console.log('路由参数:', route.query)
+  console.log('userStore.userInfo:', userStore.userInfo)
+  
   if (route.query.action === 'create') {
-    formData.petId = route.query.petId
-    formData.registerId = route.query.registerId
-    handleCreate()
+    const petId = route.query.petId
+    const registerId = route.query.registerId
+    const petName = route.query.petName
+    
+    console.log('接收到的参数:', { petId, registerId, petName })
+    
+    if (petId) {
+      formData.petId = Number(petId)
+    }
+    if (registerId) {
+      formData.registerId = Number(registerId)
+    }
+    
+    console.log('设置后的 formData:', { 
+      petId: formData.petId, 
+      registerId: formData.registerId 
+    })
+    
+    // 先显示表单
+    showForm.value = true
+    
+    // 并行获取数据和宠物详情
+    await Promise.all([
+      fetchOptions(),
+      formData.petId ? fetchPetDetail(formData.petId) : Promise.resolve()
+    ])
+    
+    console.log('数据加载完成，药品选项:', drugOptions.value.length)
   } else {
     fetchList()
   }

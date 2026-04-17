@@ -14,7 +14,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/pet_hospital?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
-    password: yxx860818.
+    password: yxx860818.  # 确认这是你的密码
   
   # Redis 配置
   data:
@@ -23,20 +23,28 @@ spring:
       port: 6379
       database: 0
 
-      
-
-      # MyBatis-Plus 配置
+# ⚠️ 关键：mybatis-plus 必须和 spring 同级，绝对不能缩进！
 mybatis-plus:
-  mapper-locations: classpath:/mapper/**/*.xml
+  # XML映射文件位置
+  mapper-locations: classpath*:mapper/**/*.xml
+  # 实体类包路径
   type-aliases-package: com.pethospital.pet_hospital.entity
   configuration:
+    # 开启SQL日志
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 驼峰命名自动转换
     map-underscore-to-camel-case: true
   global-config:
     db-config:
+      # ID生成策略
       id-type: auto
+      # 逻辑删除字段
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
 logging:
   level:
     root: info
     com.pethospital: debug
+    com.pethospital.pet_hospital.mapper: debug  # 增加Mapper日志

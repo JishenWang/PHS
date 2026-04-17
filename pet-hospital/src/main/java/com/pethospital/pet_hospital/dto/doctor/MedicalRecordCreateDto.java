@@ -11,23 +11,35 @@ import jakarta.validation.constraints.NotNull;
  */
 public class MedicalRecordCreateDto {
     
+    @NotNull(message = "挂号ID不能为空")
     private Long registerId;
+    
+    @NotNull(message = "宠物ID不能为空")
     private Long petId;
+    
+    @NotNull(message = "医生ID不能为空")
     private Long doctorId;
+    
+    private String doctorName;
+    
+    @NotBlank(message = "主诉不能为空")
     private String chiefComplaint;
+    
     private String symptoms;
     private String presentIllness;
     private String pastHistory;
     private String physicalExam;
     private String auxiliaryExam;
+    
+    @NotBlank(message = "诊断结果不能为空")
     private String diagnosis;
+    
     private String treatmentPlan;
     private String doctorAdvice;
     private String remark;
     
-    public MedicalRecordCreateDto() {}
+    // ========== Getter & Setter ==========
     
-    @NotNull(message = "挂号ID不能为空")
     public Long getRegisterId() {
         return registerId;
     }
@@ -36,7 +48,6 @@ public class MedicalRecordCreateDto {
         this.registerId = registerId;
     }
     
-    @NotNull(message = "宠物ID不能为空")
     public Long getPetId() {
         return petId;
     }
@@ -45,7 +56,6 @@ public class MedicalRecordCreateDto {
         this.petId = petId;
     }
     
-    @NotNull(message = "医生ID不能为空")
     public Long getDoctorId() {
         return doctorId;
     }
@@ -54,7 +64,14 @@ public class MedicalRecordCreateDto {
         this.doctorId = doctorId;
     }
     
-    @NotBlank(message = "主诉不能为空")
+    public String getDoctorName() {
+        return doctorName;
+    }
+    
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
+    }
+    
     public String getChiefComplaint() {
         return chiefComplaint;
     }
@@ -103,7 +120,6 @@ public class MedicalRecordCreateDto {
         this.auxiliaryExam = auxiliaryExam;
     }
     
-    @NotBlank(message = "诊断结果不能为空")
     public String getDiagnosis() {
         return diagnosis;
     }
@@ -134,5 +150,17 @@ public class MedicalRecordCreateDto {
     
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+    
+    @Override
+    public String toString() {
+        return "MedicalRecordCreateDto{" +
+                "registerId=" + registerId +
+                ", petId=" + petId +
+                ", doctorId=" + doctorId +
+                ", doctorName='" + doctorName + '\'' +
+                ", chiefComplaint='" + chiefComplaint + '\'' +
+                ", diagnosis='" + diagnosis + '\'' +
+                '}';
     }
 }

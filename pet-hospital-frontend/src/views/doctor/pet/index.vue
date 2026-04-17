@@ -223,19 +223,25 @@ import {
   UserFilled, Phone, Location, Warning, InfoFilled, 
   Calendar, ArrowRight
 } from '@element-plus/icons-vue'
-import { acceptModule } from '@/api/doctor/doctor'
-
+import { acceptModule, recordModule } from '@/api/doctor/doctor'
 
 const route = useRoute()
 const router = useRouter()
 
 // 响应式数据
 const loading = ref(false)
-const petId = ref(route.query.petId)
-const registerId = ref(route.query.registerId)
 const timelineFilter = ref('all')
 
-// 宠物信息
+// 关键修复：从路由参数获取，并添加调试
+const petId = ref(route.query.petId)
+const registerId = ref(route.query.registerId)
+
+// 调试输出
+console.log('路由参数:', route.query)
+console.log('petId:', petId.value)
+console.log('registerId:', registerId.value)
+
+// 宠物信息 - 默认空值
 const petInfo = ref({
   petId: '',
   name: '',
@@ -253,11 +259,9 @@ const petInfo = ref({
   lastCheckup: '',
   remark: '',
   status: 1,
-  avatar: '',
   ownerName: '',
   ownerPhone: '',
   ownerAddress: '',
-  ownerAvatar: '',
   createTime: '',
   source: ''
 })
@@ -276,98 +280,125 @@ const filteredRecords = computed(() => {
   return healthRecords.value.filter(r => r.type === typeMap[timelineFilter.value])
 })
 
-// 获取宠物详情
+// 获取宠物详情 - 关键修复
 const fetchPetDetail = async () => {
+  // 关键检查：必须有 petId
   if (!petId.value) {
-    loadMockData()
+    ElMessage.error('缺少宠物ID参数，请从接诊列表点击进入')
+    console.error('错误：缺少 petId 参数，当前路由:', route.fullPath)
     return
   }
   
   loading.value = true
+  console.log('开始查询宠物详情, petId:', petId.value)
+  
   try {
     const res = await acceptModule.getPetDetail(petId.value)
-    if (res.data) {
-      petInfo.value = res.data
+    console.log('宠物详情API返回:', res)
+    
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      
+      // 关键修复：映射后端字段到前端字段，添加更多默认值处理
+      petInfo.value = {
+        petId: data.petId || petId.value,
+        name: data.name || '未命名',
+        type: data.type || '未知',
+        breed: data.breed || '未知品种',
+        gender: data.gender === 2 ? 2 : 1,  // 明确判断：只有2是母，其他都是公
+        age: data.age || 0,
+        birthday: data.birthday || '',
+        weight: data.weight || 0,
+        color: data.color || '#D4A574',
+        chipNumber: data.chipNumber || '未植入',
+        allergy: data.allergy || '',
+        vaccineStatus: data.vaccineStatus || '暂无记录',
+        neutered: data.neutered || false,
+        lastCheckup: data.lastCheckup || '暂无记录',
+        remark: data.description || data.remark || '无特殊备注',
+        status: data.status === 1 ? 1 : 0,
+        ownerName: data.ownerName || '未知',
+        ownerPhone: data.ownerPhone || '未填写',
+        ownerAddress: data.ownerAddress || '未填写地址',
+        createTime: data.createTime || '',
+        source: data.source || '门诊登记'
+      }
+      
+      console.log('宠物信息加载成功:', petInfo.value)
+      
+    } else {
+      ElMessage.error(res.msg || '获取宠物信息失败')
+      console.error('API返回错误:', res)
     }
-    await fetchHealthRecords()
   } catch (error) {
     console.error('获取宠物信息失败', error)
-    loadMockData()
+    ElMessage.error('获取宠物信息失败: ' + (error.message || '网络错误'))
   } finally {
     loading.value = false
   }
 }
 
-// 获取健康记录
+// 获取健康记录（病历/疫苗/体检）
 const fetchHealthRecords = async () => {
+  if (!petId.value) return
+  
   try {
-    const res = await acceptModule.getPetHealthRecords(petId.value)
-    if (res.data) {
-      healthRecords.value = res.data
+    // 调用病历列表API获取该宠物的病历
+    const res = await recordModule.getMedicalRecordList({
+      petId: petId.value,
+      pageNum: 1,
+      pageSize: 50
+    })
+    
+    console.log('健康记录API返回:', res)
+    
+    // 关键修复：后端返回的 total 是 0 但 data 有数据，需要特殊处理
+    if (res.code === 200 && res.data) {
+      let list = []
+      
+      // 方式1：从 res.data.data 获取
+      if (res.data.data && Array.isArray(res.data.data)) {
+        list = res.data.data
+      }
+      // 方式2：从 res.data.list 获取
+      else if (res.data.list && Array.isArray(res.data.list)) {
+        list = res.data.list
+      }
+      // 方式3：从 res.data.records 获取
+      else if (res.data.records && Array.isArray(res.data.records)) {
+        list = res.data.records
+      }
+      // 方式4：res.data 本身就是数组
+      else if (Array.isArray(res.data)) {
+        list = res.data
+      }
+      
+      console.log('解析出的列表:', list)
+      
+      // 转换为时间轴格式
+      if (list.length > 0) {
+        healthRecords.value = list.map(record => ({
+          type: getRecordType(record.type || '门诊'),
+          title: record.title || record.diagnosis || '就诊记录',
+          content: record.chiefComplaint || record.symptoms || record.diagnosis || '',
+          time: record.createTime ? record.createTime.split('T')[0] : '',
+          doctor: record.doctorName || '医生',
+          hasDetail: true,
+          recordId: record.recordId || record.id
+        }))
+      } else {
+        // 如果没有病历记录，显示空数组
+        healthRecords.value = []
+      }
+      
+      console.log('转换后的健康记录:', healthRecords.value)
+    } else {
+      healthRecords.value = []
     }
   } catch (error) {
-    console.error('获取健康记录失败', error)
-    loadMockHealthRecords()
+    console.error('获取健康记录失败:', error)
+    healthRecords.value = []
   }
-}
-
-// 加载模拟数据
-const loadMockData = () => {
-  petInfo.value = {
-    petId: petId.value || '1',
-    name: '豆豆',
-    type: '犬类',
-    breed: '金毛寻回犬',
-    gender: 1,
-    age: 3,
-    birthday: '2023-04-15',
-    weight: 28.5,
-    color: '#D4A574',
-    chipNumber: '900123456789012',
-    allergy: '青霉素过敏',
-    vaccineStatus: '已接种狂犬疫苗',
-    neutered: true,
-    lastCheckup: '2026-02-20',
-    remark: '性格温顺，对陌生人友好',
-    status: 1,
-    avatar: '',
-    ownerName: '张先生',
-    ownerPhone: '138****8888',
-    ownerAddress: '贵阳市南明区花果园小区',
-    ownerAvatar: '',
-    createTime: '2025-03-15',
-    source: '门诊登记'
-  }
-  loadMockHealthRecords()
-}
-
-const loadMockHealthRecords = () => {
-  healthRecords.value = [
-    {
-      title: '急性肠胃炎诊疗',
-      content: '主诉：呕吐、腹泻2天。诊断：急性肠胃炎。治疗方案：禁食24小时，静脉补液，口服益生菌。',
-      time: '2026-04-10 14:30',
-      type: 'danger',
-      doctor: '李医生',
-      hasDetail: true
-    },
-    {
-      title: '年度疫苗接种',
-      content: '接种狂犬疫苗（瑞贝康）1支，四联疫苗1支。下次接种时间：2027-04-10',
-      time: '2026-04-05 10:00',
-      type: 'success',
-      doctor: '王护士',
-      hasDetail: true
-    },
-    {
-      title: '健康体检',
-      content: '血常规、生化全套、DR检查。结果：各项指标正常，建议控制体重。',
-      time: '2026-02-20 09:30',
-      type: 'primary',
-      doctor: '李医生',
-      hasDetail: true
-    }
-  ]
 }
 
 // 时间轴样式
@@ -379,6 +410,17 @@ const getTimelineColor = (type) => {
 const getRecordTypeText = (type) => {
   const map = { danger: '病历', success: '疫苗', primary: '体检', warning: '治疗' }
   return map[type] || '其他'
+}
+
+const getRecordType = (type) => {
+  const typeMap = {
+    '门诊': 'danger',
+    '疫苗': 'success',
+    '体检': 'primary',
+    '手术': 'warning',
+    '复查': 'info'
+  }
+  return typeMap[type] || 'danger'
 }
 
 // 创建病历
@@ -419,7 +461,23 @@ const viewRecordDetail = (record) => {
 }
 
 onMounted(() => {
-  fetchPetDetail()
+  console.log('宠物档案页面加载，完整路由:', route.fullPath)
+  console.log('route.query:', route.query)
+  console.log('route.params:', route.params)
+  
+  // 尝试多种方式获取 petId
+  petId.value = route.query.petId || route.params.petId || route.query.id
+  registerId.value = route.query.registerId || route.params.registerId
+  
+  console.log('解析后的 petId:', petId.value)
+  console.log('解析后的 registerId:', registerId.value)
+  
+  if (!petId.value) {
+    console.log('未传递宠物ID,显示默认空状态')
+  } else {
+    fetchPetDetail()
+    fetchHealthRecords()
+  }
 })
 </script>
 

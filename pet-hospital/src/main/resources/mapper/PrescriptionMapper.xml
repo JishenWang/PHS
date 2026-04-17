@@ -69,4 +69,51 @@
         order by id desc
     </select>
 
+    <!-- 联表查询处方列表 -->
+    <select id="listWithPetName" parameterType="map" resultType="map">
+        SELECT p.id, p.prescription_no, p.register_id, p.pet_id, 
+            pet.name as pet_name, p.doctor_id, p.diagnosis, 
+            p.total_amount, p.status, p.remark, p.create_time
+        FROM prescription p
+        LEFT JOIN pet ON p.pet_id = pet.id
+        WHERE p.is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (p.prescription_no LIKE CONCAT('%', #{keyword}, '%')
+                OR p.diagnosis LIKE CONCAT('%', #{keyword}, '%')
+                OR pet.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="doctorId != null and doctorId != ''">
+            AND p.doctor_id = #{doctorId}
+        </if>
+        <if test="petId != null and petId != ''">
+            AND p.pet_id = #{petId}
+        </if>
+        <if test="status != null">
+            AND p.status = #{status}
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countWithPetName" parameterType="map" resultType="long">
+        SELECT COUNT(*)
+        FROM prescription p
+        LEFT JOIN pet ON p.pet_id = pet.id
+        WHERE p.is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (p.prescription_no LIKE CONCAT('%', #{keyword}, '%')
+                OR p.diagnosis LIKE CONCAT('%', #{keyword}, '%')
+                OR pet.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="doctorId != null and doctorId != ''">
+            AND p.doctor_id = #{doctorId}
+        </if>
+        <if test="petId != null and petId != ''">
+            AND p.pet_id = #{petId}
+        </if>
+        <if test="status != null">
+            AND p.status = #{status}
+        </if>
+    </select>
+
 </mapper>

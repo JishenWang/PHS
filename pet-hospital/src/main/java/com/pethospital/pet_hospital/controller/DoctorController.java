@@ -1,5 +1,18 @@
 package com.pethospital.pet_hospital.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.pethospital.pet_hospital.dto.common.PageQueryDto;
 import com.pethospital.pet_hospital.dto.doctor.ConsultReplyDto;
 import com.pethospital.pet_hospital.dto.doctor.DoctorStatusUpdateDto;
@@ -8,14 +21,15 @@ import com.pethospital.pet_hospital.dto.doctor.PrescriptionCreateDto;
 import com.pethospital.pet_hospital.service.IDoctorService;
 import com.pethospital.pet_hospital.vo.common.PageResultVo;
 import com.pethospital.pet_hospital.vo.common.ResultVo;
-import com.pethospital.pet_hospital.vo.doctor.*;
+import com.pethospital.pet_hospital.vo.doctor.ConsultVo;
+import com.pethospital.pet_hospital.vo.doctor.DoctorInfoVo;
+import com.pethospital.pet_hospital.vo.doctor.DoctorStatisticsVo;
+import com.pethospital.pet_hospital.vo.doctor.MedicalRecordVo;
+import com.pethospital.pet_hospital.vo.doctor.PrescriptionVo;
+import com.pethospital.pet_hospital.vo.doctor.WaitAcceptRegisterVo;
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/doctor")
@@ -54,6 +68,23 @@ public class DoctorController {
     
     // ==================== 接诊管理 ====================
     
+    /**
+     * 获取待接诊数量（新增接口）
+     */
+    @GetMapping("/accept/count")
+    public ResultVo<Integer> getWaitAcceptCount(@RequestParam Long doctorId) {
+        log.info("获取待接诊数量, 医生ID: {}", doctorId);
+        // 查询待接诊数量
+        PageQueryDto query = new PageQueryDto();
+        query.setPageNum(1);
+        query.setPageSize(1);
+        query.setStatus(0); // 待接诊状态
+        
+        PageResultVo<WaitAcceptRegisterVo> result = doctorService.getWaitAcceptList(query);
+        int count = result.getTotal() != null ? result.getTotal().intValue() : 0;
+        return ResultVo.success(count);
+    }
+    
     @GetMapping("/accept/list")
     public ResultVo<PageResultVo<WaitAcceptRegisterVo>> getWaitAcceptList(@Valid PageQueryDto pageQuery) {
         return ResultVo.success(doctorService.getWaitAcceptList(pageQuery));
@@ -70,6 +101,15 @@ public class DoctorController {
         return ResultVo.success("状态更新成功");
     }
     
+    /**
+     * 获取挂号单详情（用于病历创建页面）
+     */
+    @GetMapping("/accept/registerDetail")
+    public ResultVo<Map<String, Object>> getRegisterDetail(@RequestParam Long registerId) {
+        return ResultVo.success(doctorService.getRegisterDetail(registerId));
+    }
+
+
     // ==================== 病历管理 ====================
     
     @PostMapping("/record")

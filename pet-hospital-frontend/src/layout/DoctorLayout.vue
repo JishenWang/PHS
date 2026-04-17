@@ -1,14 +1,14 @@
 <template>
   <el-container class="doctor-layout">
-    <!-- 左侧侧边栏 -->
-    <el-aside :width="isCollapse ? '80px' : '260px'" class="sidebar" :class="sidebarClass">
+    <!-- 左侧侧边栏 - 宽度动态调整 -->
+    <el-aside :width="settingsStore.collapseMenu ? '80px' : '260px'" class="sidebar" :class="sidebarClass">
       <div class="logo">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </div>
-        <div v-show="!isCollapse" class="logo-text">
+        <div v-show="!settingsStore.collapseMenu" class="logo-text">
           <div class="title">宠物医院</div>
           <div class="subtitle">医生工作站</div>
         </div>
@@ -16,30 +16,22 @@
       
       <!-- 医生信息卡片 -->
       <div class="doctor-profile-mini">
-        <el-avatar :size="48" :src="userStore.avatar || defaultAvatar" class="doctor-avatar">
+        <el-avatar :size="48" :src="displayAvatar" class="doctor-avatar">
           <el-icon><UserFilled /></el-icon>
         </el-avatar>
-        <div v-show="!isCollapse" class="doctor-info">
+        <div v-show="!settingsStore.collapseMenu" class="doctor-info">
           <div class="name">{{ displayName }}</div>
           <div class="dept">{{ userInfo.department || '全科医疗部' }}</div>
         </div>
-        <div v-show="!isCollapse" class="status-dot" :class="statusClass"></div>
+        <div v-show="!settingsStore.collapseMenu" class="status-dot" :class="statusClass"></div>
       </div>
       
-      <!-- 折叠按钮 -->
-      <div class="collapse-btn" @click="toggleCollapse">
-        <el-icon>
-          <Fold v-if="!isCollapse" />
-          <Expand v-else />
-        </el-icon>
-      </div>
-      
-      <!-- 导航菜单 -->
+      <!-- 导航菜单 - 路由链接保持不变 -->
       <el-menu
         :default-active="activeMenu"
         router
         class="doctor-menu"
-        :collapse="isCollapse"
+        :collapse="settingsStore.collapseMenu"
         :collapse-transition="false"
       >
         <el-menu-item index="/doctor/accept">
@@ -65,11 +57,11 @@
           <template #title>处方开具</template>
         </el-menu-item>
         
+        <!-- 在线咨询 - 小红标已隐藏 -->
         <el-menu-item index="/doctor/consult">
           <el-icon><ChatDotRound /></el-icon>
           <template #title>
             <span>在线咨询</span>
-            <el-badge v-if="unreadConsultCount > 0" :value="unreadConsultCount" class="menu-badge" type="warning" />
           </template>
         </el-menu-item>
       </el-menu>
@@ -77,14 +69,14 @@
       <!-- 工作状态 -->
       <div class="sidebar-footer">
         <div class="work-status">
-          <span v-show="!isCollapse" class="label">工作状态</span>
+          <span v-show="!settingsStore.collapseMenu" class="label">工作状态</span>
           <el-dropdown @command="handleStatusChange" trigger="click">
             <div class="status-btn" :class="statusClass">
               <el-icon v-if="doctorStatus === 1"><Sunny /></el-icon>
               <el-icon v-if="doctorStatus === 2"><Loading /></el-icon>
               <el-icon v-if="doctorStatus === 0"><Moon /></el-icon>
-              <span v-show="!isCollapse">{{ statusText }}</span>
-              <el-icon v-show="!isCollapse" class="arrow"><ArrowDown /></el-icon>
+              <span v-show="!settingsStore.collapseMenu">{{ statusText }}</span>
+              <el-icon v-show="!settingsStore.collapseMenu" class="arrow"><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -109,35 +101,52 @@
       <!-- 顶部导航栏 -->
       <el-header class="header">
         <div class="header-left">
-          <el-breadcrumb separator="/" class="breadcrumb">
+          <!-- 面包屑 - 通过 settingsStore.showBreadcrumb 控制 -->
+          <el-breadcrumb v-if="settingsStore.showBreadcrumb" separator="/" class="breadcrumb">
             <el-breadcrumb-item :to="{ path: '/doctor/accept' }">
               <el-icon><HomeFilled /></el-icon>
               <span>医生工作台</span>
             </el-breadcrumb-item>
-            <el-breadcrumb-item v-for="(item, index) in breadcrumbList" :key="index">
+            <el-breadcrumb-item 
+              v-for="(item, index) in breadcrumbList" 
+              :key="index"
+              :to="index < breadcrumbList.length - 1 ? item.path : undefined"
+            >
               {{ item.title }}
             </el-breadcrumb-item>
           </el-breadcrumb>
+          <div v-else class="breadcrumb-simple">
+            <span class="current-page">{{ currentPageTitle }}</span>
+          </div>
         </div>
         
         <div class="header-right">
           <div class="quick-actions">
+            <!-- 侧边栏折叠切换按钮 -->
+            <el-tooltip :content="settingsStore.collapseMenu ? '展开菜单' : '折叠菜单'" placement="bottom">
+              <el-button circle @click="toggleCollapse">
+                <el-icon>
+                  <Fold v-if="!settingsStore.collapseMenu" />
+                  <Expand v-else />
+                </el-icon>
+              </el-button>
+            </el-tooltip>
+            
             <el-tooltip content="刷新数据" placement="bottom">
-              <el-button circle @click="handleRefresh" :loading="refreshing">
+              <el-button circle @click="handleManualRefresh" :loading="refreshing">
                 <el-icon><Refresh /></el-icon>
               </el-button>
             </el-tooltip>
             
-            <el-badge :value="unreadConsultCount" :hidden="unreadConsultCount === 0" class="message-badge">
-              <el-button circle @click="goToConsult">
-                <el-icon><Bell /></el-icon>
-              </el-button>
-            </el-badge>
+            <!-- 铃铛图标 - 小红标已隐藏 -->
+            <el-button circle @click="goToConsult">
+              <el-icon><Bell /></el-icon>
+            </el-button>
           </div>
 
           <el-dropdown @command="handleCommand" class="user-dropdown">
             <div class="user-info">
-              <el-avatar :size="36" :src="userStore.avatar || defaultAvatar">
+              <el-avatar :size="36" :src="displayAvatar">
                 <el-icon><UserFilled /></el-icon>
               </el-avatar>
               <div class="user-meta">
@@ -174,26 +183,27 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore } from '@/store/settings'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Calendar, FirstAidKit, Document, Tickets, ChatDotRound,
   Sunny, Loading, Moon, ArrowDown, HomeFilled, Refresh, 
   Bell, UserFilled, User, Setting, SwitchButton, Fold, Expand
 } from '@element-plus/icons-vue'
+import { doctorModule, acceptModule } from '@/api/doctor/doctor'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
 
-const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-
-// 状态
-const isCollapse = ref(false)
-const doctorStatus = ref(1) // 0:休息 1:空闲 2:接诊中
+// 响应式数据 - 从 settingsStore 读取默认状态作为初始值
+const doctorStatus = ref(settingsStore.defaultStatus || 1)
 const waitAcceptCount = ref(0)
+// 小红标已隐藏，unreadConsultCount 固定为 0
 const unreadConsultCount = ref(0)
 const refreshing = ref(false)
 let refreshTimer = null
@@ -201,15 +211,43 @@ let refreshTimer = null
 // 计算属性
 const activeMenu = computed(() => route.path)
 const userInfo = computed(() => userStore.userInfo || {})
-const displayName = computed(() => userStore.username || '医生')
 
-const breadcrumbList = computed(() => {
-  return route.matched
-    .filter(item => item.meta?.title && item.path !== '/doctor')
-    .map(item => ({ title: item.meta.title }))
+// 当前页面标题
+const currentPageTitle = computed(() => {
+  return route.meta?.title || '医生工作台'
 })
 
-const sidebarClass = computed(() => 'sidebar-dark')
+// 面包屑列表
+const breadcrumbList = computed(() => {
+  const breadcrumbs = route.matched.filter(item => {
+    return item.meta && item.meta.title && item.path !== '/doctor'
+  })
+  
+  return breadcrumbs.map(item => {
+    return {
+      title: item.meta.title,
+      path: item.path
+    }
+  })
+})
+
+// 根据设置显示真实姓名或用户名
+const displayName = computed(() => {
+  if (settingsStore.showRealName && userInfo.value.realName) {
+    return userInfo.value.realName
+  }
+  return userInfo.value.username || '医生'
+})
+
+// 根据设置显示头像
+const displayAvatar = computed(() => {
+  return userInfo.value.avatar || ''
+})
+
+// 侧边栏样式 class
+const sidebarClass = computed(() => {
+  return settingsStore.sidebarStyle === 'light' ? 'sidebar-light' : 'sidebar-dark'
+})
 
 const statusText = computed(() => {
   const map = { 0: '休息中', 1: '空闲', 2: '接诊中' }
@@ -221,14 +259,40 @@ const statusClass = computed(() => {
   return map[doctorStatus.value] || 'status-rest'
 })
 
-// 方法
+// ========== 定时器管理 ==========
+const clearRefreshTimer = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+const startRefreshTimer = () => {
+  clearRefreshTimer()
+  const interval = settingsStore.refreshInterval * 1000
+  console.log(`启动自动刷新，间隔: ${settingsStore.refreshInterval}秒`)
+  refreshTimer = setInterval(() => {
+    console.log('自动刷新触发')
+    fetchWaitAcceptCount()
+    // 小红标已隐藏，不再获取未读咨询数量
+  }, interval)
+}
+
+// ========== 方法 ==========
 const toggleCollapse = () => {
-  isCollapse.value = !isCollapse.value
+  settingsStore.collapseMenu = !settingsStore.collapseMenu
 }
 
 const handleStatusChange = async (status) => {
-  doctorStatus.value = parseInt(status)
-  ElMessage.success('工作状态已更新')
+  try {
+    await doctorModule.updateDoctorStatus({ status: parseInt(status) })
+    doctorStatus.value = parseInt(status)
+    // 同步更新系统设置中的默认接诊状态
+    settingsStore.defaultStatus = parseInt(status)
+    ElMessage.success('工作状态已更新')
+  } catch (error) {
+    ElMessage.error('状态更新失败')
+  }
 }
 
 const handleCommand = (command) => {
@@ -251,7 +315,9 @@ const handleLogout = () => {
     cancelButtonText: '取消',
     type: 'warning',
   }).then(() => {
-    userStore.logout()
+    userStore.logoutAction()
+    router.push('/login')
+    ElMessage.success('已安全退出系统')
   })
 }
 
@@ -259,25 +325,85 @@ const goToConsult = () => {
   router.push('/doctor/consult')
 }
 
-const handleRefresh = async () => {
+// 获取待接诊数量
+const fetchWaitAcceptCount = async () => {
+  try {
+    const doctorId = userStore.userInfo?.id
+    if (!doctorId) return
+    
+    const res = await acceptModule.getWaitAcceptCount(doctorId)
+    if (res.code === 200) {
+      waitAcceptCount.value = res.data || 0
+    }
+  } catch (error) {
+    console.error('获取待接诊数量失败', error)
+  }
+}
+
+// 小红标已隐藏，以下方法已禁用
+// const fetchUnreadConsultCount = async () => {
+//   try {
+//     const res = await consultModule.getUnreadConsultCount()
+//     unreadConsultCount.value = res.data || 0
+//   } catch (error) {
+//     console.error('获取未读咨询数量失败', error)
+//   }
+// }
+
+// 手动刷新数据
+const handleManualRefresh = async () => {
   refreshing.value = true
+  await fetchWaitAcceptCount()
   setTimeout(() => {
     refreshing.value = false
     ElMessage.success('数据已刷新')
   }, 500)
 }
 
-// 生命周期
+// 应用默认工作状态
+const applyDefaultStatus = async () => {
+  const defaultStatusValue = settingsStore.defaultStatus
+  doctorStatus.value = defaultStatusValue
+  try {
+    await doctorModule.updateDoctorStatus({ status: defaultStatusValue })
+    console.log('默认工作状态已应用:', defaultStatusValue)
+  } catch (error) {
+    console.error('应用默认工作状态失败', error)
+  }
+}
+
+// ========== 监听器 ==========
+watch(() => settingsStore.defaultStatus, async (newStatus) => {
+  if (doctorStatus.value !== newStatus) {
+    doctorStatus.value = newStatus
+    try {
+      await doctorModule.updateDoctorStatus({ status: newStatus })
+      console.log('工作状态已同步:', newStatus)
+    } catch (error) {
+      console.error('同步工作状态失败', error)
+    }
+  }
+})
+
+watch(() => settingsStore.refreshInterval, (newInterval, oldInterval) => {
+  console.log(`刷新间隔变化: ${oldInterval}秒 -> ${newInterval}秒`)
+  startRefreshTimer()
+})
+
+// ========== 生命周期 ==========
 onMounted(() => {
-  refreshTimer = setInterval(() => {
-    // 模拟获取待接诊和未读咨询数量
-    waitAcceptCount.value = Math.floor(Math.random() * 5)
-    unreadConsultCount.value = Math.floor(Math.random() * 3)
-  }, 30000)
+  settingsStore.initSettings()
+  settingsStore.applyThemeColor(settingsStore.themeColor)
+  applyDefaultStatus()
+  fetchWaitAcceptCount()
+  // 小红标已隐藏，不再获取未读咨询数量
+  startRefreshTimer()
+  console.log('医生端布局已加载，自动刷新已启动')
 })
 
 onUnmounted(() => {
-  if (refreshTimer) clearInterval(refreshTimer)
+  clearRefreshTimer()
+  console.log('医生端布局已卸载，自动刷新已停止')
 })
 </script>
 
@@ -289,24 +415,229 @@ onUnmounted(() => {
   .sidebar {
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #1a365d 0%, #2c5282 100%);
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, background 0.3s ease;
     overflow: hidden;
-    position: relative;
+    
+    // 深色样式（默认）
+    &.sidebar-dark {
+      background: linear-gradient(180deg, #1a365d 0%, #2c5282 100%);
+      
+      .logo {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        
+        .logo-text {
+          color: white;
+          
+          .title { color: white; }
+          .subtitle { color: rgba(255, 255, 255, 0.7); }
+        }
+        
+        .logo-icon {
+          background: rgba(255, 255, 255, 0.15);
+          
+          svg { color: white; }
+        }
+      }
+      
+      .doctor-profile-mini {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        
+        .doctor-info {
+          color: white;
+          
+          .name { color: white; }
+          .dept { color: rgba(255, 255, 255, 0.7); }
+        }
+        
+        .doctor-avatar {
+          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-dot {
+          border-color: #1a365d;
+        }
+      }
+      
+      .doctor-menu {
+        :deep(.el-menu-item) {
+          color: rgba(255, 255, 255, 0.8);
+          
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+          }
+          
+          &.is-active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            
+            &::before {
+              content: '';
+              position: absolute;
+              left: 0;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 4px;
+              height: 20px;
+              background: #63b3ed;
+              border-radius: 0 2px 2px 0;
+            }
+          }
+        }
+        
+        &.el-menu--collapse {
+          :deep(.el-menu-item) {
+            &.is-active::before {
+              display: none;
+            }
+          }
+        }
+      }
+      
+      .sidebar-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        
+        .work-status {
+          .label { color: rgba(255, 255, 255, 0.6); }
+          
+          .status-btn {
+            color: white;
+            
+            &.status-free {
+              background: rgba(103, 194, 58, 0.2);
+              border: 1px solid rgba(103, 194, 58, 0.4);
+            }
+            
+            &.status-busy {
+              background: rgba(230, 162, 60, 0.2);
+              border: 1px solid rgba(230, 162, 60, 0.4);
+            }
+            
+            &.status-rest {
+              background: rgba(144, 147, 153, 0.2);
+              border: 1px solid rgba(144, 147, 153, 0.4);
+            }
+          }
+        }
+      }
+    }
+    
+    // 浅色样式
+    &.sidebar-light {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border-right: 1px solid #e2e8f0;
+      
+      .logo {
+        border-bottom: 1px solid #e2e8f0;
+        
+        .logo-text {
+          .title { color: #1e293b; }
+          .subtitle { color: #64748b; }
+        }
+        
+        .logo-icon {
+          background: #e0f2fe;
+          
+          svg { color: #3b82f6; }
+        }
+      }
+      
+      .doctor-profile-mini {
+        border-bottom: 1px solid #e2e8f0;
+        
+        .doctor-info {
+          .name { color: #334155; }
+          .dept { color: #64748b; }
+        }
+        
+        .doctor-avatar {
+          border-color: #e2e8f0;
+          background: #f1f5f9;
+        }
+        
+        .status-dot {
+          border-color: #f8fafc;
+        }
+      }
+      
+      .doctor-menu {
+        :deep(.el-menu-item) {
+          color: #64748b;
+          
+          &:hover {
+            background: #f1f5f9;
+            color: #334155;
+          }
+          
+          &.is-active {
+            background: #e0f2fe;
+            color: #3b82f6;
+            
+            &::before {
+              content: '';
+              position: absolute;
+              left: 0;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 4px;
+              height: 20px;
+              background: #3b82f6;
+              border-radius: 0 2px 2px 0;
+            }
+          }
+        }
+        
+        &.el-menu--collapse {
+          :deep(.el-menu-item) {
+            &.is-active::before {
+              display: none;
+            }
+          }
+        }
+      }
+      
+      .sidebar-footer {
+        border-top: 1px solid #e2e8f0;
+        
+        .work-status {
+          .label { color: #64748b; }
+          
+          .status-btn {
+            &.status-free {
+              background: #dcfce7;
+              border: 1px solid #86efac;
+              color: #166534;
+            }
+            
+            &.status-busy {
+              background: #fef3c7;
+              border: 1px solid #fde68a;
+              color: #92400e;
+            }
+            
+            &.status-rest {
+              background: #f3f4f6;
+              border: 1px solid #d1d5db;
+              color: #4b5563;
+            }
+          }
+        }
+      }
+    }
     
     .logo {
       height: 80px;
       display: flex;
       align-items: center;
       padding: 0 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: padding 0.3s;
       
       .logo-icon {
         width: 40px;
         height: 40px;
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -316,7 +647,6 @@ onUnmounted(() => {
         svg {
           width: 24px;
           height: 24px;
-          color: white;
         }
       }
       
@@ -324,38 +654,15 @@ onUnmounted(() => {
         .title {
           font-size: 18px;
           font-weight: 600;
-          color: white;
           letter-spacing: 1px;
+          white-space: nowrap;
         }
         
         .subtitle {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.7);
           margin-top: 2px;
+          white-space: nowrap;
         }
-      }
-    }
-    
-    .collapse-btn {
-      position: absolute;
-      right: -12px;
-      top: 90px;
-      width: 24px;
-      height: 24px;
-      background: #409EFF;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #fff;
-      font-size: 12px;
-      box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
-      z-index: 101;
-      transition: transform 0.3s;
-      
-      &:hover {
-        transform: scale(1.1);
       }
     }
     
@@ -364,10 +671,9 @@ onUnmounted(() => {
       display: flex;
       align-items: center;
       position: relative;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       
       .doctor-avatar {
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid;
         flex-shrink: 0;
       }
       
@@ -378,7 +684,6 @@ onUnmounted(() => {
         .name {
           font-size: 16px;
           font-weight: 500;
-          color: white;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -386,8 +691,10 @@ onUnmounted(() => {
         
         .dept {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.7);
           margin-top: 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
       
@@ -397,7 +704,7 @@ onUnmounted(() => {
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        border: 2px solid #1a365d;
+        border: 2px solid;
         
         &.status-free {
           background: #67C23A;
@@ -423,34 +730,11 @@ onUnmounted(() => {
       padding: 10px;
       
       :deep(.el-menu-item) {
-        color: rgba(255, 255, 255, 0.8);
         height: 50px;
         line-height: 50px;
         margin: 8px 0;
         border-radius: 10px;
         transition: all 0.3s;
-        
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-        }
-        
-        &.is-active {
-          background: rgba(255, 255, 255, 0.2);
-          color: white;
-          
-          &::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 20px;
-            background: #63b3ed;
-            border-radius: 0 2px 2px 0;
-          }
-        }
         
         .el-icon {
           font-size: 20px;
@@ -464,6 +748,7 @@ onUnmounted(() => {
         }
       }
       
+      // 折叠模式
       &.el-menu--collapse {
         padding: 10px 5px;
         
@@ -486,10 +771,13 @@ onUnmounted(() => {
             right: 2px;
             top: 2px;
             transform: none;
-          }
-          
-          &.is-active::before {
-            display: none;
+            
+            :deep(.el-badge__content) {
+              font-size: 10px;
+              height: 16px;
+              line-height: 16px;
+              padding: 0 4px;
+            }
           }
         }
       }
@@ -497,13 +785,11 @@ onUnmounted(() => {
     
     .sidebar-footer {
       padding: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
       
       .work-status {
         .label {
           display: block;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.6);
           margin-bottom: 8px;
         }
         
@@ -515,7 +801,6 @@ onUnmounted(() => {
           border-radius: 8px;
           cursor: pointer;
           transition: all 0.3s;
-          color: white;
           white-space: nowrap;
           
           .arrow {
@@ -526,21 +811,6 @@ onUnmounted(() => {
           &:hover {
             opacity: 0.9;
             transform: translateY(-1px);
-          }
-          
-          &.status-free {
-            background: rgba(103, 194, 58, 0.2);
-            border: 1px solid rgba(103, 194, 58, 0.4);
-          }
-          
-          &.status-busy {
-            background: rgba(230, 162, 60, 0.2);
-            border: 1px solid rgba(230, 162, 60, 0.4);
-          }
-          
-          &.status-rest {
-            background: rgba(144, 147, 153, 0.2);
-            border: 1px solid rgba(144, 147, 153, 0.4);
           }
         }
       }
@@ -559,7 +829,13 @@ onUnmounted(() => {
     
     .header-left {
       .breadcrumb {
+        display: flex;
+        align-items: center;
+        
         :deep(.el-breadcrumb__item) {
+          display: flex;
+          align-items: center;
+          
           .el-breadcrumb__inner {
             display: flex;
             align-items: center;
@@ -594,6 +870,14 @@ onUnmounted(() => {
           margin: 0 8px;
         }
       }
+      
+      .breadcrumb-simple {
+        .current-page {
+          font-size: 18px;
+          font-weight: 600;
+          color: #2d3748;
+        }
+      }
     }
     
     .header-right {
@@ -615,12 +899,6 @@ onUnmounted(() => {
           &:hover {
             background: #e2e8f0;
             color: #3182ce;
-          }
-        }
-        
-        .message-badge {
-          :deep(.el-badge__content) {
-            border: none;
           }
         }
       }

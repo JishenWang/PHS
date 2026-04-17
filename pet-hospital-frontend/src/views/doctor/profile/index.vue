@@ -481,6 +481,8 @@ import {
   EditPen, Edit, Check, DocumentChecked, Plus, Phone, Message
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
+// 在文件顶部添加导入
+import { profileModule } from '@/api/doctor/profile'
 
 
 const userStore = useUserStore()

@@ -1,5 +1,16 @@
 package com.pethospital.pet_hospital.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
 import com.pethospital.pet_hospital.dto.desk.ChargeQueryDto;
 import com.pethospital.pet_hospital.dto.desk.CustomerQueryDto;
 import com.pethospital.pet_hospital.dto.desk.RegisterQueryDto;
@@ -11,16 +22,6 @@ import com.pethospital.pet_hospital.mapper.PetMapper;
 import com.pethospital.pet_hospital.mapper.RegisterRecordMapper;
 import com.pethospital.pet_hospital.mapper.UserMapper;
 import com.pethospital.pet_hospital.service.IDeskService;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class DeskServiceImpl implements IDeskService {
@@ -87,15 +88,34 @@ public class DeskServiceImpl implements IDeskService {
         List<Map<String, Object>> list;
         Long total;
         try {
+            // 关键修复：将 String 类型的 status 转换为 Integer
+            Integer status = null;
+            String statusStr = queryDto.getStatus();
+            if (statusStr != null && !statusStr.isEmpty()) {
+                try {
+                    // 如果是数字字符串，直接转换
+                    status = Integer.parseInt(statusStr);
+                } catch (NumberFormatException e) {
+                    // 如果是状态名称，进行映射
+                    switch (statusStr) {
+                        case "WAITING": status = 0; break;
+                        case "IN_PROGRESS": status = 1; break;
+                        case "DONE": status = 2; break;
+                        case "CANCELED": status = 3; break;
+                        default: status = null;
+                    }
+                }
+            }
+            
             list = registerRecordMapper.listDeskRegisters(
-                    queryDto.getStatus(),
+                    status,  // 传 Integer，不是 String
                     queryDto.getKeyword(),
                     doctorId,
                     offset,
                     pageSize
             );
             total = registerRecordMapper.countDeskRegisters(
-                    queryDto.getStatus(),
+                    status,  // 传 Integer，不是 String
                     queryDto.getKeyword(),
                     doctorId
             );

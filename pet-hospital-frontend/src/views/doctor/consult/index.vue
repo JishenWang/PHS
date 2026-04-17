@@ -304,15 +304,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   Bell, Close, Search, FirstAidKit, User, Phone, 
   CircleCheck, ChatDotRound, EditPen, Plus, Promotion,
   Bottom, UserFilled, Message, Check
 } from '@element-plus/icons-vue'
-import { consultModule } from '@/api/doctor/doctor'
+
 import { useUserStore } from '@/store/user'
+import { consultModule, doctorModule } from '@/api/doctor/doctor'
+
 
 
 const userStore = useUserStore()
@@ -354,10 +356,17 @@ const replyForm = reactive({
 
 const userInfo = computed(() => userStore.userInfo || {})
 
+// 监听标签页切换，自动刷新列表
+watch(activeTab, (newVal, oldVal) => {
+  console.log('标签页切换:', oldVal, '->', newVal)
+  pagination.pageNum = 1  // 重置到第一页
+  fetchList()  // 重新获取列表
+})
+
 // 获取未读数量
 const fetchUnreadCount = async () => {
   try {
-    const res = await consultModule.getUnreadConsultCount()
+    const res = await consultModule.getUnreadConsultCount()  // 不需要传参
     unreadCount.value = res.data || 0
   } catch (error) {
     console.error('获取未读数量失败', error)
@@ -368,21 +377,64 @@ const fetchUnreadCount = async () => {
 const fetchList = async () => {
   loading.value = true
   try {
+    const doctorId = userInfo.value?.doctorId || userInfo.value?.id
+    const replyStatusValue = activeTab.value === 'unread' ? 0 : (activeTab.value === 'replied' ? 1 : undefined)
+    
     const params = {
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
-      petName: searchForm.petName,
+      keyword: searchForm.petName,  // 使用 keyword 而不是 petName
       startDate: searchForm.dateRange?.[0],
       endDate: searchForm.dateRange?.[1],
-      replyStatus: activeTab.value === 'unread' ? 0 : (activeTab.value === 'replied' ? 1 : undefined)
+      replyStatus: replyStatusValue,
+      doctorId: doctorId
     }
+    
+    console.log('=== 查询咨询列表 ===')
+    console.log('activeTab:', activeTab.value)
+    console.log('replyStatus:', replyStatusValue)
+    console.log('doctorId:', doctorId)
+    console.log('完整参数:', params)
+    
     const res = await consultModule.getConsultList(params)
-    tableData.value = (res.data?.list || []).map(item => ({
-      ...item,
-      imageList: item.images?.split(',') || []
-    }))
-    pagination.total = res.data?.total || 0
+    console.log('API返回:', res)
+    
+    if (res.code === 200 && res.data) {
+      let list = []
+      let total = 0
+      
+      const pageData = res.data
+      
+      if (pageData.data && Array.isArray(pageData.data)) {
+        list = pageData.data
+        total = pageData.total || list.length
+      } else if (pageData.list && Array.isArray(pageData.list)) {
+        list = pageData.list
+        total = pageData.total || list.length
+      } else if (pageData.records && Array.isArray(pageData.records)) {
+        list = pageData.records
+        total = pageData.total || list.length
+      } else if (Array.isArray(pageData)) {
+        list = pageData
+        total = list.length
+      }
+      
+      if (total === 0 && list.length > 0) {
+        total = list.length
+      }
+      
+      tableData.value = list.map(item => ({
+        ...item,
+        imageList: item.images?.split(',') || []
+      }))
+      pagination.total = total
+    } else {
+      tableData.value = []
+      pagination.total = 0
+    }
   } catch (error) {
+    console.error('获取咨询列表失败:', error)
+    tableData.value = []
     ElMessage.error('获取列表失败')
   } finally {
     loading.value = false
@@ -456,6 +508,7 @@ const handleRemove = (file) => {
 }
 
 // 提交回复
+// 提交回复
 const submitReply = async () => {
   if (!replyForm.replyContent.trim()) {
     ElMessage.warning('请输入回复内容')
@@ -463,8 +516,25 @@ const submitReply = async () => {
   }
   
   try {
+    // 获取医生ID
+    let doctorId = userInfo.value?.doctorId || userInfo.value?.id
+    
+    if (!doctorId) {
+      // 尝试从接口获取
+      const doctorRes = await doctorModule.getDoctorInfo()
+      if (doctorRes.code === 200 && doctorRes.data) {
+        doctorId = doctorRes.data.doctorId
+      }
+    }
+    
+    if (!doctorId) {
+      ElMessage.error('无法获取医生信息，请重新登录')
+      return
+    }
+    
     await consultModule.replyConsult({
       consultId: replyForm.consultId,
+      doctorId: doctorId,
       replyContent: replyForm.replyContent,
       replyImages: replyForm.imageList.map(img => img.url).join(',')
     })
@@ -473,7 +543,8 @@ const submitReply = async () => {
     fetchList()
     fetchUnreadCount()
   } catch (error) {
-    ElMessage.error('回复失败')
+    console.error('回复失败:', error)
+    ElMessage.error(error.message || '回复失败')
   }
 }
 
