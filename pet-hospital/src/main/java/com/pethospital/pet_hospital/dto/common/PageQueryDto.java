@@ -1,5 +1,7 @@
 package com.pethospital.pet_hospital.dto.common;
 
+import java.time.LocalDate;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
@@ -17,8 +19,13 @@ public class PageQueryDto {
     private Integer status;
     private String startTime;
     private String endTime;
+    private LocalDate startDate;   // 新增：开始日期
+    private LocalDate endDate;     // 新增：结束日期
     private String orderBy;
     private String orderDirection = "DESC";
+    private Long doctorId;         // 新增：医生ID
+    private Long petId;            // 新增：宠物ID
+    private String petName;        // 新增：宠物名称
     
     public PageQueryDto() {}
     
@@ -78,6 +85,22 @@ public class PageQueryDto {
         this.endTime = endTime;
     }
     
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+    
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+    
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+    
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+    
     public String getOrderBy() {
         return orderBy;
     }
@@ -92,5 +115,29 @@ public class PageQueryDto {
     
     public void setOrderDirection(String orderDirection) {
         this.orderDirection = orderDirection;
+    }
+    
+    public Long getDoctorId() {
+        return doctorId;
+    }
+    
+    public void setDoctorId(Long doctorId) {
+        this.doctorId = doctorId;
+    }
+    
+    public Long getPetId() {
+        return petId;
+    }
+    
+    public void setPetId(Long petId) {
+        this.petId = petId;
+    }
+    
+    public String getPetName() {
+        return petName;
+    }
+    
+    public void setPetName(String petName) {
+        this.petName = petName;
     }
 }

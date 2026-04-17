@@ -1,4 +1,3 @@
-// 提示词：按领域模块聚合实体；字段严格来源于 pet_hospital.sql，不得猜测。
 package com.pethospital.pet_hospital.entity;
 
 import java.math.BigDecimal;

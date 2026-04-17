@@ -1,146 +1,157 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pethospital.pet_hospital.mapper.RegisterRecordMapper">
 
-    <sql id="deskRegisterWhere">
-        rr.is_deleted = 0
-        <if test="doctorId != null">
-            and rr.doctor_id = #{doctorId}
-        </if>
-        <if test="status != null and status != ''">
-            and rr.status =
-            <choose>
-                <when test="status == 'WAITING'">0</when>
-                <when test="status == 'IN_PROGRESS'">1</when>
-                <when test="status == 'DONE'">2</when>
-                <when test="status == 'CANCELED'">3</when>
-                <otherwise>-1</otherwise>
-            </choose>
+    <!-- 根据ID查询 -->
+    <select id="getById" resultType="java.util.HashMap">
+        SELECT 
+            r.id,
+            r.register_no as register_no,
+            r.pet_id,
+            r.owner_user_id as owner_id,
+            r.doctor_id,
+            r.service_item_id as service_type,
+            r.triage_note as symptom,
+            r.status,
+            r.amount,
+            r.register_time as visit_time,
+            r.accept_time,
+            r.create_time,
+            r.update_time,
+            p.name as pet_name,
+            p.type as pet_type,
+            p.breed,
+            p.age,
+            p.gender,
+            u.real_name as owner_name,
+            u.phone as owner_phone
+        FROM register_record r
+        LEFT JOIN pet p ON r.pet_id = p.id
+        LEFT JOIN sys_user u ON r.owner_user_id = u.id
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="listAll" resultType="java.util.HashMap">
+        SELECT 
+            r.*,
+            p.name as pet_name,
+            u.real_name as owner_name
+        FROM register_record r
+        LEFT JOIN pet p ON r.pet_id = p.id
+        LEFT JOIN sys_user u ON r.owner_user_id = u.id
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 查询挂号视图 -->
+    <select id="listRegisterView" resultType="java.util.HashMap">
+        SELECT 
+            r.id,
+            r.register_no as register_no,
+            r.pet_id,
+            r.owner_user_id as owner_id,
+            r.doctor_id,
+            r.service_item_id as service_type,
+            r.triage_note as symptom,
+            r.status,
+            r.amount,
+            r.register_time as visit_time,
+            r.accept_time,
+            r.create_time,
+            p.name as pet_name,
+            p.type as pet_type,
+            p.breed,
+            p.age,
+            p.gender,
+            u.real_name as owner_name,
+            u.phone as owner_phone
+        FROM register_record r
+        LEFT JOIN pet p ON r.pet_id = p.id
+        LEFT JOIN sys_user u ON r.owner_user_id = u.id
+        ORDER BY r.register_time DESC
+    </select>
+
+    <!-- 医生端接诊列表查询 - 直接使用数字状态 -->
+    <select id="listDeskRegisters" resultType="java.util.HashMap">
+        SELECT 
+            r.id,
+            r.register_no as register_no,
+            r.pet_id,
+            r.owner_user_id as owner_id,
+            r.doctor_id,
+            r.service_item_id as service_type,
+            r.triage_note as symptom,
+            r.status,
+            r.amount,
+            r.register_time as visit_time,
+            r.accept_time,
+            r.create_time,
+            p.name as pet_name,
+            p.type as pet_type,
+            p.breed,
+            p.age,
+            p.gender,
+            u.real_name as owner_name,
+            u.phone as owner_phone
+        FROM register_record r
+        LEFT JOIN pet p ON r.pet_id = p.id
+        LEFT JOIN sys_user u ON r.owner_user_id = u.id
+        WHERE 1=1
+        <if test="status != null">
+            AND r.status = #{status}
         </if>
         <if test="keyword != null and keyword != ''">
-            and (
-            rr.register_no like concat('%', #{keyword}, '%')
-            or su.real_name like concat('%', #{keyword}, '%')
-            or su.phone like concat('%', #{keyword}, '%')
-            or p.name like concat('%', #{keyword}, '%')
-            or dp.name like concat('%', #{keyword}, '%')
+            AND (
+                p.name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+                OR r.register_no LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
-    </sql>
-
-    <select id="getById" resultType="java.util.HashMap">
-        select id as id,
-               register_no as registerNo,
-               appointment_id as appointmentId,
-               owner_user_id as ownerUserId,
-               pet_id as petId,
-               doctor_id as doctorId,
-               service_item_id as serviceItemId,
-               desk_user_id as deskUserId,
-               register_time as registerTime,
-               accept_time as acceptTime,
-               queue_no as queueNo,
-               symptom as symptom,
-               triage_note as triageNote,
-               amount as amount,
-               status as status,
-               cancel_reason as cancelReason,
-               create_time as createTime,
-               update_time as updateTime,
-               created_time as createdTime,
-               updated_time as updatedTime,
-               is_deleted as isDeleted
-        from register_record
-        where id = #{id}
+        <if test="doctorId != null">
+            AND r.doctor_id = #{doctorId}
+        </if>
+        ORDER BY r.register_time DESC
+        LIMIT #{offset}, #{limit}
     </select>
 
-    <select id="listAll" resultType="java.util.HashMap">
-        select id as id,
-               register_no as registerNo,
-               appointment_id as appointmentId,
-               owner_user_id as ownerUserId,
-               pet_id as petId,
-               doctor_id as doctorId,
-               service_item_id as serviceItemId,
-               desk_user_id as deskUserId,
-               register_time as registerTime,
-               accept_time as acceptTime,
-               queue_no as queueNo,
-               symptom as symptom,
-               triage_note as triageNote,
-               amount as amount,
-               status as status,
-               cancel_reason as cancelReason,
-               create_time as createTime,
-               update_time as updateTime,
-               created_time as createdTime,
-               updated_time as updatedTime,
-               is_deleted as isDeleted
-        from register_record
-        order by id desc
-    </select>
-
-    <select id="listRegisterView" resultType="java.util.HashMap">
-        select rr.id as id,
-               rr.register_no as registerNo,
-               rr.register_time as registerTime,
-               rr.status as status,
-               p.name as petName,
-               p.species as petSpecies,
-               su.real_name as ownerName,
-               su.phone as ownerPhone,
-               dp.name as doctorName
-        from register_record rr
-                 left join pet p on p.id = rr.pet_id
-                 left join sys_user su on su.id = rr.owner_user_id
-                 left join doctor_profile dp on dp.id = rr.doctor_id
-        where rr.is_deleted = 0
-        order by rr.id desc
-    </select>
-
-    <select id="listDeskRegisters" resultType="java.util.HashMap">
-        select rr.id as id,
-               rr.register_no as registerNo,
-               su.real_name as customerName,
-               su.phone as phone,
-               p.name as petName,
-               p.species as petSpecies,
-               dp.name as doctorName,
-               rr.register_time as visitTime,
-               case rr.status
-                   when 0 then 'WAITING'
-                   when 1 then 'IN_PROGRESS'
-                   when 2 then 'DONE'
-                   when 3 then 'CANCELED'
-                   else 'WAITING'
-                   end as status
-        from register_record rr
-                 left join sys_user su on su.id = rr.owner_user_id
-                 left join pet p on p.id = rr.pet_id
-                 left join doctor_profile dp on dp.id = rr.doctor_id
-        where <include refid="deskRegisterWhere"/>
-        order by rr.id desc
-        limit #{offset}, #{limit}
-    </select>
-
+    <!-- 查询总数 - 同样修改 -->
     <select id="countDeskRegisters" resultType="java.lang.Long">
-        select count(1)
-        from register_record rr
-                 left join sys_user su on su.id = rr.owner_user_id
-                 left join pet p on p.id = rr.pet_id
-                 left join doctor_profile dp on dp.id = rr.doctor_id
-        where <include refid="deskRegisterWhere"/>
+        SELECT COUNT(*)
+        FROM register_record r
+        LEFT JOIN pet p ON r.pet_id = p.id
+        LEFT JOIN sys_user u ON r.owner_user_id = u.id
+        WHERE 1=1
+        <if test="status != null">
+            AND r.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+                OR r.register_no LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="doctorId != null">
+            AND r.doctor_id = #{doctorId}
+        </if>
     </select>
 
+
+    <!-- 根据ID更新状态 -->
     <update id="updateStatusById">
-        update register_record
-        set status = #{status},
-            update_time = now(),
-            updated_time = now()
-        where id = #{id}
-          and is_deleted = 0
+        UPDATE register_record
+        SET status = CASE 
+                WHEN #{status} = 0 THEN 'WAITING'
+                WHEN #{status} = 1 THEN 'IN_PROGRESS'
+                WHEN #{status} = 2 THEN 'DONE'
+                WHEN #{status} = 3 THEN 'CANCELED'
+                ELSE status
+            END,
+            accept_time = CASE WHEN #{status} = 1 THEN NOW() ELSE accept_time END,
+            update_time = NOW()
+        WHERE id = #{id}
     </update>
 
 </mapper>

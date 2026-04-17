@@ -1,10 +1,13 @@
+// 提示词：全字段映射必须严格来源于 pet_hospital.sql，字段名不得猜测。
 package com.pethospital.pet_hospital.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import lombok.Data;
@@ -81,5 +84,10 @@ public class Doctor {
     private LocalDateTime updatedTime;
     
     // 数据库字段：is_deleted
+    @TableLogic
     private Integer isDeleted;
+    
+    // 非数据库字段（仅用于前端展示）
+    @TableField(exist = false)
+    private String workStatusDesc;
 }

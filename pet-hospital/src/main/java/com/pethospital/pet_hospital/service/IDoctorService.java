@@ -1,16 +1,22 @@
 package com.pethospital.pet_hospital.service;
 
+import java.util.List;
+import java.util.Map;
+
 import com.pethospital.pet_hospital.dto.common.PageQueryDto;
 import com.pethospital.pet_hospital.dto.doctor.ConsultReplyDto;
 import com.pethospital.pet_hospital.dto.doctor.DoctorStatusUpdateDto;
 import com.pethospital.pet_hospital.dto.doctor.MedicalRecordCreateDto;
 import com.pethospital.pet_hospital.dto.doctor.PrescriptionCreateDto;
 import com.pethospital.pet_hospital.vo.common.PageResultVo;
-import com.pethospital.pet_hospital.vo.doctor.*;
-import jakarta.servlet.http.HttpServletResponse;
+import com.pethospital.pet_hospital.vo.doctor.ConsultVo;
+import com.pethospital.pet_hospital.vo.doctor.DoctorInfoVo;
+import com.pethospital.pet_hospital.vo.doctor.DoctorStatisticsVo;
+import com.pethospital.pet_hospital.vo.doctor.MedicalRecordVo;
+import com.pethospital.pet_hospital.vo.doctor.PrescriptionVo;
+import com.pethospital.pet_hospital.vo.doctor.WaitAcceptRegisterVo;
 
-import java.util.List;
-import java.util.Map;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 医生端服务接口
@@ -153,4 +159,9 @@ public interface IDoctorService {
      * 获取接诊统计
      */
     Map<String, Object> getAcceptStatistics(Long doctorId, String statType);
+
+    /**
+     * 获取挂号单详情
+     */
+    Map<String, Object> getRegisterDetail(Long registerId);
 }

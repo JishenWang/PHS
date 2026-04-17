@@ -1,6 +1,5 @@
 package com.pethospital.pet_hospital.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
@@ -13,31 +12,41 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName("prescription")
-public class Prescription {
+@TableName("consult")
+public class Consult {
     
     @TableId(type = IdType.AUTO)
     private Long id;
     
-    private String prescriptionNo;
+    private String consultNo;
     
-    private Long registerId;
-    
-    private Long recordId;
+    private Long ownerUserId;
     
     private Long petId;
     
     private Long doctorId;
     
-    private Integer prescriptionType;
+    private String title;
     
-    private String diagnosis;
+    private String content;
     
-    private BigDecimal totalAmount;
+    private String images;
+    
+    private String replyContent;
+    
+    private String replyImages;
+    
+    private Integer replyStatus;
+    
+    private Integer rating;
+    
+    private String comment;
+    
+    private LocalDateTime consultTime;
+    
+    private LocalDateTime replyTime;
     
     private Integer status;
-    
-    private String remark;
     
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

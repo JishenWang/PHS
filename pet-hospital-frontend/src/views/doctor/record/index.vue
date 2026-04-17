@@ -53,12 +53,13 @@
 
           <!-- 表格视图 -->
           <el-table 
-            v-if="viewMode === 'table'"
+            v-if="viewMode === 'table' && Array.isArray(tableData)"
             :data="tableData" 
             stripe 
             v-loading="loading"
             class="record-table"
             :header-cell-style="{ background: '#f8fafc', color: '#475569' }"
+          >
           >
             <el-table-column prop="recordNo" label="病历编号" width="160">
               <template #default="{ row }">
@@ -115,7 +116,7 @@
           <!-- 卡片视图 -->
           <div v-else class="card-view">
             <el-row :gutter="20">
-              <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="row in tableData" :key="row.recordId">
+              <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="row in (tableData || [])" :key="row.recordId">
                 <div class="record-card-item" :class="{ 'draft': row.status === 0 }">
                   <div class="card-header-mini">
                     <el-tag :type="row.status === 1 ? 'success' : 'warning'" size="small" round>
@@ -379,7 +380,7 @@ import {
   Check, FirstAidKit, InfoFilled, ChatDotRound, 
   CircleCheck, Document, User, Grid, Menu
 } from '@element-plus/icons-vue'
-import { recordModule } from '@/api/doctor/doctor'
+import { recordModule, acceptModule } from '@/api/doctor/doctor'
 import { useSettingsStore } from '@/store/settings'
 import { useUserStore } from '@/store/user'
 
@@ -433,21 +434,124 @@ const formRules = {
   diagnosis: [{ required: true, message: '请输入诊断结果', trigger: 'blur' }]
 }
 
+// ========== 新增：根据挂号ID获取挂号单详情 ==========
+// ========== 修复：根据挂号ID获取挂号单详情 ==========
+const fetchRegisterDetail = async (registerId) => {
+  try {
+    const res = await acceptModule.getWaitAcceptList({
+      pageNum: 1,
+      pageSize: 100,
+      status: undefined
+    })
+    
+    console.log('获取挂号单列表结果:', res)
+    
+    if (res.code === 200 && res.data) {
+      const pageData = res.data
+      let list = pageData.data || pageData.list || pageData.records || []
+      
+      if (!Array.isArray(list)) {
+        list = []
+      }
+      
+      // 根据 registerId 查找对应的挂号单
+      const target = list.find(item => {
+        const id = item.registerId || item.register_id || item.id
+        return String(id) === String(registerId)
+      })
+      
+      if (target) {
+        console.log('找到挂号单:', target)
+        
+        // ========== 关键修复：使用 registerId（数字ID），不是 registerNo（字符串编号）==========
+        formData.registerId = target.registerId || target.register_id || target.id
+        formData.petName = target.petName || ''
+        formData.petId = target.petId || target.pet_id
+        
+        // 如果挂号单里有医生姓名就用，否则用当前登录医生
+        formData.doctorName = target.doctorName || userStore.userInfo?.realName || userStore.userInfo?.username || ''
+        
+        console.log('fetchRegisterDetail 赋值后:', {
+          registerId: formData.registerId,
+          petId: formData.petId,
+          petName: formData.petName
+        })
+        
+        return true
+      } else {
+        console.warn('未找到匹配的挂号单, registerId:', registerId)
+        return false
+      }
+    }
+    return false
+  } catch (error) {
+    console.error('获取挂号单详情失败:', error)
+    return false
+  }
+}
+
+// 获取列表
 // 获取列表
 const fetchList = async () => {
   loading.value = true
   try {
+    // 构建关键词：使用宠物名称作为关键词
+    let keyword = searchForm.petName || ''
+    
     const params = {
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
-      petName: searchForm.petName,
-      startDate: searchForm.dateRange?.[0],
-      endDate: searchForm.dateRange?.[1]
+      keyword: keyword,  // 使用 keyword 而不是 petName
+      startDate: searchForm.dateRange?.[0] || '',
+      endDate: searchForm.dateRange?.[1] || ''
     }
+    
+    console.log('请求参数:', params)
     const res = await recordModule.getMedicalRecordList(params)
-    tableData.value = res.data?.list || []
-    pagination.total = res.data?.total || 0
+    console.log('病历列表API返回:', res)
+    
+    if (res.code === 200 && res.data) {
+      let list = []
+      let total = 0
+      let current = pagination.pageNum
+      let size = pagination.pageSize
+      
+      const pageData = res.data
+      
+      if (pageData.data && Array.isArray(pageData.data)) {
+        list = pageData.data
+        total = pageData.total || list.length
+        current = pageData.current || pageData.pageNum || 1
+        size = pageData.size || pageData.pageSize || 10
+      } else if (pageData.list && Array.isArray(pageData.list)) {
+        list = pageData.list
+        total = pageData.total || list.length
+      } else if (pageData.records && Array.isArray(pageData.records)) {
+        list = pageData.records
+        total = pageData.total || list.length
+      } else if (Array.isArray(pageData)) {
+        list = pageData
+        total = list.length
+      }
+      
+      if (total === 0 && list.length > 0) {
+        total = list.length
+      }
+      
+      tableData.value = list
+      pagination.total = total
+      pagination.pageNum = current
+      pagination.pageSize = size
+      
+      console.log('解析后的列表:', list, '总数:', total)
+    } else {
+      tableData.value = []
+      pagination.total = 0
+      ElMessage.error(res.msg || '获取列表失败')
+    }
   } catch (error) {
+    console.error('获取病历列表失败:', error)
+    tableData.value = []
     ElMessage.error('获取列表失败')
   } finally {
     loading.value = false
@@ -502,7 +606,13 @@ const nextStep = async () => {
 // 重置表单
 const resetForm = () => {
   Object.keys(formData).forEach(key => {
-    formData[key] = key === 'recordId' ? null : ''
+    if (key === 'recordId') {
+      formData[key] = null
+    } else if (key === 'registerId' || key === 'petId') {
+      formData[key] = ''
+    } else {
+      formData[key] = ''
+    }
   })
 }
 
@@ -524,12 +634,54 @@ const applyTemplate = () => {
   }
 }
 
-// 打开创建表单
-const openCreateForm = () => {
+// ========== 关键修复：打开创建表单，增强数据获取 ==========
+// ========== 关键修复：打开创建表单，增强数据获取 ==========
+// ========== 修复：打开创建表单 ==========
+const openCreateForm = async () => {
   isEdit.value = false
   resetForm()
   currentStep.value = 0
   showForm.value = true
+  
+  // 先设置医生名称（兜底）
+  formData.doctorName = userStore.userInfo?.realName || userStore.userInfo?.username || ''
+  
+  // 从 URL 获取参数
+  const urlRegisterId = route.query.registerId
+  const urlPetId = route.query.petId
+  const urlPetName = route.query.petName
+  
+  console.log('URL 参数:', { urlRegisterId, urlPetId, urlPetName })
+  
+  // 设置基础值
+  if (urlRegisterId) {
+    formData.registerId = Number(urlRegisterId)
+  }
+  if (urlPetId) {
+    formData.petId = Number(urlPetId)
+  }
+  if (urlPetName) {
+    formData.petName = urlPetName
+  }
+  
+  console.log('URL 参数赋值后:', {
+    registerId: formData.registerId,
+    petId: formData.petId,
+    petName: formData.petName
+  })
+  
+  // 如果有 registerId，尝试获取更完整的信息（但保留数字ID）
+  if (formData.registerId) {
+    await fetchRegisterDetail(formData.registerId)
+  }
+  
+  console.log('最终 formData:', {
+    registerId: formData.registerId,
+    petId: formData.petId,
+    petName: formData.petName,
+    doctorName: formData.doctorName
+  })
+  
   applyTemplate()
 }
 
@@ -539,11 +691,33 @@ const handleView = (row) => {
 }
 
 // 编辑
+// 编辑 - 修复：确保所有字段都被正确赋值
 const handleEdit = (row) => {
+  console.log('编辑病历，原始数据:', row)
+  
   isEdit.value = true
-  Object.assign(formData, row)
+  // 确保所有字段都被赋值
+  formData.recordId = row.recordId || row.id
+  formData.registerId = row.registerId || ''
+  formData.petId = row.petId || ''
+  formData.petName = row.petName || ''
+  formData.doctorName = row.doctorName || userStore.userInfo?.realName || ''
+  formData.chiefComplaint = row.chiefComplaint || ''
+  formData.symptoms = row.symptoms || ''
+  formData.presentIllness = row.presentIllness || ''
+  formData.pastHistory = row.pastHistory || ''
+  formData.physicalExam = row.physicalExam || ''
+  formData.auxiliaryExam = row.auxiliaryExam || ''
+  formData.diagnosis = row.diagnosis || ''
+  formData.treatmentPlan = row.treatmentPlan || ''
+  formData.doctorAdvice = row.doctorAdvice || ''
+  formData.remark = row.remark || ''
+  formData.status = row.status || 0
+  
   currentStep.value = 0
   showForm.value = true
+  
+  console.log('编辑病历，赋值后 formData:', formData)
 }
 
 // 导出
@@ -552,22 +726,101 @@ const handleExport = (row) => {
 }
 
 // 提交
+// 提交
+// 提交
 const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     
+    // ========== 关键修复：确保 ID 是数字类型 ==========
+    let registerIdValue = formData.registerId
+    let petIdValue = formData.petId
+    
+    // 如果是字符串，尝试转换为数字
+    if (typeof registerIdValue === 'string' && registerIdValue.trim() !== '') {
+      registerIdValue = Number(registerIdValue)
+    }
+    if (typeof petIdValue === 'string' && petIdValue.trim() !== '') {
+      petIdValue = Number(petIdValue)
+    }
+    
+    // 校验转换后的值
+    if (!registerIdValue || isNaN(registerIdValue) || registerIdValue <= 0) {
+      ElMessage.error('挂号ID无效，请从接诊列表重新进入')
+      return
+    }
+    if (!petIdValue || isNaN(petIdValue) || petIdValue <= 0) {
+      ElMessage.error('宠物ID无效，请从接诊列表重新进入')
+      return
+    }
+    
+    // 获取医生ID
+    const doctorIdValue = userStore.userInfo?.doctorId || userStore.userInfo?.id || 2006
+    
     if (isEdit.value) {
-      await recordModule.updateMedicalRecord(formData)
+      // 编辑模式
+      if (!formData.recordId) {
+        ElMessage.error('病历ID不能为空')
+        return
+      }
+      
+      const updateData = {
+        recordId: Number(formData.recordId),
+        registerId: registerIdValue,
+        petId: petIdValue,
+        doctorId: Number(doctorIdValue),
+        doctorName: formData.doctorName || userStore.userInfo?.realName || '',
+        chiefComplaint: formData.chiefComplaint || '',
+        symptoms: formData.symptoms || '',
+        presentIllness: formData.presentIllness || '',
+        pastHistory: formData.pastHistory || '',
+        physicalExam: formData.physicalExam || '',
+        auxiliaryExam: formData.auxiliaryExam || '',
+        diagnosis: formData.diagnosis || '',
+        treatmentPlan: formData.treatmentPlan || '',
+        doctorAdvice: formData.doctorAdvice || '',
+        remark: formData.remark || '',
+        status: formData.status || 1
+      }
+      
+      console.log('更新病历数据:', updateData)
+      await recordModule.updateMedicalRecord(updateData)
       ElMessage.success('更新成功')
     } else {
-      await recordModule.createMedicalRecord(formData)
+      // 创建模式 - 严格按照后端 DTO 字段名
+      const createData = {
+        registerId: registerIdValue,
+        petId: petIdValue,
+        doctorId: Number(doctorIdValue),
+        doctorName: formData.doctorName || userStore.userInfo?.realName || '',
+        chiefComplaint: formData.chiefComplaint || '',
+        symptoms: formData.symptoms || '',
+        presentIllness: formData.presentIllness || '',
+        pastHistory: formData.pastHistory || '',
+        physicalExam: formData.physicalExam || '',
+        auxiliaryExam: formData.auxiliaryExam || '',
+        diagnosis: formData.diagnosis || '',
+        treatmentPlan: formData.treatmentPlan || '',
+        doctorAdvice: formData.doctorAdvice || '',
+        remark: formData.remark || ''
+      }
+      
+      console.log('创建病历数据:', createData)
+      await recordModule.createMedicalRecord(createData)
       ElMessage.success('创建成功')
     }
     
     showForm.value = false
     fetchList()
   } catch (error) {
-    console.error(error)
+    console.error('提交失败:', error)
+    if (error.response?.data?.msg) {
+      ElMessage.error(error.response.data.msg)
+    } else if (error.message) {
+      ElMessage.error('提交失败: ' + error.message)
+    } else {
+      ElMessage.error('提交失败，请检查表单')
+    }
   }
 }
 
@@ -583,12 +836,56 @@ const handleSubmitAndPrescription = async () => {
   })
 }
 
-onMounted(() => {
+// ========== 关键修复：onMounted 增加调试日志 ==========
+// ========== 关键修复：onMounted 增加调试日志 ==========
+onMounted(async () => {
+  console.log('=== 路由参数检查 ===')
+  console.log('route.query:', route.query)
+  
+  // 兼容大小写和拼写错误
+  const petId = route.query.petId || route.query.petld || route.query.PetId
+  const registerId = route.query.registerId || route.query.registerld || route.query.RegisterId
+  const petName = route.query.petName || route.query.PetName || ''
+  
+  console.log('解析后的参数:', { petId, registerId, petName })
+  console.log('userStore.userInfo:', userStore.userInfo)
+  
   if (route.query.action === 'create') {
-    formData.petId = route.query.petId
-    formData.registerId = route.query.registerId
-    formData.petName = route.query.petName || ''
-    formData.doctorName = userStore.userInfo?.realName || userStore.userInfo?.username || ''
+    // 设置基础值 - 转换为数字
+    if (petId) {
+      const numericPetId = Number(petId)
+      if (!isNaN(numericPetId)) {
+        formData.petId = numericPetId
+      }
+    }
+    if (registerId) {
+      const numericRegisterId = Number(registerId)
+      if (!isNaN(numericRegisterId)) {
+        formData.registerId = numericRegisterId
+      }
+    }
+    if (petName) formData.petName = petName
+    
+    // 设置医生名
+    formData.doctorName = userStore.userInfo?.realName || 
+                          userStore.userInfo?.username || 
+                          userStore.userInfo?.name || ''
+    
+    console.log('赋值后的 formData:', {
+      petId: formData.petId,
+      registerId: formData.registerId,
+      petName: formData.petName,
+      doctorName: formData.doctorName
+    })
+    
+    // 检查是否有必要字段缺失
+    if (!formData.registerId) {
+      ElMessage.warning('未获取到挂号ID，请从接诊列表重新进入')
+    }
+    if (!formData.petId) {
+      ElMessage.warning('未获取到宠物ID，请从接诊列表重新进入')
+    }
+    
     openCreateForm()
   } else {
     fetchList()

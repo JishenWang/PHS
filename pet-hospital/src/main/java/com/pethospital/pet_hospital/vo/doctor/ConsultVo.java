@@ -26,11 +26,16 @@ public class ConsultVo {
     // 宠物信息
     private Long petId;
     private String petName;
+    private String petType;         // 宠物类型：犬/猫/兔等
     
     // 主人信息
     private Long ownerId;
     private String ownerName;
     private String ownerPhone;
+    
+    // 医生信息
+    private Long doctorId;
+    private String doctorName;
     
     // 咨询内容
     private String title;           // 咨询标题

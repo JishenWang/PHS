@@ -192,55 +192,45 @@ export const asyncRoutes = [
         path: 'accept',
         name: 'DoctorAccept',
         component: () => import('@/views/doctor/accept/index.vue'),
-        meta: { title: '接诊管理', icon: 'accept' }
-      },
-      {
-        path: 'record',
-        name: 'DoctorRecord',
-        component: () => import('@/views/doctor/record/index.vue'),
-        meta: { title: '病历管理', icon: 'record' }
-      },
-      {
-        path: 'prescription',
-        name: 'DoctorPrescription',
-        component: () => import('@/views/doctor/prescription/index.vue'),
-        meta: { title: '处方管理', icon: 'prescription' }
-      },
-      {
-        path: 'consult',
-        name: 'DoctorConsult',
-        component: () => import('@/views/doctor/consult/index.vue'),
-        meta: { title: '在线咨询', icon: 'consult' }
+        meta: { title: '接诊列表', icon: 'Calendar' }
       },
       {
         path: 'pet',
         name: 'DoctorPet',
         component: () => import('@/views/doctor/pet/index.vue'),
-        meta: { title: '宠物档案', icon: 'pet' }
+        meta: { title: '宠物档案', icon: 'FirstAidKit' }
       },
       {
         path: 'record',
         name: 'DoctorRecord',
-        component: () => import('../views/doctor/record/index.vue'),
-        meta: { title: '病历记录', icon: 'record' }
+        component: () => import('@/views/doctor/record/index.vue'),
+        meta: { title: '病历记录', icon: 'Document' }
       },
       {
         path: 'prescription',
         name: 'DoctorPrescription',
-        component: () => import('../views/doctor/prescription/index.vue'),
-        meta: { title: '处方开具', icon: 'prescription' }
+        component: () => import('@/views/doctor/prescription/index.vue'),
+        meta: { title: '处方开具', icon: 'Tickets' }
       },
       {
         path: 'consult',
         name: 'DoctorConsult',
-        component: () => import('../views/doctor/consult/index.vue'),
-        meta: { title: '咨询回复', icon: 'consult' }
+        component: () => import('@/views/doctor/consult/index.vue'),
+        meta: { title: '在线咨询', icon: 'ChatDotRound' }
       },
+      // ========== 新增：个人中心 ==========
       {
         path: 'profile',
         name: 'DoctorProfile',
-        component: () => import('../views/doctor/profile/index.vue'),
+        component: () => import('@/views/doctor/profile/index.vue'),
         meta: { title: '个人中心', hidden: true }
+      },
+      // ========== 新增：系统设置 ==========
+      {
+        path: 'settings',
+        name: 'DoctorSettings',
+        component: () => import('@/views/doctor/settings/index.vue'),
+        meta: { title: '系统设置', hidden: true }
       }
     ]
   }

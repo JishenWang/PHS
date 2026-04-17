@@ -4,80 +4,74 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pethospital.pet_hospital.mapper.DoctorMapper">
 
-    <select id="getById" resultType="com.pethospital.pet_hospital.entity.Doctor">
-        select id as id,
-               user_id as userId,
-               doctor_no as doctorNo,
-               dept_id as deptId,
-               name as name,
-               department as dept,
-               title as title,
-               phone as phone,
-               specialty as specialty,
-               introduction as introduction,
-               avatar_url as avatarUrl,
-               patient_count as patientCount,
-               consultation_fee as consultationFee,
-               work_status as workStatusCode,
-               auth_status as authStatus,
-               auth_remark as authRemark,
-               rating as rating,
-               status as status,
-               create_time as createTime,
-               update_time as updateTime,
-               created_time as createdTime,
-               updated_time as updatedTime,
-               is_deleted as isDeleted
-        from doctor_profile
-        where id = #{id}
+    <!-- 结果映射 -->
+    <resultMap id="doctorResultMap" type="com.pethospital.pet_hospital.entity.Doctor">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="doctorNo" column="doctor_no"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="name" column="name"/>
+        <result property="department" column="department"/>
+        <result property="title" column="title"/>
+        <result property="phone" column="phone"/>
+        <result property="specialty" column="specialty"/>
+        <result property="introduction" column="introduction"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="patientCount" column="patient_count"/>
+        <result property="consultationFee" column="consultation_fee"/>
+        <result property="workStatus" column="work_status"/>
+        <result property="authStatus" column="auth_status"/>
+        <result property="authRemark" column="auth_remark"/>
+        <result property="rating" column="rating"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="isDeleted" column="is_deleted"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="baseColumns">
+        id, user_id, doctor_no, dept_id, name, department, title, phone,
+        specialty, introduction, avatar_url, patient_count, consultation_fee,
+        work_status, auth_status, auth_remark, rating, status,
+        create_time, update_time, is_deleted
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="getById" resultMap="doctorResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM doctor_profile
+        WHERE id = #{id} AND is_deleted = 0
     </select>
 
-    <select id="listAllFull" resultType="com.pethospital.pet_hospital.entity.Doctor">
-        select id as id,
-               user_id as userId,
-               doctor_no as doctorNo,
-               dept_id as deptId,
-               name as name,
-               department as dept,
-               title as title,
-               phone as phone,
-               specialty as specialty,
-               introduction as introduction,
-               avatar_url as avatarUrl,
-               patient_count as patientCount,
-               consultation_fee as consultationFee,
-               work_status as workStatusCode,
-               auth_status as authStatus,
-               auth_remark as authRemark,
-               rating as rating,
-               status as status,
-               create_time as createTime,
-               update_time as updateTime,
-               created_time as createdTime,
-               updated_time as updatedTime,
-               is_deleted as isDeleted
-        from doctor_profile
-        order by id desc
+    <!-- 查询全部（完整字段） -->
+    <select id="listAllFull" resultMap="doctorResultMap">
+        SELECT <include refid="baseColumns"/>
+        FROM doctor_profile
+        WHERE is_deleted = 0
+        ORDER BY id DESC
     </select>
 
+    <!-- 查询全部（简化字段） -->
     <select id="listAll" resultType="com.pethospital.pet_hospital.entity.Doctor">
-        select id,
-               user_id as userId,
-               doctor_no as doctorNo,
-               name,
-               department as dept,
-               dept_id as deptId,
-               work_status as workStatusCode,
-               case work_status
-                   when 1 then 'FREE'
-                   when 2 then 'BUSY'
-                   else 'REST'
-                   end as workStatus,
-               created_time as createdTime,
-               updated_time as updatedTime
-        from doctor_profile
-        where is_deleted = 0
-        order by id desc
+        SELECT 
+            id,
+            user_id as userId,
+            doctor_no as doctorNo,
+            name,
+            department as dept,  <!-- 注意：这里映射为dept -->
+            dept_id as deptId,
+            work_status as workStatus,
+            CASE work_status
+                WHEN 1 THEN 'FREE'
+                WHEN 2 THEN 'BUSY'
+                ELSE 'REST'
+            END as workStatusDesc,
+            create_time as createTime,
+            update_time as updateTime
+        FROM doctor_profile
+        WHERE is_deleted = 0
+        ORDER BY id DESC
     </select>
 
 </mapper>

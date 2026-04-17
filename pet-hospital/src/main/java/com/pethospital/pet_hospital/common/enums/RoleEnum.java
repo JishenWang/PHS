@@ -62,4 +62,35 @@ public enum RoleEnum {
         }
         return null;
     }
+
+    /**
+     * 根据角色编码字符串获取枚举（用于角色字符串转枚举）
+     * @param code 角色编码字符串（如 "admin", "doctor", "desk", "owner"）
+     * @return RoleEnum
+     */
+    public static RoleEnum getByCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        for (RoleEnum role : values()) {
+            if (role.value.equals(code) || role.name().equalsIgnoreCase(code)) {
+                return role;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 获取角色名称（中文描述）
+     */
+    public String getName() {
+        return this.description;
+    }
+
+    /**
+     * 获取角色标识（value）
+     */
+    public String getRoleCode() {
+        return this.value;
+    }
 }

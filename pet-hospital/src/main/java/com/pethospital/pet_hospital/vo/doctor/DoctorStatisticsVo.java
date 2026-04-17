@@ -8,12 +8,6 @@ import lombok.Builder;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * 医生统计VO
- * 
- * @author YangXinxin
- * @date 2026-04-05
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -32,9 +26,6 @@ public class DoctorStatisticsVo {
     private List<MonthlyStat> monthlyStats; // 每月统计
     private List<YearlyStat> yearlyStats;   // 每年统计
     
-    /**
-     * 每日统计
-     */
     @Data
     @Builder
     @NoArgsConstructor
@@ -47,9 +38,6 @@ public class DoctorStatisticsVo {
         private BigDecimal amount;      // 金额
     }
     
-    /**
-     * 每月统计
-     */
     @Data
     @Builder
     @NoArgsConstructor
@@ -62,9 +50,6 @@ public class DoctorStatisticsVo {
         private BigDecimal amount;
     }
     
-    /**
-     * 每年统计
-     */
     @Data
     @Builder
     @NoArgsConstructor
