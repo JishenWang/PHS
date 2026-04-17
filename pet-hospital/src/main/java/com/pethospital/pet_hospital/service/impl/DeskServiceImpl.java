@@ -1,10 +1,5 @@
 package com.pethospital.pet_hospital.service.impl;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -132,15 +127,8 @@ public class DeskServiceImpl implements IDeskService {
         List<Map<String, Object>> normalized = new ArrayList<>();
         for (Map<String, Object> row : list) {
             Map<String, Object> one = new HashMap<>(row);
-            one.put("registerNo", firstNonBlank(row, "registerNo", "register_no"));
-            one.put("customerName", firstNonBlank(row, "customerName", "owner_name"));
-            one.put("phone", firstNonBlank(row, "phone", "owner_phone"));
-            one.put("petName", firstNonBlank(row, "petName", "pet_name"));
-            one.put("petSpecies", firstNonBlank(row, "petSpecies", "pet_species", "pet_type"));
-            one.put("doctorName", firstNonBlank(row, "doctorName", "doctor_name"));
-            one.put("serviceType", firstNonBlank(row, "serviceType", "service_type", "serviceName"));
-            one.put("reason", firstNonBlank(row, "reason", "symptom", "triage_note"));
-            one.put("visitTime", firstNonNull(row, "visitTime", "visit_time", "register_time"));
+            one.put("serviceType", "普通门诊");
+            one.put("reason", "");
             normalized.add(one);
         }
         return pageMap(normalized, total == null ? 0L : total, page, pageSize);
@@ -349,10 +337,6 @@ public class DeskServiceImpl implements IDeskService {
         }
         try {
             int updated = registerRecordMapper.updateStatusById(id, dbStatus);
-            if (updated > 0 && dbStatus == 2) {
-                // 完成就诊后确保产生待收费订单，打通“挂号 -> 收费 -> 订单核对”闭环。
-                ensurePendingOrderForRegister(id);
-            }
             result.put("success", updated > 0);
             result.put("message", updated > 0 ? "状态更新成功" : "挂号单不存在");
         } catch (Exception ex) {
@@ -531,13 +515,10 @@ public class DeskServiceImpl implements IDeskService {
             Long exist = jdbcTemplate.queryForObject("select count(1) from register_record where appointment_id=? and is_deleted=0", Long.class, reserveId);
             if (exist != null && exist == 0) {
                 String registerNo = "RG" + System.currentTimeMillis();
-                insertReserveRegisterWithCompatibility(
-                        registerNo,
-                        reserveId,
-                        ownerId,
-                        petId,
-                        doctorId,
-                        parseLongObj(a.get("service_item_id"))
+                jdbcTemplate.update(
+                        "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,created_time,updated_time,create_time,update_time) " +
+                                "values(?,?,?,?,?,?,now(),0,0,0,now(),now(),now(),now())",
+                        registerNo, reserveId, ownerId, petId, doctorId, a.get("service_item_id")
                 );
             }
             result.put("success", true);
@@ -553,12 +534,9 @@ public class DeskServiceImpl implements IDeskService {
     @Override
     public Map<String, Object> createRegister(Map<String, Object> payload) {
         Map<String, Object> result = new HashMap<>();
-        Long ownerId = parseIdFromPayload(payload, "customerId", "ownerId", "ownerUserId");
-        Long petId = parseIdFromPayload(payload, "petId");
-        Long doctorId = parseIdFromPayload(payload, "doctorId");
-        if (doctorId == null) {
-            doctorId = queryDoctorIdByName(str(payload.get("doctorName")));
-        }
+        Long ownerId = parseLongObj(payload.get("customerId"));
+        Long petId = parseLongObj(payload.get("petId"));
+        Long doctorId = parseLongObj(payload.get("doctorId"));
         if (ownerId == null || petId == null || doctorId == null) {
             result.put("success", false);
             result.put("message", "参数无效");
@@ -569,28 +547,19 @@ public class DeskServiceImpl implements IDeskService {
             if (isBlank(registerNo)) {
                 registerNo = "RG" + System.currentTimeMillis();
             }
-            String appointmentNo = "AP" + registerNo.replaceFirst("^RG", "");
             String reason = str(payload.get("reason"));
-            Long serviceItemId = queryServiceItemIdByType(str(payload.get("serviceType")));
-            Timestamp appointmentTime = parseVisitTime(payload.get("visitTime"));
-            insertAppointmentWithCompatibility(
-                    appointmentNo,
-                    ownerId,
-                    petId,
-                    doctorId,
-                    serviceItemId,
-                    str(payload.get("serviceType")),
-                    reason,
-                    appointmentTime
+            jdbcTemplate.update(
+                    "insert into register_record(register_no,owner_user_id,pet_id,doctor_id,register_time,symptom,status,amount,is_deleted,created_time,updated_time,create_time,update_time) " +
+                            "values(?,?,?,?,now(),?,0,0,0,now(),now(),now(),now())",
+                    registerNo, ownerId, petId, doctorId, reason
             );
             result.put("success", true);
-            result.put("reserveNo", appointmentNo);
-            result.put("message", "预约已创建，请先在预约核销中完成核销");
+            result.put("registerNo", registerNo);
             return result;
         } catch (Exception ex) {
             log.error("createRegister failed", ex);
             result.put("success", false);
-            result.put("message", "创建挂号失败：" + friendlyDbError(ex));
+            result.put("message", "创建挂号失败");
             return result;
         }
     }
@@ -646,7 +615,7 @@ public class DeskServiceImpl implements IDeskService {
         }
         try {
             int updated = jdbcTemplate.update(
-                    "update order_info set pay_status=2, pay_status_text='refunding', remark=concat(ifnull(remark,''),' 退款原因:',?), update_time=now(), updated_time=now() where id=? and pay_status=1",
+                    "update order_info set pay_status=2, remark=concat(ifnull(remark,''),' 退款原因:',?), update_time=now(), updated_time=now() where id=? and pay_status=1",
                     strOrDefault(reason, ""), id
             );
             result.put("success", updated > 0);
@@ -768,348 +737,11 @@ public class DeskServiceImpl implements IDeskService {
         }
     }
 
-    /**
-     * 兼容前端传入 "d_3001" / "3001" / 3001 等多种主键格式。
-     */
-    private Long parseFlexibleLong(Object obj) {
-        if (obj == null) {
-            return null;
-        }
-        String raw = String.valueOf(obj).trim();
-        if (raw.isEmpty()) {
-            return null;
-        }
-        Long direct = parseLongObj(raw);
-        if (direct != null) {
-            return direct;
-        }
-        String digits = raw.replaceAll("\\D+", "");
-        if (digits.isEmpty()) {
-            return null;
-        }
-        return parseLongObj(digits);
-    }
-
-    private Long parseIdFromPayload(Map<String, Object> payload, String... keys) {
-        if (payload == null || keys == null) {
-            return null;
-        }
-        for (String key : keys) {
-            Long id = parseFlexibleLong(payload.get(key));
-            if (id != null) {
-                return id;
-            }
-        }
-        return null;
-    }
-
-    private Long queryDoctorIdByName(String doctorName) {
-        if (isBlank(doctorName)) {
-            return null;
-        }
-        try {
-            List<Long> ids = jdbcTemplate.query(
-                    "select id from doctor_profile where is_deleted=0 and name=? order by id asc limit 1",
-                    (rs, rowNum) -> rs.getLong("id"),
-                    doctorName.trim()
-            );
-            return ids.isEmpty() ? null : ids.get(0);
-        } catch (Exception ex) {
-            log.warn("queryDoctorIdByName failed, doctorName={}", doctorName, ex);
-            return null;
-        }
-    }
-
-    private Long queryServiceItemIdByType(String serviceType) {
-        if (isBlank(serviceType)) {
-            return null;
-        }
-        try {
-            List<Long> ids = jdbcTemplate.query(
-                    "select id from service_item where is_deleted=0 and (service_name=? or category=?) order by id asc limit 1",
-                    (rs, rowNum) -> rs.getLong("id"),
-                    serviceType.trim(),
-                    serviceType.trim()
-            );
-            return ids.isEmpty() ? null : ids.get(0);
-        } catch (Exception ex) {
-            log.warn("queryServiceItemIdByType failed, serviceType={}", serviceType, ex);
-            return null;
-        }
-    }
-
-    private void insertRegisterWithCompatibility(String registerNo,
-                                                 Long ownerId,
-                                                 Long petId,
-                                                 Long doctorId,
-                                                 Long serviceItemId,
-                                                 String reason) {
-        List<String> sqlList = new ArrayList<>();
-        sqlList.add(
-                "insert into register_record(" +
-                        "register_no,owner_user_id,pet_id,doctor_id,service_item_id,register_time,symptom,status,amount,is_deleted,created_time,updated_time,create_time,update_time" +
-                        ") values(?,?,?,?,?,now(),?,0,0,0,now(),now(),now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(" +
-                        "register_no,owner_user_id,pet_id,doctor_id,service_item_id,register_time,symptom,status,amount,is_deleted,create_time,update_time" +
-                        ") values(?,?,?,?,?,now(),?,0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(" +
-                        "register_no,owner_user_id,pet_id,doctor_id,service_item_id,register_time,symptom,status,amount,is_deleted,created_time,updated_time" +
-                        ") values(?,?,?,?,?,now(),?,0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(" +
-                        "register_no,owner_user_id,pet_id,doctor_id,register_time,symptom,status,amount,is_deleted,create_time,update_time" +
-                        ") values(?,?,?,?,now(),?,0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(" +
-                        "register_no,owner_user_id,pet_id,doctor_id,register_time,symptom,status,amount,is_deleted,created_time,updated_time" +
-                        ") values(?,?,?,?,now(),?,0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(" +
-                        "register_no,owner_user_id,pet_id,doctor_id,register_time,symptom,status,amount,is_deleted" +
-                        ") values(?,?,?,?,now(),?,0,0,0)"
-        );
-
-        Exception last = null;
-        for (String sql : sqlList) {
-            try {
-                if (sql.contains("service_item_id")) {
-                    jdbcTemplate.update(sql, registerNo, ownerId, petId, doctorId, serviceItemId, reason);
-                } else {
-                    jdbcTemplate.update(sql, registerNo, ownerId, petId, doctorId, reason);
-                }
-                return;
-            } catch (Exception ex) {
-                last = ex;
-                log.warn("insert register fallback failed, try next sql", ex);
-            }
-        }
-        if (last instanceof RuntimeException) {
-            throw (RuntimeException) last;
-        }
-        throw new RuntimeException(last);
-    }
-
-    private void insertAppointmentWithCompatibility(String appointmentNo,
-                                                    Long ownerId,
-                                                    Long petId,
-                                                    Long doctorId,
-                                                    Long serviceItemId,
-                                                    String serviceType,
-                                                    String reason,
-                                                    Timestamp appointmentTime) {
-        List<String> sqlList = new ArrayList<>();
-        sqlList.add(
-                "insert into appointment(" +
-                        "appointment_no,owner_user_id,owner_id,pet_id,doctor_id,service_item_id,service_type,appointment_time,symptom_desc,source_type,status,status_text,is_deleted,created_time,updated_time,create_time,update_time" +
-                        ") values(?,?,?,?,?,?,?,?,?,'DESK',0,'pending',0,now(),now(),now(),now())"
-        );
-        sqlList.add(
-                "insert into appointment(" +
-                        "appointment_no,owner_user_id,owner_id,pet_id,doctor_id,service_item_id,service_type,appointment_time,symptom_desc,source_type,status,status_text,is_deleted,create_time,update_time" +
-                        ") values(?,?,?,?,?,?,?,?,?,'DESK',0,'pending',0,now(),now())"
-        );
-        sqlList.add(
-                "insert into appointment(" +
-                        "appointment_no,owner_user_id,owner_id,pet_id,doctor_id,service_item_id,service_type,appointment_time,symptom_desc,source_type,status,is_deleted,create_time,update_time" +
-                        ") values(?,?,?,?,?,?,?,?,?,'DESK',0,0,now(),now())"
-        );
-
-        Exception last = null;
-        for (String sql : sqlList) {
-            try {
-                jdbcTemplate.update(
-                        sql,
-                        appointmentNo,
-                        ownerId,
-                        ownerId,
-                        petId,
-                        doctorId,
-                        serviceItemId,
-                        strOrDefault(serviceType, "普通门诊"),
-                        appointmentTime,
-                        strOrDefault(reason, "")
-                );
-                return;
-            } catch (Exception ex) {
-                last = ex;
-                log.warn("insert appointment fallback failed, try next sql", ex);
-            }
-        }
-        if (last instanceof RuntimeException) {
-            throw (RuntimeException) last;
-        }
-        throw new RuntimeException(last);
-    }
-
-    private Timestamp parseVisitTime(Object visitTime) {
-        String raw = str(visitTime);
-        if (isBlank(raw)) {
-            return new Timestamp(System.currentTimeMillis());
-        }
-        try {
-            return Timestamp.from(Instant.parse(raw));
-        } catch (Exception ignore) {
-            // continue with local datetime parse
-        }
-        try {
-            LocalDateTime dt = LocalDateTime.parse(raw, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            return Timestamp.valueOf(dt);
-        } catch (Exception ignore) {
-            // continue
-        }
-        try {
-            LocalDateTime dt = LocalDateTime.parse(raw, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-            return Timestamp.valueOf(dt);
-        } catch (Exception ignore) {
-            return Timestamp.from(Instant.now().atZone(ZoneId.systemDefault()).toInstant());
-        }
-    }
-
-    private String friendlyDbError(Exception ex) {
-        if (ex == null || ex.getMessage() == null) {
-            return "数据库异常";
-        }
-        String msg = ex.getMessage();
-        String lower = msg.toLowerCase();
-        if (lower.contains("communications link failure")
-                || lower.contains("connection")
-                || lower.contains("jdbcconnection")) {
-            return "数据库连接异常";
-        }
-        if (lower.contains("constraint") || lower.contains("foreign key")) {
-            return "关联数据不存在";
-        }
-        if (lower.contains("unknown column")) {
-            return "数据库字段不匹配";
-        }
-        return "数据库写入异常";
-    }
-
-    private void ensurePendingOrderForRegister(Long registerId) {
-        if (registerId == null) {
-            return;
-        }
-        Long exists = jdbcTemplate.queryForObject(
-                "select count(1) from order_info where register_id=?",
-                Long.class,
-                registerId
-        );
-        if (exists != null && exists > 0) {
-            return;
-        }
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "select rr.id, rr.appointment_id, rr.owner_user_id, rr.pet_id, rr.doctor_id, rr.service_item_id, rr.amount, " +
-                        "si.price as service_price, si.service_name " +
-                        "from register_record rr " +
-                        "left join service_item si on si.id = rr.service_item_id " +
-                        "where rr.id=? and rr.is_deleted=0 limit 1",
-                registerId
-        );
-        if (rows.isEmpty()) {
-            return;
-        }
-        Map<String, Object> row = rows.get(0);
-        Long ownerId = parseLongObj(row.get("owner_user_id"));
-        if (ownerId == null) {
-            return;
-        }
-        Long petId = parseLongObj(row.get("pet_id"));
-        Long doctorId = parseLongObj(row.get("doctor_id"));
-        Long appointmentId = parseLongObj(row.get("appointment_id"));
-        double servicePrice = parseDouble(row.get("service_price"));
-        double registerAmount = parseDouble(row.get("amount"));
-        double payable = servicePrice > 0 ? servicePrice : (registerAmount > 0 ? registerAmount : 30D);
-        String serviceName = strOrDefault(row.get("service_name"), "普通门诊");
-
-        String orderNo = "OD" + System.currentTimeMillis() + ((int) (Math.random() * 90) + 10);
-        jdbcTemplate.update(
-                "insert into order_info(order_no,register_id,appointment_id,owner_user_id,pet_id,doctor_id,total_amount,discount_amount,reduction_amount,adjust_amount,payable_amount,paid_amount,pay_status,pay_status_text,remark,create_time,update_time,created_time,updated_time) " +
-                        "values(?,?,?,?,?,?,?,0,0,0,?,0,0,'pending',?,now(),now(),now(),now())",
-                orderNo, registerId, appointmentId, ownerId, petId, doctorId, payable, payable, "挂号完成待收费：" + serviceName
-        );
-    }
-
-    private void insertReserveRegisterWithCompatibility(String registerNo,
-                                                        Long reserveId,
-                                                        Long ownerId,
-                                                        Long petId,
-                                                        Long doctorId,
-                                                        Long serviceItemId) {
-        List<String> sqlList = new ArrayList<>();
-        sqlList.add(
-                "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,created_time,updated_time,create_time,update_time) " +
-                        "values(?,?,?,?,?,?,now(),0,0,0,now(),now(),now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,create_time,update_time) " +
-                        "values(?,?,?,?,?,?,now(),0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,created_time,updated_time) " +
-                        "values(?,?,?,?,?,?,now(),0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,register_time,status,amount,is_deleted,create_time,update_time) " +
-                        "values(?,?,?,?,?,now(),0,0,0,now(),now())"
-        );
-        sqlList.add(
-                "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,register_time,status,amount,is_deleted,created_time,updated_time) " +
-                        "values(?,?,?,?,?,now(),0,0,0,now(),now())"
-        );
-
-        Exception last = null;
-        for (String sql : sqlList) {
-            try {
-                if (sql.contains("service_item_id")) {
-                    jdbcTemplate.update(sql, registerNo, reserveId, ownerId, petId, doctorId, serviceItemId);
-                } else {
-                    jdbcTemplate.update(sql, registerNo, reserveId, ownerId, petId, doctorId);
-                }
-                return;
-            } catch (Exception ex) {
-                last = ex;
-                log.warn("insert reserve register fallback failed, try next sql", ex);
-            }
-        }
-        if (last instanceof RuntimeException) {
-            throw (RuntimeException) last;
-        }
-        throw new RuntimeException(last);
-    }
-
     private Object[] mergeArgs(List<Object> args, Object... tail) {
         List<Object> merged = new ArrayList<>(args);
         for (Object t : tail) {
             merged.add(t);
         }
         return merged.toArray();
-    }
-
-    private String firstNonBlank(Map<String, Object> row, String... keys) {
-        Object obj = firstNonNull(row, keys);
-        if (obj == null) {
-            return "";
-        }
-        String str = String.valueOf(obj);
-        return isBlank(str) ? "" : str;
-    }
-
-    private Object firstNonNull(Map<String, Object> row, String... keys) {
-        if (row == null || keys == null) {
-            return null;
-        }
-        for (String key : keys) {
-            if (row.containsKey(key) && row.get(key) != null) {
-                return row.get(key);
-            }
-        }
-        return null;
     }
 }
