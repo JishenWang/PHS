@@ -122,7 +122,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { buildRegisterExportCsv, createRegister, getDeskEnums, getRegisterList, getReserveList, queryCustomers, updateRegisterStatus, verifyReserve } from '@/api/desk/desk'
+import { buildRegisterExportCsv, createRegister, getDeskEnums, getDoctorStatusList, getRegisterList, getReserveList, queryCustomers, updateRegisterStatus, verifyReserve } from '@/api/desk/desk'
 
 const enums = getDeskEnums()
 const loading = ref(false)
@@ -171,6 +171,21 @@ function formatTime(v) {
 async function fetchCustomers() {
   const { data } = await queryCustomers({ page: 1, pageSize: 999 })
   customers.value = data.list || []
+}
+
+async function fetchDoctors() {
+  try {
+    const { data } = await getDoctorStatusList()
+    const list = Array.isArray(data) ? data : []
+    if (list.length > 0) {
+      enums.doctors.splice(0, enums.doctors.length, ...list)
+      if (!form.doctorId) {
+        form.doctorId = list[0].id
+      }
+    }
+  } catch (e) {
+    ElMessage.error(e?.message || '医生列表加载失败')
+  }
 }
 
 async function fetchReserve() {
@@ -293,6 +308,7 @@ function exportCsv() {
 }
 
 onMounted(async () => {
+  await fetchDoctors()
   await fetchCustomers()
   await fetchReserve()
   await fetchList()

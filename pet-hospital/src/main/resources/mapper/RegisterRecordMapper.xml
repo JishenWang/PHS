@@ -74,28 +74,38 @@
     <!-- 医生端接诊列表查询 - 直接使用数字状态 -->
     <select id="listDeskRegisters" resultType="java.util.HashMap">
         SELECT 
-            r.id,
-            r.register_no as register_no,
-            r.pet_id,
-            r.owner_user_id as owner_id,
-            r.doctor_id,
-            r.service_item_id as service_type,
-            r.triage_note as symptom,
-            r.status,
-            r.amount,
-            r.register_time as visit_time,
-            r.accept_time,
-            r.create_time,
-            p.name as pet_name,
-            p.type as pet_type,
-            p.breed,
-            p.age,
-            p.gender,
-            u.real_name as owner_name,
-            u.phone as owner_phone
+            r.id AS id,
+            r.register_no AS registerNo,
+            r.pet_id AS petId,
+            r.owner_user_id AS customerId,
+            r.doctor_id AS doctorId,
+            COALESCE(si.service_name, '普通门诊') AS serviceType,
+            COALESCE(r.symptom, r.triage_note, '') AS reason,
+            CASE
+                WHEN r.status = 0 THEN 'WAITING'
+                WHEN r.status = 1 THEN 'IN_PROGRESS'
+                WHEN r.status = 2 THEN 'DONE'
+                WHEN r.status = 3 THEN 'CANCELED'
+                WHEN r.status = 'WAITING' THEN 'WAITING'
+                WHEN r.status = 'IN_PROGRESS' THEN 'IN_PROGRESS'
+                WHEN r.status = 'DONE' THEN 'DONE'
+                WHEN r.status = 'CANCELED' THEN 'CANCELED'
+                ELSE 'WAITING'
+            END AS status,
+            r.amount AS amount,
+            r.register_time AS visitTime,
+            r.accept_time AS acceptTime,
+            r.create_time AS createTime,
+            p.name AS petName,
+            COALESCE(p.species, p.type, '') AS petSpecies,
+            d.name AS doctorName,
+            COALESCE(u.real_name, '') AS customerName,
+            COALESCE(u.phone, '') AS phone
         FROM register_record r
         LEFT JOIN pet p ON r.pet_id = p.id
         LEFT JOIN sys_user u ON r.owner_user_id = u.id
+        LEFT JOIN doctor_profile d ON r.doctor_id = d.id
+        LEFT JOIN service_item si ON r.service_item_id = si.id
         WHERE 1=1
         <if test="status != null">
             AND r.status = #{status}
@@ -105,6 +115,7 @@
                 p.name LIKE CONCAT('%', #{keyword}, '%')
                 OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
                 OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+                OR d.name LIKE CONCAT('%', #{keyword}, '%')
                 OR r.register_no LIKE CONCAT('%', #{keyword}, '%')
             )
         </if>
@@ -142,15 +153,13 @@
     <!-- 根据ID更新状态 -->
     <update id="updateStatusById">
         UPDATE register_record
-        SET status = CASE 
-                WHEN #{status} = 0 THEN 'WAITING'
-                WHEN #{status} = 1 THEN 'IN_PROGRESS'
-                WHEN #{status} = 2 THEN 'DONE'
-                WHEN #{status} = 3 THEN 'CANCELED'
+        SET status = CASE
+                WHEN #{status} IN (0,1,2,3) THEN #{status}
                 ELSE status
             END,
             accept_time = CASE WHEN #{status} = 1 THEN NOW() ELSE accept_time END,
-            update_time = NOW()
+            update_time = NOW(),
+            updated_time = NOW()
         WHERE id = #{id}
     </update>
 
