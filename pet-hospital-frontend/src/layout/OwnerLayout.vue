@@ -158,6 +158,7 @@ const unreadCount = ref(2)
 const refreshing = ref(false)
 let refreshTimer = null
 
+// 计算属性
 const activeMenu = computed(() => route.path)
 const displayName = computed(() => userStore.username || '宠物主人')
 
