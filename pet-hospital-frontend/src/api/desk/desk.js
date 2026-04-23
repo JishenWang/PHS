@@ -102,24 +102,10 @@ async function tryRequestOrFallback(requester, fallback) {
   try {
     const data = await requester()
     if (data !== undefined && data !== null) return { data, source: 'api' }
-  } catch (error) {
-    // 只有“后端不可达”（断网/超时/服务未启动）才切 mock，避免接口报错却显示成功
-    if (!shouldFallbackToMock(error)) {
-      throw error
-    }
+  } catch {
+    // ignore
   }
   return { data: await fallback(), source: 'mock' }
-}
-
-function shouldFallbackToMock(error) {
-  if (!error) return true
-  // axios: 有 response 说明后端已返回，必须按真实错误处理
-  if (error.response) return false
-  // 请求超时 / 网络中断 / 服务不可达，允许切到本地 mock
-  const code = String(error.code || '').toUpperCase()
-  if (code === 'ECONNABORTED' || code === 'ERR_NETWORK') return true
-  const msg = String(error.message || '').toLowerCase()
-  return msg.includes('network') || msg.includes('timeout') || msg.includes('failed to fetch')
 }
 
 function seedOnce() {
@@ -533,16 +519,7 @@ export async function getDoctorStatusList() {
     () => request({ url: '/desk/doctors/status', method: 'get' }),
     async () => normalizeDoctorList(lsGetArray(LS_KEYS.doctors))
   )
-  const payload = result.data
-  let doctorList = []
-  if (Array.isArray(payload)) {
-    doctorList = payload
-  } else if (Array.isArray(payload?.data)) {
-    doctorList = payload.data
-  } else if (Array.isArray(payload?.list)) {
-    doctorList = payload.list
-  }
-  const normalized = normalizeDoctorList(doctorList)
+  const normalized = normalizeDoctorList(result.data)
   if (normalized.length >= 2) {
     lsSetArray(LS_KEYS.doctors, normalized)
     result.data = normalized

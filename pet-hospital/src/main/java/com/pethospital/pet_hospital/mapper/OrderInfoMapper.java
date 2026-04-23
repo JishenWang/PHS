@@ -14,7 +14,7 @@ import com.pethospital.pet_hospital.entity.OrderInfo;
 @Mapper
 public interface OrderInfoMapper extends BaseMapper<OrderInfo> {
 
-    @Update("UPDATE order_info SET pay_status = 1, pay_status_text = 'paid', pay_method = #{payMethod}, pay_time = NOW(), paid_amount = payable_amount, update_time = NOW(), updated_time = NOW() WHERE id = #{id} AND pay_status = 0")
+    @Update("UPDATE order_info SET pay_status = 1, pay_status_text = 'paid', pay_method = #{payMethod}, pay_time = NOW(), update_time = NOW() WHERE id = #{id}")
     int confirmChargeById(@Param("id") Long id, @Param("payMethod") String payMethod);
 
     @Select("<script>" +

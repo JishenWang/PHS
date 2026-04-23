@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -63,7 +62,6 @@ public class DoctorServiceImpl implements IDoctorService {
     private final ConsultMapper consultMapper;
     private final MedicineItemMapper medicineItemMapper;
     private final ServiceItemMapper serviceItemMapper;
-    private final JdbcTemplate jdbcTemplate;
 
     // 修改构造函数
     public DoctorServiceImpl(DoctorMapper doctorMapper, 
@@ -74,8 +72,7 @@ public class DoctorServiceImpl implements IDoctorService {
                             PrescriptionMapper prescriptionMapper,
                             ConsultMapper consultMapper,
                             MedicineItemMapper medicineItemMapper,
-                            ServiceItemMapper serviceItemMapper,
-                            JdbcTemplate jdbcTemplate) {
+                            ServiceItemMapper serviceItemMapper) {
         this.doctorMapper = doctorMapper;
         this.petMapper = petMapper;
         this.userMapper = userMapper;
@@ -85,7 +82,6 @@ public class DoctorServiceImpl implements IDoctorService {
         this.consultMapper = consultMapper;
         this.medicineItemMapper = medicineItemMapper;
         this.serviceItemMapper = serviceItemMapper;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
 
@@ -224,21 +220,21 @@ public class DoctorServiceImpl implements IDoctorService {
     private WaitAcceptRegisterVo convertToWaitAcceptRegisterVo(Map<String, Object> record) {
         WaitAcceptRegisterVo vo = new WaitAcceptRegisterVo();
         vo.setRegisterId(getLongValue(record, "id"));
-        vo.setRegisterNo(getStringValue(record, "registerNo"));
-        vo.setPetId(getLongValue(record, "petId"));
-        vo.setPetName(getStringValue(record, "petName"));
-        vo.setPetType(getStringValue(record, "petType"));
+        vo.setRegisterNo(getStringValue(record, "register_no"));
+        vo.setPetId(getLongValue(record, "pet_id"));
+        vo.setPetName(getStringValue(record, "pet_name"));
+        vo.setPetType(getStringValue(record, "pet_type"));
         vo.setBreed(getStringValue(record, "breed"));
         vo.setAge(getIntegerValue(record, "age"));
         vo.setGender(getStringValue(record, "gender"));
-        vo.setOwnerId(getLongValue(record, "ownerId"));
-        vo.setOwnerName(getStringValue(record, "ownerName"));
-        vo.setOwnerPhone(getStringValue(record, "ownerPhone"));
-        vo.setServiceType(getStringValue(record, "serviceType"));
+        vo.setOwnerId(getLongValue(record, "owner_id"));
+        vo.setOwnerName(getStringValue(record, "owner_name"));
+        vo.setOwnerPhone(getStringValue(record, "owner_phone"));
+        vo.setServiceType(getStringValue(record, "service_type"));
         vo.setSymptom(getStringValue(record, "symptom"));
         vo.setAmount(getBigDecimalValue(record, "amount"));
         
-        // 状态：SQL 直接返回数字 0/1/2/3，也兼容字符串
+        // 关键修复：直接从 record 中获取原始状态值
         Object rawStatus = record.get("status");
         Integer statusInt = 0;
         
@@ -250,22 +246,25 @@ public class DoctorServiceImpl implements IDoctorService {
                     case "IN_PROGRESS": statusInt = 1; break;
                     case "DONE": statusInt = 2; break;
                     case "CANCELED": statusInt = 3; break;
-                    default: 
-                        try { statusInt = Integer.parseInt(statusStr); } catch (NumberFormatException e) { statusInt = 0; }
+                    default: statusInt = 0;
                 }
             } else if (rawStatus instanceof Number) {
                 statusInt = ((Number) rawStatus).intValue();
             }
         }
         
+        // 添加日志
+        log.info("转换状态: petName={}, rawStatus={}, convertedStatus={}", 
+                vo.getPetName(), rawStatus, statusInt);
+        
         vo.setStatus(statusInt);
         vo.setStatusDesc(getStatusDesc(statusInt));
         
-        Object registerTime = record.get("registerTime");
-        if (registerTime != null) {
-            vo.setRegisterTime(parseDateTime(registerTime.toString()));
+        Object visitTime = record.get("visit_time");
+        if (visitTime != null) {
+            vo.setRegisterTime(parseDateTime(visitTime.toString()));
         }
-        Object acceptTime = record.get("acceptTime");
+        Object acceptTime = record.get("accept_time");
         if (acceptTime != null) {
             vo.setAcceptTime(parseDateTime(acceptTime.toString()));
         }
@@ -487,44 +486,35 @@ public class DoctorServiceImpl implements IDoctorService {
 
     @Override
     public MedicalRecordVo createMedicalRecord(MedicalRecordCreateDto dto) {
-        try {
-            // 0. 确保 doctorId 有效（自动创建缺失的医生档案）
-            Long validDoctorId = ensureDoctorProfile(dto.getDoctorId(), dto.getDoctorName());
-            
-            // 1. 创建实体对象
-            MedicalRecord record = new MedicalRecord();
-            record.setRegisterId(dto.getRegisterId());
-            record.setPetId(dto.getPetId());
-            record.setDoctorId(validDoctorId);
-            record.setDoctorName(dto.getDoctorName());
-            record.setChiefComplaint(dto.getChiefComplaint());
-            record.setSymptoms(dto.getSymptoms());
-            record.setPresentIllness(dto.getPresentIllness());
-            record.setPastHistory(dto.getPastHistory());
-            record.setPhysicalExam(dto.getPhysicalExam());
-            record.setAuxiliaryExam(dto.getAuxiliaryExam());
-            record.setDiagnosis(dto.getDiagnosis());
-            record.setTreatmentPlan(dto.getTreatmentPlan());
-            record.setDoctorAdvice(dto.getDoctorAdvice());
-            record.setRemark(dto.getRemark());
-            record.setStatus(0); // 草稿状态
-            record.setIsDeleted(0);
-            
-            // 生成病历编号
-            record.setRecordNo("MR" + System.currentTimeMillis());
-            
-            // 2. 插入数据库
-            medicalRecordMapper.insert(record);
-            
-            log.info("创建病历成功, 病历ID: {}, 挂号ID: {}", record.getId(), dto.getRegisterId());
-            
-            // 3. 转换为VO返回
-            return convertToMedicalRecordVo(record);
-        } catch (Exception e) {
-            log.error("创建病历失败", e);
-            String msg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new RuntimeException("创建病历失败: " + msg);
-        }
+        // 1. 创建实体对象
+        MedicalRecord record = new MedicalRecord();
+        record.setRegisterId(dto.getRegisterId());
+        record.setPetId(dto.getPetId());
+        record.setDoctorId(dto.getDoctorId());
+        record.setDoctorName(dto.getDoctorName());
+        record.setChiefComplaint(dto.getChiefComplaint());
+        record.setSymptoms(dto.getSymptoms());
+        record.setPresentIllness(dto.getPresentIllness());
+        record.setPastHistory(dto.getPastHistory());
+        record.setPhysicalExam(dto.getPhysicalExam());
+        record.setAuxiliaryExam(dto.getAuxiliaryExam());
+        record.setDiagnosis(dto.getDiagnosis());
+        record.setTreatmentPlan(dto.getTreatmentPlan());
+        record.setDoctorAdvice(dto.getDoctorAdvice());
+        record.setRemark(dto.getRemark());
+        record.setStatus(0); // 草稿状态
+        record.setIsDeleted(0);
+        
+        // 生成病历编号
+        record.setRecordNo("MR" + System.currentTimeMillis());
+        
+        // 2. 插入数据库
+        medicalRecordMapper.insert(record);
+        
+        log.info("创建病历成功, 病历ID: {}, 挂号ID: {}", record.getId(), dto.getRegisterId());
+        
+        // 3. 转换为VO返回
+        return convertToMedicalRecordVo(record);
     }
 
     @Override
@@ -697,44 +687,6 @@ public class DoctorServiceImpl implements IDoctorService {
     }
     
     /**
-     * 确保医生档案存在，返回有效的 doctor_profile.id
-     */
-    private Long ensureDoctorProfile(Long doctorId, String doctorName) {
-        if (doctorId != null && doctorId > 0) {
-            // 检查 doctor_profile 是否存在
-            try {
-                Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM doctor_profile WHERE id = ? AND is_deleted = 0",
-                    Integer.class, doctorId
-                );
-                if (count != null && count > 0) {
-                    return doctorId;
-                }
-            } catch (Exception e) {
-                log.warn("检查医生档案失败, doctorId={}", doctorId);
-            }
-        }
-        // 不存在则自动创建
-        try {
-            String name = doctorName != null && !doctorName.isEmpty() ? doctorName : "医生" + System.currentTimeMillis();
-            jdbcTemplate.update(
-                "INSERT INTO doctor_profile(user_id, name, department, title, work_status, status, is_deleted, create_time, update_time) " +
-                "VALUES(?, ?, '全科医疗部', '主治医师', 1, 1, 0, NOW(), NOW())",
-                doctorId != null ? doctorId : 0, name
-            );
-            Long newId = jdbcTemplate.queryForObject(
-                "SELECT id FROM doctor_profile WHERE name = ? ORDER BY id DESC LIMIT 1",
-                Long.class, name
-            );
-            log.info("自动创建医生档案, newDoctorId={}", newId);
-            return newId != null ? newId : doctorId;
-        } catch (Exception e) {
-            log.error("自动创建医生档案失败", e);
-            return doctorId;
-        }
-    }
-    
-    /**
      * 将MedicalRecord实体转换为MedicalRecordVo
      */
     private MedicalRecordVo convertToMedicalRecordVo(MedicalRecord record) {
@@ -808,62 +760,53 @@ public class DoctorServiceImpl implements IDoctorService {
         log.info("开始创建处方, 挂号ID: {}, 宠物ID: {}, 医生ID: {}", 
             dto.getRegisterId(), dto.getPetId(), dto.getDoctorId());
         
-        try {
-            // 0. 确保 doctorId 有效
-            Long validDoctorId = ensureDoctorProfile(dto.getDoctorId(), null);
-            
-            // 1. 生成处方编号
-            String prescriptionNo = "PR" + System.currentTimeMillis();
-            
-            // 2. 创建处方实体
-            Prescription prescription = new Prescription();
-            prescription.setPrescriptionNo(prescriptionNo);
-            prescription.setRegisterId(dto.getRegisterId());
-            prescription.setPetId(dto.getPetId());
-            prescription.setDoctorId(validDoctorId);
-            prescription.setPrescriptionType(dto.getPrescriptionType() != null ? dto.getPrescriptionType() : 0);
-            prescription.setDiagnosis(dto.getDiagnosis());
-            prescription.setTotalAmount(dto.getTotalAmount());
-            prescription.setRemark(dto.getRemark());
-            prescription.setStatus(0);  // 0=草稿
-            prescription.setIsDeleted(0);
-            prescription.setCreateTime(LocalDateTime.now());
-            prescription.setUpdateTime(LocalDateTime.now());
-            
-            // 3. 保存到数据库
-            int result = prescriptionMapper.insert(prescription);
-            log.info("处方保存结果: {}, 处方ID: {}, 处方号: {}", result, prescription.getId(), prescriptionNo);
-            
-            if (result <= 0) {
-                throw new RuntimeException("处方保存失败");
-            }
-            
-            // 4. 返回VO
-            PrescriptionVo vo = new PrescriptionVo();
-            vo.setPrescriptionId(prescription.getId());
-            vo.setPrescriptionNo(prescriptionNo);
-            vo.setRegisterId(dto.getRegisterId());
-            vo.setPetId(dto.getPetId());
-            vo.setDoctorId(dto.getDoctorId());
-            vo.setDiagnosis(dto.getDiagnosis());
-            vo.setTotalAmount(dto.getTotalAmount());
-            vo.setStatus(0);
-            vo.setStatusDesc("草稿");
-            vo.setCreateTime(LocalDateTime.now());
-            
-            // 补充宠物名称
-            Pet pet = petMapper.selectById(dto.getPetId());
-            if (pet != null) {
-                vo.setPetName(pet.getName());
-            }
-            
-            log.info("处方创建完成, 处方号: {}", prescriptionNo);
-            return vo;
-        } catch (Exception e) {
-            log.error("创建处方失败", e);
-            String msg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new RuntimeException("创建处方失败: " + msg);
+        // 1. 生成处方编号
+        String prescriptionNo = "PR" + System.currentTimeMillis();
+        
+        // 2. 创建处方实体
+        Prescription prescription = new Prescription();
+        prescription.setPrescriptionNo(prescriptionNo);
+        prescription.setRegisterId(dto.getRegisterId());
+        prescription.setPetId(dto.getPetId());
+        prescription.setDoctorId(dto.getDoctorId());
+        prescription.setPrescriptionType(dto.getPrescriptionType() != null ? dto.getPrescriptionType() : 0);
+        prescription.setDiagnosis(dto.getDiagnosis());
+        prescription.setTotalAmount(dto.getTotalAmount());
+        prescription.setRemark(dto.getRemark());
+        prescription.setStatus(0);  // 0=草稿
+        prescription.setIsDeleted(0);
+        prescription.setCreateTime(LocalDateTime.now());
+        prescription.setUpdateTime(LocalDateTime.now());
+        
+        // 3. 保存到数据库
+        int result = prescriptionMapper.insert(prescription);
+        log.info("处方保存结果: {}, 处方ID: {}, 处方号: {}", result, prescription.getId(), prescriptionNo);
+        
+        if (result <= 0) {
+            throw new RuntimeException("处方保存失败");
         }
+        
+        // 4. 返回VO
+        PrescriptionVo vo = new PrescriptionVo();
+        vo.setPrescriptionId(prescription.getId());
+        vo.setPrescriptionNo(prescriptionNo);
+        vo.setRegisterId(dto.getRegisterId());
+        vo.setPetId(dto.getPetId());
+        vo.setDoctorId(dto.getDoctorId());
+        vo.setDiagnosis(dto.getDiagnosis());
+        vo.setTotalAmount(dto.getTotalAmount());
+        vo.setStatus(0);
+        vo.setStatusDesc("草稿");
+        vo.setCreateTime(LocalDateTime.now());
+        
+        // 补充宠物名称
+        Pet pet = petMapper.selectById(dto.getPetId());
+        if (pet != null) {
+            vo.setPetName(pet.getName());
+        }
+        
+        log.info("处方创建完成, 处方号: {}", prescriptionNo);
+        return vo;
     }
 
     @Override
