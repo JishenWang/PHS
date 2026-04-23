@@ -24,7 +24,6 @@ import com.pethospital.pet_hospital.mapper.UserMapper;
 import com.pethospital.pet_hospital.service.ICommonService;
 import com.pethospital.pet_hospital.utils.EncryptUtil;
 import com.pethospital.pet_hospital.utils.JwtUtil;
-import com.pethospital.pet_hospital.utils.RedisUtil;
 import com.pethospital.pet_hospital.vo.common.ResultVo;
 import com.pethospital.pet_hospital.vo.common.UserInfoVo;
 
@@ -42,14 +41,12 @@ public class CommonServiceImpl implements ICommonService {
     private final UserMapper userMapper;
     private final DoctorMapper doctorMapper;
     private final JwtUtil jwtUtil;
-    private final RedisUtil redisUtil;
     
     public CommonServiceImpl(UserMapper userMapper, DoctorMapper doctorMapper, 
-                             JwtUtil jwtUtil, RedisUtil redisUtil) {
+                             JwtUtil jwtUtil) {
         this.userMapper = userMapper;
         this.doctorMapper = doctorMapper;
         this.jwtUtil = jwtUtil;
-        this.redisUtil = redisUtil;
     }
     
     // ==================== 登录认证相关实现 ====================
@@ -196,6 +193,20 @@ public class CommonServiceImpl implements ICommonService {
             LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(Doctor::getUserId, user.getId());
             Doctor doctor = doctorMapper.selectOne(wrapper);
+            if (doctor == null) {
+                // 自动创建医生档案，避免后续外键约束失败
+                doctor = new Doctor();
+                doctor.setUserId(user.getId());
+                doctor.setName(user.getRealName() != null ? user.getRealName() : user.getUsername());
+                doctor.setPhone(user.getPhone());
+                doctor.setDepartment("全科医疗部");
+                doctor.setTitle("主治医师");
+                doctor.setWorkStatus(1); // 空闲
+                doctor.setStatus(1);
+                doctor.setIsDeleted(0);
+                doctorMapper.insert(doctor);
+                log.info("自动创建医生档案, userId={}, doctorId={}", user.getId(), doctor.getId());
+            }
             if (doctor != null) {
                 userInfo.setDoctorId(doctor.getId());
                 userInfo.setTitle(doctor.getTitle());

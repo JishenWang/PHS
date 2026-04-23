@@ -127,8 +127,29 @@ public class DeskServiceImpl implements IDeskService {
         List<Map<String, Object>> normalized = new ArrayList<>();
         for (Map<String, Object> row : list) {
             Map<String, Object> one = new HashMap<>(row);
-            one.put("serviceType", "普通门诊");
-            one.put("reason", "");
+            one.put("registerNo", firstNonBlank(row, "registerNo", "register_no"));
+            one.put("customerName", firstNonBlank(row, "customerName", "ownerName", "owner_name"));
+            one.put("phone", firstNonBlank(row, "phone", "ownerPhone", "owner_phone"));
+            one.put("petName", firstNonBlank(row, "petName", "pet_name"));
+            one.put("petSpecies", firstNonBlank(row, "petSpecies", "petType", "pet_species", "pet_type"));
+            one.put("doctorName", firstNonBlank(row, "doctorName", "doctor_name"));
+            one.put("serviceType", firstNonBlank(row, "serviceType", "service_type", "serviceName"));
+            one.put("reason", firstNonBlank(row, "reason", "symptom", "triage_note"));
+            one.put("visitTime", firstNonNull(row, "visitTime", "registerTime", "visit_time", "register_time"));
+            
+            // 兼容：status 可能是数字(0/1/2/3)或字符串(WAITING...)，统一转成字符串给前端
+            Object rawStatus = row.get("status");
+            if (rawStatus instanceof Number) {
+                int s = ((Number) rawStatus).intValue();
+                switch (s) {
+                    case 0: one.put("status", "WAITING"); break;
+                    case 1: one.put("status", "IN_PROGRESS"); break;
+                    case 2: one.put("status", "DONE"); break;
+                    case 3: one.put("status", "CANCELED"); break;
+                    default: one.put("status", "WAITING");
+                }
+            }
+            
             normalized.add(one);
         }
         return pageMap(normalized, total == null ? 0L : total, page, pageSize);
