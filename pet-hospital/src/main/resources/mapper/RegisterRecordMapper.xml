@@ -75,32 +75,44 @@
     <select id="listDeskRegisters" resultType="java.util.HashMap">
         SELECT 
             r.id AS id,
+            r.id AS id,
             r.register_no AS registerNo,
+            r.register_no AS register_no,
             r.pet_id AS petId,
-            r.owner_user_id AS customerId,
+            r.pet_id AS pet_id,
+            r.owner_user_id AS ownerId,
+            r.owner_user_id AS owner_id,
             r.doctor_id AS doctorId,
+            r.doctor_id AS doctor_id,
             COALESCE(si.service_name, '普通门诊') AS serviceType,
+            COALESCE(si.service_name, '普通门诊') AS service_type,
+            COALESCE(r.symptom, r.triage_note, '') AS symptom,
             COALESCE(r.symptom, r.triage_note, '') AS reason,
-            CASE
-                WHEN r.status = 0 THEN 'WAITING'
-                WHEN r.status = 1 THEN 'IN_PROGRESS'
-                WHEN r.status = 2 THEN 'DONE'
-                WHEN r.status = 3 THEN 'CANCELED'
-                WHEN r.status = 'WAITING' THEN 'WAITING'
-                WHEN r.status = 'IN_PROGRESS' THEN 'IN_PROGRESS'
-                WHEN r.status = 'DONE' THEN 'DONE'
-                WHEN r.status = 'CANCELED' THEN 'CANCELED'
-                ELSE 'WAITING'
-            END AS status,
+            r.status AS status,
             r.amount AS amount,
+            r.register_time AS registerTime,
+            r.register_time AS register_time,
             r.register_time AS visitTime,
+            r.register_time AS visit_time,
             r.accept_time AS acceptTime,
+            r.accept_time AS accept_time,
             r.create_time AS createTime,
             p.name AS petName,
+            p.name AS pet_name,
+            COALESCE(p.species, p.type, '') AS petType,
             COALESCE(p.species, p.type, '') AS petSpecies,
+            COALESCE(p.species, p.type, '') AS pet_type,
+            p.breed AS breed,
+            p.age AS age,
+            p.gender AS gender,
             d.name AS doctorName,
+            d.name AS doctor_name,
+            COALESCE(u.real_name, '') AS ownerName,
             COALESCE(u.real_name, '') AS customerName,
-            COALESCE(u.phone, '') AS phone
+            COALESCE(u.real_name, '') AS owner_name,
+            COALESCE(u.phone, '') AS ownerPhone,
+            COALESCE(u.phone, '') AS phone,
+            COALESCE(u.phone, '') AS owner_phone
         FROM register_record r
         LEFT JOIN pet p ON r.pet_id = p.id
         LEFT JOIN sys_user u ON r.owner_user_id = u.id
