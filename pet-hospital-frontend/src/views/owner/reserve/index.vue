@@ -300,10 +300,12 @@ const loadReserveList = async () => {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     const res = await response.json()
+
     if (res.code === 200) {
       // 获取所有预约数据（处理嵌套结构）
       let allRecords = res.data?.data || res.data?.records || res.data || []
       if (!Array.isArray(allRecords)) allRecords = []
+
       // 1. 更新统计数据（基于全部数据）
       stats.value = stats.value.map(stat => {
         if (stat.key === 'all') {
@@ -312,11 +314,13 @@ const loadReserveList = async () => {
         const count = allRecords.filter(item => String(item.status) === stat.key).length
         return { ...stat, count: count }
       })
+
       // 2. 根据选中的标签筛选要显示的数据
       let showRecords = allRecords
       if (activeTab.value !== 'all') {
         showRecords = allRecords.filter(item => String(item.status) === activeTab.value)
       }
+
       // 3. 关联宠物名称
       reserveList.value = showRecords.map(item => {
         const pet = petList.value.find(p => p.id === item.petId)
@@ -382,6 +386,7 @@ const submitReserve = async () => {
       appointmentTime: formattedTime,
       remark: form.value.remark || ''
     }
+
     const response = await fetch('/api/owner/reserve', {
       method: 'POST',
       headers: {
@@ -391,6 +396,7 @@ const submitReserve = async () => {
       body: JSON.stringify(submitData)
     })
     const res = await response.json()
+
     if (res.code === 200) {
       ElMessage.success('预约提交成功')
       dialogVisible.value = false
@@ -557,6 +563,7 @@ onMounted(async () => {
           width: 8px;
           height: 8px;
           border-radius: 50%;
+
           &.status-0 { background: #f59e0b; }
           &.status-1 { background: #10b981; }
           &.status-2 { background: #3b82f6; }
@@ -757,6 +764,7 @@ onMounted(async () => {
       color: #1e293b;
     }
   }
+
   .empty-pets {
     padding: 20px;
   }

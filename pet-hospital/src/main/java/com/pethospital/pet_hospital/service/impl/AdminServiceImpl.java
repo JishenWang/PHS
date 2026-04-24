@@ -25,6 +25,7 @@ import com.pethospital.pet_hospital.vo.admin.PetVo;
 import com.pethospital.pet_hospital.vo.admin.UserVo;
 
 @Service
+@SuppressWarnings("null")
 public class AdminServiceImpl implements IAdminService {
 
     @Autowired

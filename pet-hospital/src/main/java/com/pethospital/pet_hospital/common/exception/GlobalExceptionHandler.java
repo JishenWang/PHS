@@ -130,6 +130,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResultVo<Void> handleException(Exception e) {
         log.error("系统异常: ", e);
-        return ResultVo.error(500, "系统繁忙，请稍后重试");
+        // 取根因消息，方便开发调试
+        String rootMsg = e.getMessage();
+        if (e.getCause() != null && e.getCause().getMessage() != null) {
+            rootMsg = e.getCause().getMessage();
+        }
+        if (rootMsg == null || rootMsg.isEmpty()) {
+            rootMsg = "系统繁忙，请稍后重试";
+        }
+        return ResultVo.error(500, rootMsg);
     }
 }

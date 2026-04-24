@@ -21,8 +21,7 @@ public class DateUtil {
     public static final String PATTERN_DATETIME_CN = "yyyy年MM月dd日 HH:mm:ss";
     public static final String PATTERN_DATE_CN = "yyyy年MM月dd日";
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(PATTERN_DATE);
-    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern(PATTERN_DATETIME);
+    // FORMATTERS removed: use inline formatters to avoid unused field warnings
 
     /**
      * Date转String（yyyy-MM-dd）

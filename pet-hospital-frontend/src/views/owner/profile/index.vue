@@ -337,7 +337,7 @@ const loadUserInfo = async () => {
   }
 }
 
-// 加载统计数据（核心修改）
+// 加载统计数据
 const loadStats = async () => {
   try {
     const token = getToken()
