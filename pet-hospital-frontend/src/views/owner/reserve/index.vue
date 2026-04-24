@@ -13,7 +13,13 @@
 
     <!-- 统计卡片 -->
     <div class="stats-row">
-      <div v-for="stat in stats" :key="stat.key" class="stat-card" :class="{ active: activeTab === stat.key }" @click="activeTab = stat.key; loadReserveList()">
+      <div 
+        v-for="stat in stats" 
+        :key="stat.key" 
+        class="stat-card" 
+        :class="{ active: activeTab === stat.key }" 
+        @click="handleTabChange(stat.key)"
+      >
         <div class="stat-value" :style="{ color: stat.color }">{{ stat.count }}</div>
         <div class="stat-label">{{ stat.label }}</div>
       </div>
@@ -21,9 +27,9 @@
 
     <!-- 预约列表 -->
     <div class="reserve-list" v-loading="loading">
-      <div v-for="item in reserveList" :key="item.id" class="reserve-card" :class="item.status">
+      <div v-for="item in reserveList" :key="item.id" class="reserve-card" :class="{ cancelled: item.status === '3' }">
         <div class="reserve-status">
-          <span class="status-dot" :class="item.status"></span>
+          <span class="status-dot" :class="'status-' + item.status"></span>
           <span class="status-text">{{ getStatusName(item.status) }}</span>
           <span class="reserve-time">{{ formatDateTime(item.appointmentTime) }}</span>
         </div>
@@ -38,7 +44,7 @@
             </div>
           </div>
         </div>
-        <div class="reserve-footer" v-if="item.status === 'pending'">
+        <div class="reserve-footer" v-if="item.status === '0'">
           <el-button type="danger" plain size="small" @click.stop="handleCancelReserve(item)">取消预约</el-button>
         </div>
         <div class="reserve-footer" v-else>
@@ -68,6 +74,11 @@
             <div class="pet-name">{{ pet.name }}</div>
             <div class="pet-breed">{{ pet.breed }}</div>
           </div>
+        </div>
+        <div v-if="petList.length === 0" class="empty-pets">
+          <el-empty description="暂无宠物，请先添加宠物" :image-size="80">
+            <el-button type="primary" @click="router.push('/owner/pets')">去添加宠物</el-button>
+          </el-empty>
         </div>
       </div>
 
@@ -160,7 +171,7 @@
       </div>
       <template #footer>
         <el-button @click="detailVisible = false">关闭</el-button>
-        <el-button v-if="currentDetail?.status === 'pending'" type="danger" @click="cancelFromDetail">取消预约</el-button>
+        <el-button v-if="currentDetail?.status === '0'" type="danger" @click="cancelFromDetail">取消预约</el-button>
       </template>
     </el-dialog>
   </div>
@@ -185,10 +196,10 @@ const step = ref(0)
 
 const stats = ref([
   { key: 'all', label: '全部', count: 0, color: '#64748b' },
-  { key: 'pending', label: '待确认', count: 0, color: '#f59e0b' },
-  { key: 'confirmed', label: '已确认', count: 0, color: '#10b981' },
-  { key: 'completed', label: '已完成', count: 0, color: '#3b82f6' },
-  { key: 'cancelled', label: '已取消', count: 0, color: '#ef4444' }
+  { key: '0', label: '待确认', count: 0, color: '#f59e0b' },
+  { key: '1', label: '已确认', count: 0, color: '#10b981' },
+  { key: '2', label: '已完成', count: 0, color: '#3b82f6' },
+  { key: '3', label: '已取消', count: 0, color: '#ef4444' }
 ])
 
 const services = [
@@ -216,26 +227,45 @@ const getToken = () => {
 const formatDateTime = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
+// 获取状态名称
 const getStatusName = (status) => {
-  // status 可能是整数 0,1,2,3
-  const names = { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' }
-  return names[status] !== undefined ? names[status] : (status === 'pending' ? '待确认' : status)
+  const statusMap = {
+    '0': '待确认',
+    '1': '已确认',
+    '2': '已完成',
+    '3': '已取消'
+  }
+  return statusMap[status] || '未知状态'
 }
 
 const getStatusColor = (status) => {
-  const colors = { 0: '#f59e0b', 1: '#10b981', 2: '#3b82f6', 3: '#ef4444' }
+  const colors = { 
+    '0': '#f59e0b', 
+    '1': '#10b981', 
+    '2': '#3b82f6', 
+    '3': '#ef4444'
+  }
   return colors[status] || '#64748b'
 }
 
 const getServiceName = (value) => {
-  return services.find(s => s.value === value)?.label || value
+  const serviceMap = {
+    'consultation': '门诊诊疗',
+    'vaccine': '疫苗接种',
+    'exam': '体检',
+    'grooming': '洗澡美容',
+    '普通门诊': '门诊诊疗'
+  }
+  return serviceMap[value] || value || '未知服务'
 }
 
 const getServicePrice = (value) => {
-  return services.find(s => s.value === value)?.price || 0
+  const service = services.find(s => s.value === value)
+  return service?.price || 0
 }
 
 const disabledDate = (time) => {
@@ -251,60 +281,74 @@ const loadPets = async () => {
     })
     const res = await response.json()
     if (res.code === 200) {
-      petList.value = res.data?.data || res.data?.records || []
+      const petData = res.data?.data || res.data?.records || res.data || []
+      petList.value = Array.isArray(petData) ? petData : []
     }
   } catch (error) {
     console.error('加载宠物列表失败:', error)
+    petList.value = []
   }
 }
 
-// 加载预约列表
+// 加载预约列表（核心修改）
 const loadReserveList = async () => {
   loading.value = true
   try {
     const token = getToken()
-    let url = '/api/owner/reserve/list?page=1&pageSize=50'
-    if (activeTab.value !== 'all') {
-      url += `&status=${activeTab.value}`
-    }
-    const response = await fetch(url, {
+    // 一次性获取所有预约数据
+    const response = await fetch('/api/owner/reserve/list?page=1&pageSize=100', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     const res = await response.json()
-    console.log('预约列表响应:', res)
+    
     if (res.code === 200) {
-      const records = res.data?.data || res.data?.records || []
-      reserveList.value = records.map(item => {
-        const pet = petList.value.find(p => p.id === item.petId)
-        let status = item.status
-        if (typeof status === 'number') {
-          status = status === 0 ? 'pending' : (status === 1 ? 'confirmed' : (status === 2 ? 'completed' : 'cancelled'))
+      // 获取所有预约数据（处理嵌套结构）
+      let allRecords = res.data?.data || res.data?.records || res.data || []
+      if (!Array.isArray(allRecords)) allRecords = []
+      
+      // 1. 更新统计数据（基于全部数据）
+      stats.value = stats.value.map(stat => {
+        if (stat.key === 'all') {
+          return { ...stat, count: allRecords.length }
         }
+        const count = allRecords.filter(item => String(item.status) === stat.key).length
+        return { ...stat, count: count }
+      })
+      
+      // 2. 根据选中的标签筛选要显示的数据
+      let showRecords = allRecords
+      if (activeTab.value !== 'all') {
+        showRecords = allRecords.filter(item => String(item.status) === activeTab.value)
+      }
+      
+      // 3. 关联宠物名称
+      reserveList.value = showRecords.map(item => {
+        const pet = petList.value.find(p => p.id === item.petId)
         return {
           ...item,
-          petName: pet?.name || '未知宠物',
-          status: status
+          petName: pet?.name || `宠物ID:${item.petId}`,
+          status: String(item.status)
         }
       })
-      updateStats(reserveList.value)
     }
   } catch (error) {
     console.error('加载预约列表失败:', error)
+    reserveList.value = []
   } finally {
     loading.value = false
   }
 }
 
-const updateStats = (records) => {
-  stats.value = stats.value.map(stat => ({
-    ...stat,
-    count: stat.key === 'all' ? records.length : records.filter(item => item.status === stat.key).length
-  }))
+// 切换标签页
+const handleTabChange = (key) => {
+  activeTab.value = key
+  loadReserveList()
 }
 
 const handleCreate = () => {
   if (petList.value.length === 0) {
     ElMessage.warning('请先添加宠物')
+    router.push('/owner/pets')
     return
   }
   step.value = 0
@@ -332,7 +376,6 @@ const submitReserve = async () => {
   submitting.value = true
   try {
     const token = getToken()
-    // 将日期格式转换为 ISO 格式（带 T）
     let formattedTime = form.value.appointmentTime
     if (formattedTime && !formattedTime.includes('T')) {
       formattedTime = formattedTime.replace(' ', 'T')
@@ -341,10 +384,8 @@ const submitReserve = async () => {
       petId: Number(form.value.petId),
       serviceType: form.value.serviceType,
       appointmentTime: formattedTime,
-       status: 0,
       remark: form.value.remark || ''
     }
-    console.log('提交数据:', submitData)
     
     const response = await fetch('/api/owner/reserve', {
       method: 'POST',
@@ -355,7 +396,6 @@ const submitReserve = async () => {
       body: JSON.stringify(submitData)
     })
     const res = await response.json()
-    console.log('提交响应:', res)
     
     if (res.code === 200) {
       ElMessage.success('预约提交成功')
@@ -419,9 +459,9 @@ const viewDetail = (id) => {
   }
 }
 
-onMounted(() => {
-  loadPets()
-  loadReserveList()
+onMounted(async () => {
+  await loadPets()
+  await loadReserveList()
 })
 </script>
 
@@ -524,10 +564,10 @@ onMounted(() => {
           height: 8px;
           border-radius: 50%;
           
-          &.pending { background: #f59e0b; }
-          &.confirmed { background: #10b981; }
-          &.completed { background: #3b82f6; }
-          &.cancelled { background: #ef4444; }
+          &.status-0 { background: #f59e0b; }
+          &.status-1 { background: #10b981; }
+          &.status-2 { background: #3b82f6; }
+          &.status-3 { background: #ef4444; }
         }
         
         .status-text {
@@ -723,6 +763,10 @@ onMounted(() => {
       font-weight: 500;
       color: #1e293b;
     }
+  }
+  
+  .empty-pets {
+    padding: 20px;
   }
 }
 </style>
