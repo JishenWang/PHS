@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
  * 提供常用的Redis操作
  */
 @Component
-@SuppressWarnings("null")
 public class RedisUtil {
 
     @Autowired

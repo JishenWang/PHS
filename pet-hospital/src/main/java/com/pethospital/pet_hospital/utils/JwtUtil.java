@@ -150,12 +150,7 @@ public class JwtUtil {
      * 验证令牌（不验证用户名）
      */
     public Boolean validateToken(String token) {
-        try {
-            return !isTokenExpired(token);
-        } catch (Exception e) {
-            log.warn("Token validation failed: {}", e.getMessage());
-            return false;
-        }
+        return !isTokenExpired(token);
     }
 
     /**

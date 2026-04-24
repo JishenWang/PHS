@@ -264,7 +264,7 @@ public class OwnerServiceImpl implements IOwnerService {
             LambdaQueryWrapper<ConsultationReply> replyWrapper = new LambdaQueryWrapper<>();
             replyWrapper.eq(ConsultationReply::getConsultationId, consultId);
             replyWrapper.orderByAsc(ConsultationReply::getCreateTime);
-            consultationReplyMapper.selectList(replyWrapper);
+            List<ConsultationReply> replies = consultationReplyMapper.selectList(replyWrapper);
         }
         return consultation;
     }
