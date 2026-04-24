@@ -305,13 +305,14 @@ export default {
 .login-container {
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: url('@/assets/images/login-bg.jpg') center center / cover no-repeat;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   position: relative;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-right: 10vw;
 }
 
 .background {
@@ -322,32 +323,18 @@ export default {
   left: 0;
 }
 
-.circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.circle-1 {
-  width: 600px;
-  height: 600px;
-  top: -200px;
-  left: -100px;
-}
-
-.circle-2 {
-  width: 400px;
-  height: 400px;
-  bottom: -100px;
-  right: -50px;
+.circle, .circle-1, .circle-2 {
+  display: none;
 }
 
 .login-box {
   width: 420px;
-  background: white;
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 20px;
   padding: 40px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
   position: relative;
   z-index: 1;
 }
@@ -385,9 +372,9 @@ export default {
 }
 
 .role-item:hover {
-  border-color: #667eea;
+  border-color: #3b82f6;
   transform: translateX(5px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 5px 20px rgba(59, 130, 246, 0.15);
 }
 
 .role-icon {
@@ -416,7 +403,7 @@ export default {
 }
 
 .back-link {
-  color: #667eea;
+  color: #3b82f6;
   cursor: pointer;
   font-size: 14px;
   display: inline-block;
@@ -424,7 +411,7 @@ export default {
 }
 
 .back-link:hover {
-  color: #764ba2;
+  color: #2563eb;
 }
 
 .form-header h2 {
@@ -461,7 +448,7 @@ export default {
 }
 
 .form-item input:focus {
-  border-color: #667eea;
+  border-color: #3b82f6;
 }
 
 .code-box {
@@ -476,7 +463,7 @@ export default {
 .code-btn {
   width: 120px;
   height: 44px;
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;
@@ -486,7 +473,7 @@ export default {
 }
 
 .code-btn:hover:not(:disabled) {
-  background: #5a6fd6;
+  background: #2563eb;
 }
 
 .code-btn:disabled {
@@ -515,7 +502,7 @@ export default {
 }
 
 .switch-type {
-  color: #667eea;
+  color: #3b82f6;
   cursor: pointer;
 }
 
@@ -525,7 +512,7 @@ export default {
 
 .submit-btn {
   height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   color: white;
   border: none;
   border-radius: 24px;

@@ -1,62 +1,60 @@
 <template>
-  <el-container class="admin-layout">
+  <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside width="220px" class="sidebar">
-      <div class="logo">
-        <span class="logo-icon">🐾</span>
-        <span class="logo-text">宠物医院管理</span>
+    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">🐾</div>
+        <div v-show="!isCollapse" class="logo-text">
+          <div class="logo-title">宠物医院</div>
+          <div class="logo-sub">管理后台</div>
+        </div>
       </div>
-      
+
       <el-menu
         :default-active="activeMenu"
         router
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
-        class="admin-menu"
+        :collapse="isCollapse"
+        :collapse-transition="false"
+        class="layout-menu"
       >
-        <el-menu-item index="/admin/dashboard">
-          <el-icon><DataLine /></el-icon>
-          <span>数据看板</span>
-        </el-menu-item>
-        
-        <el-menu-item index="/admin/user">
-          <el-icon><User /></el-icon>
-          <span>用户管理</span>
-        </el-menu-item>
-        
-        <el-menu-item index="/admin/doctor">
-          <el-icon><FirstAidKit /></el-icon>
-          <span>医生管理</span>
-        </el-menu-item>
-        
-        <el-menu-item index="/admin/pet">
-          <el-icon><Tickets /></el-icon>
-          <span>宠物管理</span>
-        </el-menu-item>
-        
-        <el-menu-item index="/admin/system">
-          <el-icon><Setting /></el-icon>
-          <span>系统配置</span>
+        <el-menu-item
+          v-for="menu in sidebarMenus"
+          :key="menu.path"
+          :index="menu.path"
+        >
+          <el-icon v-if="menu.icon">
+            <component :is="menu.icon || Menu" />
+          </el-icon>
+          <template #title>{{ menu.title }}</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
-    
-    <el-container class="main-container">
+
+    <!-- 主区域 -->
+    <el-container>
       <!-- 顶部导航 -->
-      <el-header class="header">
+      <el-header class="layout-header">
         <div class="header-left">
-          <breadcrumb />
+          <el-icon class="collapse-btn" @click="toggleCollapse">
+            <Fold v-if="!isCollapse" />
+            <Expand v-else />
+          </el-icon>
+          <el-breadcrumb separator="/" class="layout-breadcrumb">
+            <el-breadcrumb-item
+              v-for="(item, index) in breadcrumbList"
+              :key="index"
+              :to="index < breadcrumbList.length - 1 ? item.path : undefined"
+            >
+              {{ item.title }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
+
         <div class="header-right">
-          <el-tooltip content="全屏" placement="bottom">
-            <el-icon class="header-icon" @click="toggleFullscreen"><FullScreen /></el-icon>
-          </el-tooltip>
-          
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-info">
               <el-avatar :size="32" :src="userStore.avatar || defaultAvatar" />
-              <span class="username">{{ userStore.username || '管理员' }}</span>
+              <span v-show="!isCollapse" class="username">{{ userStore.username || '管理员' }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
@@ -75,11 +73,11 @@
           </el-dropdown>
         </div>
       </el-header>
-      
-      <!-- 内容区域 -->
-      <el-main class="main-content">
+
+      <!-- 内容区 -->
+      <el-main class="layout-main">
         <router-view v-slot="{ Component }">
-          <transition name="fade-transform" mode="out-in">
+          <transition name="fade-slide" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
@@ -89,23 +87,20 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { useLayout } from '@/composables/useLayout'
 import {
-  DataLine, User, FirstAidKit, Tickets, Setting,
-  FullScreen, ArrowDown, SwitchButton
+  Fold, Expand, ArrowDown, User, Setting, SwitchButton, Menu
 } from '@element-plus/icons-vue'
-import Breadcrumb from '@/components/Breadcrumb/index.vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const { isCollapse, toggleCollapse, sidebarMenus, activeMenu, breadcrumbList } = useLayout()
 
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-
-const activeMenu = computed(() => route.path)
 
 const handleCommand = (command) => {
   switch (command) {
@@ -116,97 +111,137 @@ const handleCommand = (command) => {
       router.push('/admin/settings')
       break
     case 'logout':
-      handleLogout()
+      ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => userStore.logout())
       break
-  }
-}
-
-const handleLogout = () => {
-  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    userStore.logout()
-  }).catch(() => {})
-}
-
-const toggleFullscreen = () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen()
-  } else {
-    document.exitFullscreen()
   }
 }
 </script>
 
 <style scoped>
-.admin-layout {
+.layout-container {
   height: 100vh;
-  background: #f0f2f5;
+  background: #f8fafc;
 }
 
-.sidebar {
-  background: #304156;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
-}
-
-.logo {
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #2b3649;
-  border-bottom: 1px solid #1f2d3d;
-}
-
-.logo-icon {
-  font-size: 28px;
-  margin-right: 8px;
-}
-
-.logo-text {
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-.admin-menu {
-  border-right: none;
-  padding-top: 10px;
-}
-
-:deep(.admin-menu .el-menu-item) {
-  height: 50px;
-  line-height: 50px;
-  margin: 4px 10px;
-  border-radius: 4px;
-}
-
-:deep(.admin-menu .el-menu-item:hover) {
-  background: #263445;
-}
-
-:deep(.admin-menu .el-menu-item.is-active) {
-  background: #263445;
-}
-
-:deep(.admin-menu .el-icon) {
-  font-size: 18px;
-  margin-right: 10px;
-}
-
-.main-container {
+/* ===== 侧边栏 ===== */
+.layout-sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
   overflow: hidden;
 }
 
-.header {
+.sidebar-logo {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  margin-left: 12px;
+  overflow: hidden;
+}
+
+.logo-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.logo-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* ===== 菜单 ===== */
+.layout-menu {
+  flex: 1;
+  background: transparent;
+  border-right: none;
+  padding: 10px;
+}
+
+.layout-menu :deep(.el-menu-item) {
+  color: #334155;
+  height: 48px;
+  line-height: 48px;
+  margin: 6px 0;
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+
+.layout-menu :deep(.el-menu-item:hover) {
+  background: #f8fafc;
+  color: #059669;
+}
+
+.layout-menu :deep(.el-menu-item.is-active) {
+  background: #f0fdf4;
+  color: #059669;
+}
+
+.layout-menu :deep(.el-menu-item.is-active::before) {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background: #059669;
+  border-radius: 0 2px 2px 0;
+}
+
+.layout-menu :deep(.el-icon) {
+  font-size: 20px;
+}
+
+/* 折叠模式 */
+.layout-menu:deep(.el-menu--collapse) {
+  padding: 10px 5px;
+}
+
+.layout-menu:deep(.el-menu--collapse .el-menu-item) {
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layout-menu:deep(.el-menu--collapse .el-icon) {
+  margin-right: 0 !important;
+  font-size: 22px;
+}
+
+/* ===== 顶部 ===== */
+.layout-header {
   height: 64px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -216,6 +251,31 @@ const toggleFullscreen = () => {
 .header-left {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.collapse-btn {
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.collapse-btn:hover {
+  color: #059669;
+  background: #f0fdf4;
+}
+
+.layout-breadcrumb :deep(.el-breadcrumb__inner) {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.layout-breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .header-right {
@@ -224,57 +284,45 @@ const toggleFullscreen = () => {
   gap: 20px;
 }
 
-.header-icon {
-  font-size: 20px;
-  color: #606266;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.header-icon:hover {
-  color: #409EFF;
-  background: #f5f7fa;
-}
-
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.3s;
 }
 
 .user-info:hover {
-  background: #f5f7fa;
+  background: #f0fdf4;
 }
 
 .username {
   font-size: 14px;
-  color: #606266;
+  color: #334155;
 }
 
-.main-content {
+/* ===== 主内容区 ===== */
+.layout-main {
   padding: 20px;
   overflow-y: auto;
+  background: #f8fafc;
 }
 
 /* 页面切换动画 */
-.fade-transform-enter-active,
-.fade-transform-leave-active {
-  transition: all 0.3s;
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.25s ease;
 }
 
-.fade-transform-enter-from {
+.fade-slide-enter-from {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateX(-12px);
 }
 
-.fade-transform-leave-to {
+.fade-slide-leave-to {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateX(12px);
 }
 </style>
