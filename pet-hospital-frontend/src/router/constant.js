@@ -39,31 +39,31 @@ export const asyncRoutes = [
         path: 'dashboard',
         name: 'AdminDashboard',
         component: () => import('@/views/admin/dashboard/index.vue'),
-        meta: { title: '数据看板', icon: 'DataLine' }
+        meta: { title: '数据看板', icon: 'dashboard' }
       },
       {
         path: 'user',
         name: 'AdminUser',
         component: () => import('@/views/admin/user/index.vue'),
-        meta: { title: '用户管理', icon: 'UserFilled' }
+        meta: { title: '用户管理', icon: 'user' }
       },
       {
         path: 'doctor',
         name: 'AdminDoctor',
         component: () => import('@/views/admin/doctor/index.vue'),
-        meta: { title: '医生管理', icon: 'FirstAidKit' }
+        meta: { title: '医生管理', icon: 'doctor' }
       },
       {
         path: 'pet',
         name: 'AdminPet',
         component: () => import('@/views/admin/pet/index.vue'),
-        meta: { title: '宠物管理', icon: 'Tickets' }
+        meta: { title: '宠物管理', icon: 'pet' }
       },
       {
         path: 'system',
         name: 'AdminSystem',
         component: () => import('@/views/admin/system/index.vue'),
-        meta: { title: '系统配置', icon: 'Setting' }
+        meta: { title: '系统配置', icon: 'setting' }
       }
     ]
   },
@@ -80,7 +80,7 @@ export const asyncRoutes = [
         path: 'pet',
         name: 'OwnerPet',
         component: () => import('@/views/owner/pet/index.vue'),
-        meta: { title: '我的宠物', icon: 'FirstAidKit' }
+        meta: { title: '我的宠物', icon: 'pet' }
       },
       {
         path: 'pet/:id',
@@ -92,13 +92,13 @@ export const asyncRoutes = [
         path: 'health',
         name: 'OwnerHealth',
         component: () => import('@/views/owner/health/index.vue'),
-        meta: { title: '健康记录', icon: 'Notebook' }
+        meta: { title: '健康记录', icon: 'health' }
       },
       {
         path: 'reserve',
         name: 'OwnerReserve',
         component: () => import('@/views/owner/reserve/index.vue'),
-        meta: { title: '预约申请', icon: 'Calendar' }
+        meta: { title: '预约申请', icon: 'reserve' }
       },
       {
         path: 'reserve/:id',
@@ -116,7 +116,7 @@ export const asyncRoutes = [
         path: 'consult',
         name: 'OwnerConsult',
         component: () => import('@/views/owner/consult/index.vue'),
-        meta: { title: '在线咨询', icon: 'ChatDotRound' }
+        meta: { title: '在线咨询', icon: 'consult' }
       },
       {
         path: 'consult/:id',
@@ -157,19 +157,25 @@ export const asyncRoutes = [
         path: 'customer',
         name: 'DeskCustomer',
         component: () => import('../views/desk/customer/index.vue'),
-        meta: { title: '客户查询', icon: 'UserFilled' }
+        meta: { title: '客户查询', icon: 'customer' }
       },
       {
         path: 'register',
         name: 'DeskRegister',
         component: () => import('@/views/desk/register/index.vue'),
-        meta: { title: '挂号管理', icon: 'Calendar' }
+        meta: { title: '挂号管理', icon: 'register' }
       },
       {
         path: 'charge',
         name: 'DeskCharge',
         component: () => import('@/views/desk/charge/index.vue'),
-        meta: { title: '收费管理', icon: 'Money' }
+        meta: { title: '收费管理', icon: 'charge' }
+      },
+      {
+        path: 'customer',
+        name: 'DeskCustomer',
+        component: () => import('@/views/desk/customer/index.vue'),
+        meta: { title: '客户管理', icon: 'customer' }
       }
     ]
   },
