@@ -1,15 +1,15 @@
 <template>
   <div class="consult-detail-page">
-    <!-- 返回按钮 -->
+    <!-- Back Button -->
     <div class="page-nav">
       <el-button link @click="goBack" class="back-btn">
         <el-icon><ArrowLeft /></el-icon>
-        返回
+        {{ $t('consultDetail.back') }}
       </el-button>
     </div>
 
     <div v-loading="loading">
-      <!-- 咨询信息卡片 -->
+      <!-- Consultation Info Card -->
       <div class="info-card">
         <div class="card-header">
           <div class="doctor-info">
@@ -17,9 +17,9 @@
               <el-icon><User /></el-icon>
             </el-avatar>
             <div>
-              <div class="doctor-name">{{ detail.doctorName || '等待接诊' }}</div>
+              <div class="doctor-name">{{ detail.doctorName || $t('consultDetail.awaitingResponse') }}</div>
               <div class="consult-status" :class="detail.status">
-                {{ detail.status === 'ongoing' ? '进行中' : '已完成' }}
+                {{ detail.status === 'ongoing' ? $t('consultDetail.ongoing') : $t('consultDetail.completed') }}
               </div>
             </div>
           </div>
@@ -30,7 +30,7 @@
           <div class="question-box">
             <div class="question-label">
               <span class="label-icon">📝</span>
-              问题描述
+              {{ $t('consultDetail.problemDescription') }}
             </div>
             <p>{{ detail.content }}</p>
           </div>
@@ -40,14 +40,14 @@
         </div>
       </div>
 
-      <!-- 回复列表 -->
+      <!-- Reply List -->
       <div class="replies-card">
         <div class="card-header">
-          <span class="title">医生回复</span>
-          <span class="reply-count">共 {{ replies.length }} 条回复</span>
+          <span class="title">{{ $t('consultDetail.doctorReplies') }}</span>
+          <span class="reply-count">{{ $t('consultDetail.repliesInTotal', { count: replies.length }) }}</span>
         </div>
         <div class="replies-list">
-          <!-- 医生回复 -->
+          <!-- Doctor Reply -->
           <div v-for="reply in replies" :key="reply.id" class="reply-item" :class="reply.senderType">
             <div class="reply-avatar">
               <el-avatar :size="36">
@@ -62,47 +62,47 @@
               <div class="reply-text">{{ reply.content }}</div>
             </div>
           </div>
-          <el-empty v-if="replies.length === 0" description="暂无回复，请耐心等待" />
+          <el-empty v-if="replies.length === 0" :description="$t('consultDetail.noRepliesYet')" />
         </div>
       </div>
 
-      <!-- 输入框 -->
+      <!-- Input Box -->
       <div v-if="detail.status === 'ongoing'" class="input-card">
         <div class="input-wrapper">
           <el-input 
             type="textarea" 
             v-model="newReply" 
-            placeholder="输入追问内容..."
+            :placeholder="$t('consultDetail.enterFollowUp')"
             :rows="3"
             resize="none"
           />
           <div class="input-actions">
-            <el-button type="primary" @click="submitReply" :loading="replying">发送</el-button>
+            <el-button type="primary" @click="submitReply" :loading="replying">{{ $t('consultDetail.send') }}</el-button>
           </div>
         </div>
       </div>
 
-      <!-- 评价区域 -->
+      <!-- Rating Area -->
       <div v-if="detail.status === 'completed' && !detail.rated" class="rate-card">
         <div class="card-header">
-          <span class="title">评价服务</span>
+          <span class="title">{{ $t('consultDetail.rateService') }}</span>
         </div>
         <div class="rate-content">
-          <el-rate v-model="rating" :texts="['很差', '较差', '一般', '较好', '非常好']" show-text />
+          <el-rate v-model="rating" :texts="[$t('consultDetail.veryPoor'), $t('consultDetail.poor'), $t('consultDetail.average'), $t('consultDetail.good'), $t('consultDetail.excellent')]" show-text />
           <el-input 
             type="textarea" 
             v-model="ratingComment" 
-            placeholder="请输入评价内容（选填）"
+            :placeholder="$t('consultDetail.reviewPlaceholder')"
             :rows="2"
           />
-          <el-button type="primary" @click="submitRate" :loading="ratingSubmit">提交评价</el-button>
+          <el-button type="primary" @click="submitRate" :loading="ratingSubmit">{{ $t('consultDetail.submitReview') }}</el-button>
         </div>
       </div>
 
-      <!-- 已评价显示 -->
+      <!-- Rated Display -->
       <div v-if="detail.rated" class="rated-card">
         <div class="rated-content">
-          <span class="rated-label">已评价</span>
+          <span class="rated-label">{{ $t('consultDetail.reviewed') }}</span>
           <el-rate v-model="detail.rating" disabled />
           <span class="rated-comment">{{ detail.ratingComment }}</span>
         </div>
@@ -117,7 +117,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, User } from '@element-plus/icons-vue'
 import { getConsultDetail, replyConsult, rateConsult } from '@/api/owner/owner'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const consultId = route.params.id
@@ -156,7 +158,7 @@ const loadDetail = async () => {
       replies.value = res.data.replies || []
     }
   } catch (error) {
-    console.error('加载咨询详情失败:', error)
+    console.error(t('consultDetail.failedToLoadDetail'), error)
   } finally {
     loading.value = false
   }
@@ -164,17 +166,17 @@ const loadDetail = async () => {
 
 const submitReply = async () => {
   if (!newReply.value.trim()) {
-    ElMessage.warning('请输入追问内容')
+    ElMessage.warning(t('consultDetail.pleaseEnterFollowUp'))
     return
   }
   replying.value = true
   try {
     await replyConsult(consultId, { content: newReply.value })
-    ElMessage.success('发送成功')
+    ElMessage.success(t('consultDetail.sentSuccessfully'))
     newReply.value = ''
     loadDetail()
   } catch {
-    ElMessage.error('发送失败')
+    ElMessage.error(t('consultDetail.failedToSend'))
   } finally {
     replying.value = false
   }
@@ -184,10 +186,10 @@ const submitRate = async () => {
   ratingSubmit.value = true
   try {
     await rateConsult(consultId, { rating: rating.value, comment: ratingComment.value })
-    ElMessage.success('评价成功')
+    ElMessage.success(t('consultDetail.reviewSubmitted'))
     loadDetail()
   } catch {
-    ElMessage.error('评价失败')
+    ElMessage.error(t('consultDetail.failedToSubmitReview'))
   } finally {
     ratingSubmit.value = false
   }

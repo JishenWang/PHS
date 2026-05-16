@@ -11,6 +11,7 @@ import com.pethospital.pet_hospital.entity.OrderInfo;
 import com.pethospital.pet_hospital.entity.OwnerHealthRecord;
 import com.pethospital.pet_hospital.entity.Pet;
 import com.pethospital.pet_hospital.entity.User;
+import com.pethospital.pet_hospital.vo.owner.HealthRecordDetailVo;
 
 public interface IOwnerService {
 
@@ -24,6 +25,7 @@ public interface IOwnerService {
     // ==================== 健康记录（就诊记录） ====================
     Page<MedicalRecord> getHealthRecords(Page<MedicalRecord> page, Long userId, Long petId, String type);
     MedicalRecord getHealthRecordDetail(Long recordId, Long userId);
+    HealthRecordDetailVo getHealthRecordDetailWithPrescription(Long recordId, Long userId);
 
     // ==================== 自填记录 ====================
     Page<OwnerHealthRecord> getOwnerHealthRecords(Page<OwnerHealthRecord> page, Long userId, Long petId);
@@ -35,6 +37,7 @@ public interface IOwnerService {
     Appointment getReserveDetail(Long reserveId, Long userId);
     boolean createReserve(Appointment appointment);
     boolean cancelReserve(Long reserveId, Long userId, String cancelReason);
+    boolean confirmReserve(Long reserveId, Long userId);
     List<Map<String, Object>> getAvailableDoctors(String serviceType, String date);
     List<Map<String, Object>> getAvailableTimeSlots(Long doctorId, String date);
 

@@ -2,14 +2,14 @@
   <div class="system-config">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2>系统配置</h2>
-      <p class="subtitle">管理系统的基本参数和业务规则</p>
+      <h2>{{ $t('system.title') }}</h2>
+      <p class="subtitle">{{ $t('system.subtitle') }}</p>
     </div>
 
     <!-- 配置标签页 -->
     <el-tabs v-model="activeTab" type="border-card" class="config-tabs">
       <!-- 基础配置 -->
-      <el-tab-pane label="基础配置" name="basic">
+      <el-tab-pane :label="$t('system.basicConfig')" name="basic" key="basic">
         <el-form 
           :model="basicForm" 
           :rules="basicRules" 
@@ -17,56 +17,56 @@
           label-width="140px"
           class="config-form"
         >
-          <el-divider content-position="left">机构信息</el-divider>
+          <el-divider content-position="left">{{ $t('system.organizationInfo') }}</el-divider>
           
-          <el-form-item label="机构名称" prop="hospitalName">
-            <el-input v-model="basicForm.hospitalName" placeholder="请输入宠物医院名称" />
+          <el-form-item :label="$t('system.hospitalName')" prop="hospitalName">
+            <el-input v-model="basicForm.hospitalName" :placeholder="$t('system.hospitalNamePlaceholder')" />
           </el-form-item>
           
-          <el-form-item label="联系电话" prop="contactPhone">
-            <el-input v-model="basicForm.contactPhone" placeholder="请输入联系电话" />
+          <el-form-item :label="$t('system.contactPhone')" prop="contactPhone">
+            <el-input v-model="basicForm.contactPhone" :placeholder="$t('system.contactPhonePlaceholder')" />
           </el-form-item>
           
-          <el-form-item label="机构地址" prop="address">
+          <el-form-item :label="$t('system.address')" prop="address">
             <el-input 
               v-model="basicForm.address" 
               type="textarea" 
               :rows="2" 
-              placeholder="请输入详细地址"
+              :placeholder="$t('system.addressPlaceholder')"
             />
           </el-form-item>
 
-          <el-divider content-position="left">系统参数</el-divider>
+          <el-divider content-position="left">{{ $t('system.systemParameters') }}</el-divider>
           
-          <el-form-item label="预约提前天数" prop="maxAdvanceDays">
+          <el-form-item :label="$t('system.maxAdvanceBookingDays')" prop="maxAdvanceDays">
             <el-slider v-model="basicForm.maxAdvanceDays" :max="30" show-stops />
-            <span class="form-hint">最多可提前 {{ basicForm.maxAdvanceDays }} 天预约</span>
+            <span class="form-hint">{{ $t('system.canBookUpToDays', { days: basicForm.maxAdvanceDays }) }}</span>
           </el-form-item>
           
-          <el-form-item label="每日预约上限" prop="dailyLimit">
+          <el-form-item :label="$t('system.dailyBookingLimit')" prop="dailyLimit">
             <el-input-number v-model="basicForm.dailyLimit" :min="10" :max="200" />
           </el-form-item>
           
-          <el-form-item label="系统公告" prop="announcement">
+          <el-form-item :label="$t('system.systemAnnouncement')" prop="announcement">
             <el-input 
               v-model="basicForm.announcement" 
               type="textarea" 
               :rows="3" 
-              placeholder="登录页显示的系统公告"
+              :placeholder="$t('system.announcementPlaceholder')"
             />
           </el-form-item>
 
           <el-form-item>
             <el-button type="primary" @click="saveBasicConfig" :loading="saving.basic">
-              <el-icon><Check /></el-icon> 保存基础配置
+              <el-icon><Check /></el-icon> {{ $t('system.saveBasicConfig') }}
             </el-button>
-            <el-button @click="resetBasicForm">重置</el-button>
+            <el-button @click="resetBasicForm">{{ $t('system.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
 
       <!-- 业务配置 -->
-      <el-tab-pane label="业务配置" name="business">
+      <el-tab-pane :label="$t('system.businessConfig')" name="business" key="business">
         <el-form 
           :model="businessForm" 
           :rules="businessRules" 
@@ -74,157 +74,157 @@
           label-width="160px"
           class="config-form"
         >
-          <el-divider content-position="left">挂号费用</el-divider>
+          <el-divider content-position="left">{{ $t('system.registrationFees') }}</el-divider>
           
-          <el-form-item label="普通挂号费（元）" prop="normalFee">
+          <el-form-item :label="$t('system.normalRegistrationFee')" prop="normalFee">
             <el-input-number v-model="businessForm.normalFee" :min="0" :precision="2" :step="5" />
           </el-form-item>
           
-          <el-form-item label="专家挂号费（元）" prop="expertFee">
+          <el-form-item :label="$t('system.expertRegistrationFee')" prop="expertFee">
             <el-input-number v-model="businessForm.expertFee" :min="0" :precision="2" :step="10" />
           </el-form-item>
 
-          <el-divider content-position="left">营业时间</el-divider>
+          <el-divider content-position="left">{{ $t('system.businessHours') }}</el-divider>
           
-          <el-form-item label="上午营业时间" prop="morningTime">
+          <el-form-item :label="$t('system.morningBusinessHours')" prop="morningTime">
             <el-time-picker
               v-model="businessForm.morningTime"
               is-range
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
+              range-separator="-"
+              :start-placeholder="$t('system.startTime')"
+              :end-placeholder="$t('system.endTime')"
               format="HH:mm"
             />
           </el-form-item>
           
-          <el-form-item label="下午营业时间" prop="afternoonTime">
+          <el-form-item :label="$t('system.afternoonBusinessHours')" prop="afternoonTime">
             <el-time-picker
               v-model="businessForm.afternoonTime"
               is-range
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
+              range-separator="-"
+              :start-placeholder="$t('system.startTime')"
+              :end-placeholder="$t('system.endTime')"
               format="HH:mm"
             />
           </el-form-item>
 
-          <el-divider content-position="left">诊疗规则</el-divider>
+          <el-divider content-position="left">{{ $t('system.consultationRules') }}</el-divider>
           
-          <el-form-item label="单次诊疗时长（分钟）" prop="consultDuration">
+          <el-form-item :label="$t('system.consultationDuration')" prop="consultDuration">
             <el-radio-group v-model="businessForm.consultDuration">
-              <el-radio-button :label="15">15分钟</el-radio-button>
-              <el-radio-button :label="20">20分钟</el-radio-button>
-              <el-radio-button :label="30">30分钟</el-radio-button>
-              <el-radio-button :label="45">45分钟</el-radio-button>
+              <el-radio-button :value="15">{{ $t('system.minutes15') }}</el-radio-button>
+              <el-radio-button :value="20">{{ $t('system.minutes20') }}</el-radio-button>
+              <el-radio-button :value="30">{{ $t('system.minutes30') }}</el-radio-button>
+              <el-radio-button :value="45">{{ $t('system.minutes45') }}</el-radio-button>
             </el-radio-group>
           </el-form-item>
           
-          <el-form-item label="允许退号时间" prop="refundDeadline">
+          <el-form-item :label="$t('system.refundDeadline')" prop="refundDeadline">
             <el-select v-model="businessForm.refundDeadline">
-              <el-option label="就诊前2小时" :value="2" />
-              <el-option label="就诊前4小时" :value="4" />
-              <el-option label="就诊前8小时" :value="8" />
-              <el-option label="就诊前24小时" :value="24" />
+              <el-option :label="$t('system.hours2BeforeVisit')" :value="2" />
+              <el-option :label="$t('system.hours4BeforeVisit')" :value="4" />
+              <el-option :label="$t('system.hours8BeforeVisit')" :value="8" />
+              <el-option :label="$t('system.hours24BeforeVisit')" :value="24" />
             </el-select>
           </el-form-item>
 
           <el-form-item>
             <el-button type="primary" @click="saveBusinessConfig" :loading="saving.business">
-              <el-icon><Check /></el-icon> 保存业务配置
+              <el-icon><Check /></el-icon> {{ $t('system.saveBusinessConfig') }}
             </el-button>
-            <el-button @click="resetBusinessForm">重置</el-button>
+            <el-button @click="resetBusinessForm">{{ $t('system.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
 
       <!-- 通知配置 -->
-      <el-tab-pane label="通知配置" name="notification">
+      <el-tab-pane :label="$t('system.notificationConfig')" name="notification" key="notification">
         <el-form 
           :model="notifyForm" 
           ref="notifyFormRef"
           label-width="160px"
           class="config-form"
         >
-          <el-divider content-position="left">短信通知</el-divider>
+          <el-divider content-position="left">{{ $t('system.smsNotification') }}</el-divider>
           
-          <el-form-item label="预约成功通知">
-            <el-switch v-model="notifyForm.smsReserveSuccess" active-text="开启" inactive-text="关闭" />
+          <el-form-item :label="$t('system.bookingSuccessNotification')">
+            <el-switch v-model="notifyForm.smsReserveSuccess" :active-text="$t('system.on')" :inactive-text="$t('system.off')" />
           </el-form-item>
           
-          <el-form-item label="就诊前提醒">
-            <el-switch v-model="notifyForm.smsRemind" active-text="开启" inactive-text="关闭" />
+          <el-form-item :label="$t('system.preVisitReminder')">
+            <el-switch v-model="notifyForm.smsRemind" :active-text="$t('system.on')" :inactive-text="$t('system.off')" />
           </el-form-item>
           
-          <el-form-item label="提醒提前时间" v-if="notifyForm.smsRemind">
+          <el-form-item :label="$t('system.reminderLeadTime')" v-if="notifyForm.smsRemind">
             <el-select v-model="notifyForm.remindTime">
-              <el-option label="提前30分钟" :value="30" />
-              <el-option label="提前1小时" :value="60" />
-              <el-option label="提前2小时" :value="120" />
+              <el-option :label="$t('system.minutes30Ahead')" :value="30" />
+              <el-option :label="$t('system.hour1Ahead')" :value="60" />
+              <el-option :label="$t('system.hours2Ahead')" :value="120" />
             </el-select>
           </el-form-item>
 
-          <el-divider content-position="left">邮件通知</el-divider>
+          <el-divider content-position="left">{{ $t('system.emailNotification') }}</el-divider>
           
-          <el-form-item label="系统异常报警">
-            <el-switch v-model="notifyForm.emailErrorAlert" active-text="开启" inactive-text="关闭" />
+          <el-form-item :label="$t('system.systemExceptionAlert')">
+            <el-switch v-model="notifyForm.emailErrorAlert" :active-text="$t('system.on')" :inactive-text="$t('system.off')" />
           </el-form-item>
           
-          <el-form-item label="接收邮箱" v-if="notifyForm.emailErrorAlert">
-            <el-input v-model="notifyForm.alertEmail" placeholder="多个邮箱用逗号分隔" />
+          <el-form-item :label="$t('system.receivingEmail')" v-if="notifyForm.emailErrorAlert">
+            <el-input v-model="notifyForm.alertEmail" :placeholder="$t('system.emailPlaceholder')" />
           </el-form-item>
 
           <el-form-item>
             <el-button type="primary" @click="saveNotifyConfig" :loading="saving.notification">
-              <el-icon><Check /></el-icon> 保存通知配置
+              <el-icon><Check /></el-icon> {{ $t('system.saveNotificationConfig') }}
             </el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
 
       <!-- 数据维护 -->
-      <el-tab-pane label="数据维护" name="maintenance">
+      <el-tab-pane :label="$t('system.dataMaintenance')" name="maintenance" key="maintenance">
         <div class="maintenance-section">
-          <el-divider content-position="left">数据备份</el-divider>
+          <el-divider content-position="left">{{ $t('system.dataBackup') }}</el-divider>
           
           <div class="maint-item">
             <div class="maint-info">
-              <h4>手动备份</h4>
-              <p>立即创建当前数据库的完整备份</p>
+              <h4>{{ $t('system.manualBackup') }}</h4>
+              <p>{{ $t('system.manualBackupDesc') }}</p>
             </div>
             <el-button type="primary" @click="handleBackup" :loading="loading.backup">
-              <el-icon><Download /></el-icon> 立即备份
+              <el-icon><Download /></el-icon> {{ $t('system.backupNow') }}
             </el-button>
           </div>
           
           <div class="maint-item">
             <div class="maint-info">
-              <h4>自动备份</h4>
-              <p>系统每天凌晨2:00自动备份数据</p>
+              <h4>{{ $t('system.autoBackup') }}</h4>
+              <p>{{ $t('system.autoBackupDesc') }}</p>
             </div>
-            <el-switch v-model="autoBackup" active-text="已开启" inactive-text="已关闭" />
+            <el-switch v-model="autoBackup" :active-text="$t('system.enabled')" :inactive-text="$t('system.disabled')" />
           </div>
 
-          <el-divider content-position="left">缓存管理</el-divider>
+          <el-divider content-position="left">{{ $t('system.cacheManagement') }}</el-divider>
           
           <div class="maint-item">
             <div class="maint-info">
-              <h4>清除系统缓存</h4>
-              <p>清除Redis缓存，强制刷新所有配置</p>
+              <h4>{{ $t('system.clearSystemCache') }}</h4>
+              <p>{{ $t('system.clearCacheDesc') }}</p>
             </div>
             <el-button type="warning" @click="handleClearCache" :loading="loading.cache">
-              <el-icon><Delete /></el-icon> 清除缓存
+              <el-icon><Delete /></el-icon> {{ $t('system.clearCache') }}
             </el-button>
           </div>
 
-          <el-divider content-position="left">危险操作</el-divider>
+          <el-divider content-position="left">{{ $t('system.dangerousOperations') }}</el-divider>
           
           <div class="maint-item danger">
             <div class="maint-info">
-              <h4>重置系统</h4>
-              <p class="danger-text">⚠️ 清空所有业务数据，仅保留管理员账号，此操作不可逆！</p>
+              <h4>{{ $t('system.resetSystem') }}</h4>
+              <p class="danger-text">{{ $t('system.resetSystemDesc') }}</p>
             </div>
             <el-button type="danger" @click="handleResetSystem" :loading="loading.reset">
-              <el-icon><Warning /></el-icon> 重置系统
+              <el-icon><Warning /></el-icon> {{ $t('system.resetSystem') }}
             </el-button>
           </div>
         </div>
@@ -235,23 +235,23 @@
     <el-card class="log-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <span>配置操作日志</span>
+          <span>{{ $t('system.configOperationLog') }}</span>
           <el-button link @click="refreshLogs">
-            <el-icon><Refresh /></el-icon> 刷新
+            <el-icon><Refresh /></el-icon> {{ $t('system.refresh') }}
           </el-button>
         </div>
       </template>
       
       <el-table :data="operationLogs" v-loading="logLoading" size="small">
-        <el-table-column prop="time" label="时间" width="160" />
-        <el-table-column prop="user" label="操作人" width="100" />
-        <el-table-column prop="action" label="操作类型" width="120">
+        <el-table-column prop="time" :label="$t('system.time')" width="160" />
+        <el-table-column prop="user" :label="$t('system.operator')" width="100" />
+        <el-table-column prop="action" :label="$t('system.operationType')" width="120">
           <template #default="{ row }">
             <el-tag :type="row.type" size="small">{{ row.action }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="detail" label="详情" />
-        <el-table-column prop="ip" label="IP地址" width="120" />
+        <el-table-column prop="detail" :label="$t('system.details')" />
+        <el-table-column prop="ip" :label="$t('system.ipAddress')" width="120" />
       </el-table>
       
       <el-pagination
@@ -268,6 +268,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Check, 
@@ -281,12 +282,15 @@ import {
   saveBasicConfig as apiSaveBasic,
   getBusinessConfig,
   saveBusinessConfig as apiSaveBusiness,
+  getNotificationConfig,
+  saveNotificationConfig as apiSaveNotification,
   backupData,
   clearCache,
   resetSystem,
   getOperationLogs
 } from '@/api/admin/admin'
 
+const { t } = useI18n()
 const activeTab = ref('basic')
 const saving = reactive({ basic: false, business: false, notification: false })
 const loading = reactive({ backup: false, cache: false, reset: false })
@@ -308,9 +312,9 @@ const basicForm = reactive({
 })
 
 const basicRules = {
-  hospitalName: [{ required: true, message: '请输入机构名称', trigger: 'blur' }],
-  contactPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  address: [{ required: true, message: '请输入地址', trigger: 'blur' }]
+  hospitalName: [{ required: true, message: t('system.pleaseEnterOrganizationName'), trigger: 'blur' }],
+  contactPhone: [{ required: true, message: t('system.pleaseEnterContactPhone'), trigger: 'blur' }],
+  address: [{ required: true, message: t('system.pleaseEnterAddress'), trigger: 'blur' }]
 }
 
 // 业务配置表单
@@ -325,8 +329,8 @@ const businessForm = reactive({
 })
 
 const businessRules = {
-  normalFee: [{ required: true, message: '请设置普通挂号费', trigger: 'change' }],
-  expertFee: [{ required: true, message: '请设置专家挂号费', trigger: 'change' }]
+  normalFee: [{ required: true, message: t('system.pleaseSetNormalFee'), trigger: 'change' }],
+  expertFee: [{ required: true, message: t('system.pleaseSetExpertFee'), trigger: 'change' }]
 }
 
 // 通知配置表单
@@ -361,11 +365,11 @@ const saveBasicConfig = async () => {
     saving.basic = true
     const res = await apiSaveBasic(basicForm)
     if (res.code === 200) {
-      ElMessage.success('基础配置保存成功')
+      ElMessage.success(t('system.basicConfigSaved'))
       fetchLogs()
     }
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error(t('system.saveFailed'))
   } finally {
     saving.basic = false
   }
@@ -377,17 +381,32 @@ const resetBasicForm = () => {
 }
 
 // 保存业务配置
+const formatTime = (date) => {
+  if (!date || !(date instanceof Date)) return '00:00'
+  const h = String(date.getHours()).padStart(2, '0')
+  const m = String(date.getMinutes()).padStart(2, '0')
+  return `${h}:${m}`
+}
+
 const saveBusinessConfig = async () => {
   try {
     await businessFormRef.value.validate()
     saving.business = true
-    const res = await apiSaveBusiness(businessForm)
+    const payload = {
+      normalFee: businessForm.normalFee,
+      expertFee: businessForm.expertFee,
+      morningTime: businessForm.morningTime.map(formatTime),
+      afternoonTime: businessForm.afternoonTime.map(formatTime),
+      consultDuration: businessForm.consultDuration,
+      refundDeadline: businessForm.refundDeadline
+    }
+    const res = await apiSaveBusiness(payload)
     if (res.code === 200) {
-      ElMessage.success('业务配置保存成功')
+      ElMessage.success(t('system.businessConfigSaved'))
       fetchLogs()
     }
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error(t('system.saveFailed'))
   } finally {
     saving.business = false
   }
@@ -397,13 +416,86 @@ const resetBusinessForm = () => {
   businessFormRef.value?.resetFields()
 }
 
+// 解析时间字符串为 Date（兼容 ISO 格式和 HH:mm 格式）
+const parseTimeStr = (str) => {
+  if (!str) return null
+  if (typeof str !== 'string') return null
+  // 如果是完整 ISO 时间字符串（如 2024-01-01T00:00:00.000Z）
+  if (str.includes('T')) {
+    const d = new Date(str)
+    if (!isNaN(d.getTime())) return d
+  }
+  // 否则假设是 HH:mm 格式
+  const d = new Date(`2024-01-01T${str}`)
+  if (!isNaN(d.getTime())) return d
+  return null
+}
+
+// 获取业务配置
+const fetchBusinessConfig = async () => {
+  try {
+    const res = await getBusinessConfig()
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      if (data.normalFee != null) businessForm.normalFee = Number(data.normalFee)
+      if (data.expertFee != null) businessForm.expertFee = Number(data.expertFee)
+      if (data.morningTime && Array.isArray(data.morningTime) && data.morningTime.length >= 2) {
+        const s = parseTimeStr(data.morningTime[0])
+        const e = parseTimeStr(data.morningTime[1])
+        if (s && e) businessForm.morningTime = [s, e]
+      }
+      if (data.afternoonTime && Array.isArray(data.afternoonTime) && data.afternoonTime.length >= 2) {
+        const s = parseTimeStr(data.afternoonTime[0])
+        const e = parseTimeStr(data.afternoonTime[1])
+        if (s && e) businessForm.afternoonTime = [s, e]
+      }
+      if (data.consultDuration != null) businessForm.consultDuration = Number(data.consultDuration)
+      if (data.refundDeadline != null) businessForm.refundDeadline = Number(data.refundDeadline)
+    }
+  } catch (error) {
+    console.error('获取业务配置失败:', error)
+  }
+}
+
+// 获取通知配置
+const fetchNotificationConfig = async () => {
+  try {
+    const res = await getNotificationConfig()
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      notifyForm.smsReserveSuccess = data.smsReserveSuccess !== false
+      notifyForm.smsRemind = data.smsRemind !== false
+      notifyForm.remindTime = data.remindTime || 60
+      notifyForm.emailErrorAlert = data.emailErrorAlert === true
+      notifyForm.alertEmail = data.alertEmail || ''
+    }
+  } catch (error) {
+    console.error('获取通知配置失败:', error)
+  }
+}
+
 // 保存通知配置
 const saveNotifyConfig = async () => {
   saving.notification = true
-  setTimeout(() => {
+  try {
+    const res = await apiSaveNotification({
+      smsReserveSuccess: notifyForm.smsReserveSuccess,
+      smsRemind: notifyForm.smsRemind,
+      remindTime: notifyForm.remindTime,
+      emailErrorAlert: notifyForm.emailErrorAlert,
+      alertEmail: notifyForm.alertEmail
+    })
+    if (res.code === 200) {
+      ElMessage.success(t('system.notificationConfigSaved'))
+      fetchLogs()
+    } else {
+      ElMessage.error(t('system.saveFailed'))
+    }
+  } catch (error) {
+    ElMessage.error(t('system.saveFailed'))
+  } finally {
     saving.notification = false
-    ElMessage.success('通知配置保存成功')
-  }, 500)
+  }
 }
 
 // 数据备份
@@ -412,10 +504,10 @@ const handleBackup = async () => {
   try {
     const res = await backupData()
     if (res.code === 200) {
-      ElMessage.success('备份成功，文件已下载')
+      ElMessage.success(t('system.backupSuccessful'))
     }
   } catch (error) {
-    ElMessage.error('备份失败')
+    ElMessage.error(t('system.saveFailed'))
   } finally {
     loading.backup = false
   }
@@ -424,19 +516,19 @@ const handleBackup = async () => {
 // 清除缓存
 const handleClearCache = async () => {
   try {
-    await ElMessageBox.confirm('确定要清除系统缓存吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('system.confirmClearCache'), t('system.prompt'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
     loading.cache = true
     const res = await clearCache()
     if (res.code === 200) {
-      ElMessage.success('缓存清除成功')
+      ElMessage.success(t('system.cacheCleared'))
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('操作失败')
+      ElMessage.error(t('system.operationFailed'))
     }
   } finally {
     loading.cache = false
@@ -447,11 +539,11 @@ const handleClearCache = async () => {
 const handleResetSystem = async () => {
   try {
     await ElMessageBox.confirm(
-      '⚠️ 此操作将清空所有业务数据，仅保留管理员账号，确定要继续吗？',
-      '危险操作确认',
+      t('system.confirmResetSystem'),
+      t('system.dangerousOperationConfirm'),
       {
-        confirmButtonText: '我已了解风险，确认重置',
-        cancelButtonText: '取消',
+        confirmButtonText: t('system.understandRiskConfirmReset'),
+        cancelButtonText: t('common.cancel'),
         type: 'danger',
         confirmButtonClass: 'el-button--danger'
       }
@@ -459,13 +551,13 @@ const handleResetSystem = async () => {
     loading.reset = true
     const res = await resetSystem()
     if (res.code === 200) {
-      ElMessage.success('系统已重置，请重新登录')
+      ElMessage.success(t('system.systemReset'))
       // 跳转到登录页
       window.location.href = '/login'
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('操作失败')
+      ElMessage.error(t('system.operationFailed'))
     }
   } finally {
     loading.reset = false
@@ -495,6 +587,8 @@ const refreshLogs = () => {
 
 onMounted(() => {
   fetchBasicConfig()
+  fetchBusinessConfig()
+  fetchNotificationConfig()
   fetchLogs()
 })
 </script>

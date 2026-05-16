@@ -56,56 +56,56 @@ public class BusinessException extends RuntimeException {
      * 资源不存在
      */
     public static BusinessException notFound(String entityName) {
-        return new BusinessException(404, entityName + "不存在");
+        return new BusinessException(404, entityName + " does not exist");
     }
 
     /**
      * 资源已存在
      */
     public static BusinessException alreadyExists(String entityName) {
-        return new BusinessException(409, entityName + "已存在");
+        return new BusinessException(409, entityName + " already exists");
     }
 
     /**
      * 权限不足
      */
     public static BusinessException permissionDenied() {
-        return new BusinessException(403, "权限不足");
+        return new BusinessException(403, "Insufficient permission");
     }
 
     /**
      * 未登录或登录已过期
      */
     public static BusinessException unauthenticated() {
-        return new BusinessException(401, "未登录或登录已过期");
+        return new BusinessException(401, "Not logged in or session expired");
     }
 
     /**
      * 参数无效
      */
     public static BusinessException invalidParam(String paramName) {
-        return new BusinessException(400, paramName + "参数无效");
+        return new BusinessException(400, paramName + " parameter is invalid");
     }
 
     /**
      * 操作失败
      */
     public static BusinessException operationFailed(String reason) {
-        return new BusinessException(500, "操作失败：" + reason);
+        return new BusinessException(500, "Operation failed: " + reason);
     }
 
     /**
      * 登录失败
      */
     public static BusinessException loginFailed() {
-        return new BusinessException(401, "用户名或密码错误");
+        return new BusinessException(401, "Incorrect username or password");
     }
 
     /**
      * Token过期
      */
     public static BusinessException tokenExpired() {
-        return new BusinessException(401, "登录已过期，请重新登录");
+        return new BusinessException(401, "Session expired, please log in again");
     }
 
     /**

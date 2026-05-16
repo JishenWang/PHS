@@ -1,12 +1,12 @@
 <template>
   <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar">
+    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar" :class="sidebarClass">
       <div class="sidebar-logo">
         <div class="logo-icon">🐾</div>
         <div v-show="!isCollapse" class="logo-text">
-          <div class="logo-title">宠物医院</div>
-          <div class="logo-sub">前台收银端</div>
+          <div class="logo-title">{{ $t('layout.hospitalName') }}</div>
+          <div class="logo-sub">{{ $t('layout.deskSub') }}</div>
         </div>
       </div>
 
@@ -31,7 +31,7 @@
 
       <!-- 医生状态面板 -->
       <div v-show="!isCollapse" class="sidebar-footer">
-        <div class="footer-title">医生接诊状态</div>
+        <div class="footer-title">{{ $t('layout.doctorStatusTitle') }}</div>
         <div v-for="d in doctors" :key="d.id" class="doctor-item">
           <span class="doctor-name">{{ d.name }}</span>
           <el-tag size="small" :type="doctorTagType(d.status)">
@@ -49,37 +49,42 @@
             <Fold v-if="!isCollapse" />
             <Expand v-else />
           </el-icon>
-          <div class="header-title-group">
-            <div class="page-title">{{ pageTitle }}</div>
-            <div class="page-sub">
-              今日运营：挂号 {{ stats.registerCount }} / 接诊 {{ stats.doneCount }} / 收费 ¥{{ stats.chargeTotal?.toFixed(2) || '0.00' }}
-            </div>
-          </div>
+
+          <el-breadcrumb v-if="showBreadcrumb" separator="/" class="layout-breadcrumb">
+            <el-breadcrumb-item
+              v-for="(item, index) in breadcrumbList"
+              :key="index"
+              :to="index < breadcrumbList.length - 1 ? item.path : undefined"
+            >
+              {{ item.title }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+          <div v-else class="page-title">{{ pageTitle }}</div>
         </div>
 
         <div class="header-right">
           <el-badge :value="unreadCount" :hidden="!unreadCount">
             <el-button text @click="messageVisible = true">
-              <el-icon><Bell /></el-icon> 消息
+              <el-icon><Bell /></el-icon> {{ $t('layout.messages') }}
             </el-button>
           </el-badge>
 
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-info">
               <el-avatar :size="32" :src="userStore.avatar || defaultAvatar" />
-              <span class="username">{{ userStore.username || '前台' }}</span>
+              <span class="username">{{ displayName }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>个人中心
+                  <el-icon><User /></el-icon>{{ $t('layout.profile') }}
                 </el-dropdown-item>
-                <el-dropdown-item command="password">
-                  <el-icon><Lock /></el-icon>修改密码
+                <el-dropdown-item command="settings">
+                  <el-icon><Setting /></el-icon>{{ $t('layout.settings') }}
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
-                  <el-icon><SwitchButton /></el-icon>退出登录
+                  <el-icon><SwitchButton /></el-icon>{{ $t('layout.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -88,24 +93,28 @@
       </el-header>
 
       <el-main class="layout-main">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" :key="refreshKey" />
+          </transition>
+        </router-view>
       </el-main>
     </el-container>
 
     <!-- 消息抽屉 -->
-    <el-drawer v-model="messageVisible" title="消息提醒" size="420px">
-      <el-empty v-if="messages.length === 0" description="暂无消息" />
+    <el-drawer v-model="messageVisible" :title="$t('layout.messages')" size="420px">
+      <el-empty v-if="messages.length === 0" :description="$t('layout.noMessages')" />
       <div
         v-for="m in messages"
         :key="m.id"
         class="message-item"
         :class="{ unread: !m.read }"
       >
-        <div class="message-text">{{ m.content }}</div>
+        <div class="message-text">{{ getMessageContent(m) }}</div>
         <div class="message-meta">
           <span>{{ formatTime(m.createdAt) }}</span>
           <el-button v-if="!m.read" type="primary" link @click="markRead(m.id)">
-            标记已读
+            {{ $t('layout.markRead') }}
           </el-button>
         </div>
       </div>
@@ -114,40 +123,95 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore } from '@/store/settings'
 import { useLayout } from '@/composables/useLayout'
+import { getDoctorStatusList, getMessages } from '@/api/desk/desk'
 import {
   Fold, Expand, ArrowDown, User, Lock, SwitchButton,
-  Bell, UserFilled, Menu
+  Bell, UserFilled, Menu, Setting
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const { isCollapse, toggleCollapse, sidebarMenus, activeMenu } = useLayout()
+const settingsStore = useSettingsStore()
+const { sidebarMenus, activeMenu, breadcrumbList } = useLayout()
+const refreshKey = ref(0)
 
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-const pageTitle = computed(() => route.meta?.title || '前台工作台')
+const pageTitle = computed(() => route.meta?.title || 'Desk')
 
-// 运营数据
-const stats = ref({ registerCount: 0, doneCount: 0, chargeTotal: 0 })
+// 折叠状态从 store 管理
+const isCollapse = ref(settingsStore.collapseMenu)
+const toggleCollapse = () => {
+  isCollapse.value = !isCollapse.value
+  settingsStore.collapseMenu = isCollapse.value
+}
+watch(() => settingsStore.collapseMenu, (val) => {
+  isCollapse.value = val
+})
 
-// 医生状态（模拟）
-const doctors = ref([
-  { id: 1, name: '张医生', status: 'FREE' },
-  { id: 2, name: '李医生', status: 'BUSY' },
-  { id: 3, name: '王医生', status: 'REST' }
-])
+// 侧边栏样式 class
+const sidebarClass = computed(() => {
+  return settingsStore.sidebarStyle === 'dark' ? 'sidebar-dark' : 'sidebar-light'
+})
+
+// 是否显示面包屑
+const showBreadcrumb = computed(() => settingsStore.showBreadcrumb)
+
+// 显示名称优先取真实姓名
+const displayName = computed(() => {
+  return userStore.userInfo?.realName || userStore.username || 'Desk'
+})
+
+const loadMessages = async () => {
+  try {
+    const result = await getMessages()
+    const data = Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : [])
+    messages.value = data
+  } catch (e) {
+    messages.value = []
+  }
+}
+
+const getMessageContent = (m) => {
+  if (!m) return ''
+  if (m.type === 'notice') return t('layout.adminNotice')
+  return m.content || ''
+}
+
+// 医生状态（从后端实时获取）
+const doctors = ref([])
+
+const loadDoctorStatus = async () => {
+  try {
+    const { data } = await getDoctorStatusList()
+    const list = Array.isArray(data) ? data : (data?.data || [])
+    if (list.length > 0) {
+      doctors.value = list.map(d => ({
+        id: d.id,
+        name: d.name,
+        status: d.status || 'FREE'
+      }))
+    }
+  } catch (e) {
+    // 静默失败，保留上次数据或空列表
+  }
+}
 
 const doctorStatusMap = {
-  FREE: { label: '空闲', type: 'success' },
-  BUSY: { label: '接诊中', type: 'warning' },
-  REST: { label: '休息', type: 'info' }
+  FREE: { label: t('layout.statusFree'), type: 'success' },
+  BUSY: { label: t('layout.statusBusy'), type: 'warning' },
+  REST: { label: t('layout.statusRest'), type: 'info' }
 }
-const doctorStatusLabel = (s) => doctorStatusMap[s]?.label || '未知'
+const doctorStatusLabel = (s) => doctorStatusMap[s]?.label || t('layout.statusUnknown')
 const doctorTagType = (s) => doctorStatusMap[s]?.type || 'info'
 
 // 消息
@@ -168,11 +232,15 @@ const markRead = (id) => {
 
 const handleCommand = (command) => {
   switch (command) {
-    case 'profile': ElMessage.success('个人中心'); break
-    case 'password': ElMessage.success('修改密码'); break
+    case 'profile':
+      router.push('/desk/profile')
+      break
+    case 'settings':
+      router.push('/desk/settings')
+      break
     case 'logout':
-      ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-        confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+      ElMessageBox.confirm(t('layout.logoutConfirm'), 'Tip', {
+        confirmButtonText: t('layout.confirm'), cancelButtonText: t('layout.cancel'), type: 'warning'
       }).then(() => userStore.logout())
       break
   }
@@ -180,7 +248,11 @@ const handleCommand = (command) => {
 
 let dashboardTimer = null
 onMounted(() => {
-  dashboardTimer = setInterval(() => {}, 30000)
+  loadDoctorStatus()
+  loadMessages()
+  dashboardTimer = setInterval(() => {
+    loadDoctorStatus()
+  }, 30000)
 })
 onUnmounted(() => {
   if (dashboardTimer) clearInterval(dashboardTimer)
@@ -302,6 +374,50 @@ onUnmounted(() => {
   font-size: 22px;
 }
 
+/* ===== 深色侧边栏模式 ===== */
+.layout-sidebar.sidebar-dark {
+  background: #1e293b;
+  border-right-color: #334155;
+}
+
+.sidebar-dark .sidebar-logo {
+  border-bottom-color: #334155;
+}
+
+.sidebar-dark .logo-title {
+  color: #f1f5f9;
+}
+
+.sidebar-dark .logo-sub {
+  color: #94a3b8;
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item) {
+  color: #cbd5e1;
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--el-color-primary, #3b82f6);
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item.is-active) {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--el-color-primary, #3b82f6);
+}
+
+.sidebar-dark .sidebar-footer {
+  border-top-color: #334155;
+}
+
+.sidebar-dark .footer-title {
+  color: #94a3b8;
+}
+
+.sidebar-dark .doctor-name {
+  color: #cbd5e1;
+}
+
 /* ===== 底部医生状态面板 ===== */
 .sidebar-footer {
   padding: 16px 20px;
@@ -358,10 +474,15 @@ onUnmounted(() => {
   background: #f0fdf4;
 }
 
-.header-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.layout-breadcrumb :deep(.el-breadcrumb__inner) {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.layout-breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: #1e293b;
+  font-weight: 600;
 }
 
 .page-title {
@@ -373,6 +494,7 @@ onUnmounted(() => {
 .page-sub {
   font-size: 12px;
   color: #64748b;
+  margin-left: auto;
 }
 
 .header-right {
@@ -405,6 +527,22 @@ onUnmounted(() => {
   padding: 20px;
   overflow-y: auto;
   background: #f8fafc;
+}
+
+/* 页面切换动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(12px);
 }
 
 /* ===== 消息抽屉 ===== */

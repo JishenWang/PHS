@@ -3,18 +3,18 @@
     <!-- 搜索区域 -->
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="关键词">
+        <el-form-item :label="$t('common.keyword')">
           <el-input 
             v-model="searchForm.keyword" 
-            placeholder="请输入宠物名称或主人姓名" 
+            :placeholder="$t('adminPet.keywordPlaceholder')" 
             clearable
             prefix-icon="Search"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch" :icon="Search">搜索</el-button>
-          <el-button @click="handleReset" :icon="RefreshRight">重置</el-button>
+          <el-button type="primary" @click="handleSearch" :icon="Search">{{ $t('common.search') }}</el-button>
+          <el-button @click="handleReset" :icon="RefreshRight">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -24,12 +24,11 @@
       <template #header>
         <div class="card-header">
           <div class="header-left">
-            <span class="title">宠物档案</span>
-            <el-tag type="info" effect="plain">共 {{ tableData.length }} 只宠物</el-tag>
+            <span class="title">{{ $t('adminPet.petRecords') }}</span>
+            <el-tag type="info" effect="plain">{{ $t('adminPet.totalPets', { count: tableData.length }) }}</el-tag>
           </div>
           <div class="header-right">
-            <el-button type="primary" @click="handleAdd" :icon="Plus">新增档案</el-button>
-            <el-button type="success" :icon="Download" @click="handleExport">导出</el-button>
+            <el-button type="primary" @click="handleAdd" :icon="Plus">{{ $t('adminPet.addRecord') }}</el-button>
           </div>
         </div>
       </template>
@@ -42,9 +41,9 @@
         class="data-table"
         max-height="600"
       >
-        <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
+        <el-table-column type="index" :label="$t('common.no')" width="60" align="center" fixed="left" />
         
-        <el-table-column label="宠物信息" min-width="200" fixed="left">
+        <el-table-column :label="$t('adminPet.petInfo')" min-width="200" fixed="left">
           <template #default="{ row }">
             <div class="pet-info-cell">
               <div class="pet-avatar" :class="row.type">
@@ -52,13 +51,13 @@
               </div>
               <div class="pet-detail">
                 <div class="pet-name">{{ row.name }}</div>
-                <div class="pet-breed">{{ row.breed }} · {{ row.age }}岁 · {{ row.gender === 'male' ? '公' : '母' }}</div>
+                <div class="pet-breed">{{ row.breed }} · {{ row.age }} {{ $t('adminPet.years') }} · {{ row.gender === 'male' ? $t('adminPet.male') : $t('adminPet.female') }}</div>
               </div>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="主人信息" min-width="180">
+        <el-table-column :label="$t('adminPet.ownerInfo')" min-width="180">
           <template #default="{ row }">
             <div class="owner-info">
               <div class="owner-name">{{ row.ownerName }}</div>
@@ -70,7 +69,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="健康状态" width="120" align="center">
+        <el-table-column :label="$t('adminPet.healthStatus')" width="120" align="center">
           <template #default="{ row }">
             <el-tag :type="getHealthType(row.healthStatus)" effect="light" round>
               {{ getHealthText(row.healthStatus) }}
@@ -78,7 +77,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="疫苗情况" min-width="200">
+        <el-table-column :label="$t('adminPet.vaccination')" min-width="200">
           <template #default="{ row }">
             <div class="vaccine-tags">
               <el-tag 
@@ -88,27 +87,27 @@
                 effect="plain"
                 type="success"
               >
-                {{ vaccine }}
+                {{ getVaccineLabel(vaccine) }}
               </el-tag>
-              <el-tag v-if="!row.vaccines?.length" size="small" type="info">未接种</el-tag>
+              <el-tag v-if="!row.vaccines?.length" size="small" type="info">{{ $t('adminPet.notVaccinated') }}</el-tag>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="上次就诊" width="140" align="center">
+        <el-table-column :label="$t('adminPet.lastVisit')" width="140" align="center">
           <template #default="{ row }">
             <div class="last-visit">
               <el-icon><Calendar /></el-icon>
-              <span>{{ row.lastVisit || '无记录' }}</span>
+              <span>{{ row.lastVisit || $t('adminPet.noRecords') }}</span>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="220" fixed="right" align="center">
+        <el-table-column :label="$t('common.operation')" width="220" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
-            <el-button type="primary" link :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
+            <el-button type="primary" link :icon="View" @click="handleView(row)">{{ $t('adminPet.details') }}</el-button>
+            <el-button type="primary" link :icon="Edit" @click="handleEdit(row)">{{ $t('common.edit') }}</el-button>
+            <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -130,17 +129,17 @@
       >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="宠物名称" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入宠物名称" />
+            <el-form-item :label="$t('adminPet.petName')" prop="name">
+              <el-input v-model="formData.name" :placeholder="$t('adminPet.pleaseEnterPetName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="宠物种类" prop="type">
-              <el-select v-model="formData.type" placeholder="请选择种类" style="width: 100%">
-                <el-option label="狗" value="dog" />
-                <el-option label="猫" value="cat" />
-                <el-option label="兔子" value="rabbit" />
-                <el-option label="其他" value="other" />
+            <el-form-item :label="$t('adminPet.petType')" prop="type">
+              <el-select v-model="formData.type" :placeholder="$t('adminPet.selectType')" style="width: 100%">
+                <el-option :label="$t('adminPet.typeDog')" value="dog" />
+                <el-option :label="$t('adminPet.typeCat')" value="cat" />
+                <el-option :label="$t('adminPet.typeRabbit')" value="rabbit" />
+                <el-option :label="$t('adminPet.typeOther')" value="other" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -148,15 +147,15 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="品种" prop="breed">
-              <el-input v-model="formData.breed" placeholder="请输入品种" />
+            <el-form-item :label="$t('adminPet.breed')" prop="breed">
+              <el-input v-model="formData.breed" :placeholder="$t('adminPet.pleaseEnterBreed')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="性别" prop="gender">
+            <el-form-item :label="$t('adminPet.gender')" prop="gender">
               <el-radio-group v-model="formData.gender">
-                <el-radio label="male">公</el-radio>
-                <el-radio label="female">母</el-radio>
+                <el-radio label="male">{{ $t('adminPet.male') }}</el-radio>
+                <el-radio label="female">{{ $t('adminPet.female') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -164,12 +163,12 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="年龄" prop="age">
+            <el-form-item :label="$t('adminPet.age')" prop="age">
               <el-input-number v-model="formData.age" :min="0" :max="30" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="体重(kg)" prop="weight">
+            <el-form-item :label="$t('adminPet.weightKg')" prop="weight">
               <el-input-number v-model="formData.weight" :min="0" :precision="2" style="width: 100%" />
             </el-form-item>
           </el-col>
@@ -177,90 +176,90 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="主人姓名" prop="ownerName">
-              <el-input v-model="formData.ownerName" placeholder="请输入主人姓名" />
+            <el-form-item :label="$t('adminPet.ownerName')" prop="ownerName">
+              <el-input v-model="formData.ownerName" :placeholder="$t('adminPet.pleaseEnterOwnerName')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="主人电话" prop="ownerPhone">
-              <el-input v-model="formData.ownerPhone" placeholder="请输入主人电话" />
+            <el-form-item :label="$t('adminPet.ownerPhone')" prop="ownerPhone">
+              <el-input v-model="formData.ownerPhone" :placeholder="$t('adminPet.pleaseEnterOwnerPhone')" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="健康状态" prop="healthStatus">
+        <el-form-item :label="$t('adminPet.healthStatus')" prop="healthStatus">
           <el-radio-group v-model="formData.healthStatus">
-            <el-radio label="healthy">健康</el-radio>
-            <el-radio label="treatment">治疗中</el-radio>
-            <el-radio label="checkup">需复查</el-radio>
+            <el-radio label="healthy">{{ $t('adminPet.healthHealthy') }}</el-radio>
+            <el-radio label="treatment">{{ $t('adminPet.healthTreatment') }}</el-radio>
+            <el-radio label="checkup">{{ $t('adminPet.healthCheckup') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="疫苗记录">
+        <el-form-item :label="$t('adminPet.vaccination')">
           <el-select
             v-model="formData.vaccines"
             multiple
             collapse-tags
-            placeholder="请选择已接种疫苗"
+            :placeholder="$t('adminPet.selectVaccines')"
             style="width: 100%"
           >
-            <el-option label="狂犬疫苗" value="狂犬疫苗" />
-            <el-option label="犬六联" value="犬六联" />
-            <el-option label="犬细小" value="犬细小" />
-            <el-option label="猫三联" value="猫三联" />
-            <el-option label="猫四联" value="猫四联" />
+            <el-option :label="$t('adminPet.vaccineRabies')" value="狂犬疫苗" />
+            <el-option :label="$t('adminPet.vaccineCanineHexavalent')" value="犬六联" />
+            <el-option :label="$t('adminPet.vaccineCanineParvovirus')" value="犬细小" />
+            <el-option :label="$t('adminPet.vaccineFelineTriple')" value="猫三联" />
+            <el-option :label="$t('adminPet.vaccineFelineQuadrivalent')" value="猫四联" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="过敏史">
-          <el-input v-model="formData.allergies" type="textarea" :rows="2" placeholder="请输入过敏史，无则留空" />
+        <el-form-item :label="$t('adminPet.allergyHistory')">
+          <el-input v-model="formData.allergies" type="textarea" :rows="2" :placeholder="$t('adminPet.allergyPlaceholder')" />
         </el-form-item>
 
-        <el-form-item label="备注">
-          <el-input v-model="formData.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+        <el-form-item :label="$t('adminPet.remark')">
+          <el-input v-model="formData.remark" type="textarea" :rows="3" :placeholder="$t('adminPet.remarkPlaceholder')" />
         </el-form-item>
       </el-form>
       
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 详情对话框 -->
     <el-dialog 
-      title="宠物档案详情" 
+      :title="$t('adminPet.petRecordDetails')" 
       v-model="detailVisible" 
       width="700px"
       class="pet-detail-dialog"
     >
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="宠物名称">{{ currentPet.name }}</el-descriptions-item>
-        <el-descriptions-item label="宠物种类">{{ getPetEmoji(currentPet.type) }} {{ getPetTypeName(currentPet.type) }}</el-descriptions-item>
-        <el-descriptions-item label="品种">{{ currentPet.breed }}</el-descriptions-item>
-        <el-descriptions-item label="性别">{{ currentPet.gender === 'male' ? '公 ♂' : '母 ♀' }}</el-descriptions-item>
-        <el-descriptions-item label="年龄">{{ currentPet.age }}岁</el-descriptions-item>
-        <el-descriptions-item label="体重">{{ currentPet.weight }}kg</el-descriptions-item>
-        <el-descriptions-item label="主人姓名">{{ currentPet.ownerName }}</el-descriptions-item>
-        <el-descriptions-item label="主人电话">{{ currentPet.ownerPhone }}</el-descriptions-item>
-        <el-descriptions-item label="健康状态" :span="2">
+        <el-descriptions-item :label="$t('adminPet.petName')">{{ currentPet.name }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.petType')">{{ getPetEmoji(currentPet.type) }} {{ getPetTypeName(currentPet.type) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.breed')">{{ currentPet.breed }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.gender')">{{ currentPet.gender === 'male' ? $t('adminPet.male') + ' ♂' : $t('adminPet.female') + ' ♀' }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.age')">{{ currentPet.age }} {{ $t('adminPet.years') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.weightKg')">{{ currentPet.weight }} kg</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.ownerName')">{{ currentPet.ownerName }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.ownerPhone')">{{ currentPet.ownerPhone }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.healthStatus')" :span="2">
           <el-tag :type="getHealthType(currentPet.healthStatus)">
             {{ getHealthText(currentPet.healthStatus) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="疫苗记录" :span="2">
+        <el-descriptions-item :label="$t('adminPet.vaccination')" :span="2">
           <el-tag 
             v-for="vaccine in currentPet.vaccines || []" 
             :key="vaccine"
             type="success"
             style="margin-right: 8px; margin-bottom: 5px;"
           >
-            {{ vaccine }}
+            {{ getVaccineLabel(vaccine) }}
           </el-tag>
-          <span v-if="!currentPet.vaccines?.length">未接种</span>
+          <span v-if="!currentPet.vaccines?.length">{{ $t('adminPet.notVaccinated') }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="过敏史" :span="2">{{ currentPet.allergies || '无' }}</el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">{{ currentPet.remark || '无' }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.allergyHistory')" :span="2">{{ currentPet.allergies || $t('common.none') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('adminPet.remark')" :span="2">{{ currentPet.remark || $t('common.none') }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </div>
@@ -268,21 +267,23 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, RefreshRight, Download, Edit, Delete, View, Phone, Calendar } from '@element-plus/icons-vue'
+import { Plus, Search, RefreshRight, Edit, Delete, View, Phone, Calendar } from '@element-plus/icons-vue'
 import { 
   getPetList, 
   addPet, 
   updatePet, 
   deletePet,
-  exportPets 
 } from '@/api/admin/admin'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const submitLoading = ref(false)
 const detailVisible = ref(false)
 const dialogVisible = ref(false)
-const dialogTitle = ref('新增档案')
+const dialogTitle = ref(t('adminPet.addRecord'))
 const formRef = ref(null)
 const currentPet = ref({})
 
@@ -307,14 +308,14 @@ const formData = reactive({
 })
 
 const formRules = {
-  name: [{ required: true, message: '请输入宠物名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择宠物种类', trigger: 'change' }],
-  breed: [{ required: true, message: '请输入品种', trigger: 'blur' }],
-  gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
-  age: [{ required: true, message: '请输入年龄', trigger: 'blur' }],
-  ownerName: [{ required: true, message: '请输入主人姓名', trigger: 'blur' }],
-  ownerPhone: [{ required: true, message: '请输入主人电话', trigger: 'blur' }],
-  healthStatus: [{ required: true, message: '请选择健康状态', trigger: 'change' }]
+  name: [{ required: true, message: t('adminPet.pleaseEnterPetName'), trigger: 'blur' }],
+  type: [{ required: true, message: t('adminPet.pleaseSelectPetType'), trigger: 'change' }],
+  breed: [{ required: true, message: t('adminPet.pleaseEnterBreed'), trigger: 'blur' }],
+  gender: [{ required: true, message: t('adminPet.pleaseSelectGender'), trigger: 'change' }],
+  age: [{ required: true, message: t('adminPet.pleaseEnterAge'), trigger: 'blur' }],
+  ownerName: [{ required: true, message: t('adminPet.pleaseEnterOwnerName'), trigger: 'blur' }],
+  ownerPhone: [{ required: true, message: t('adminPet.pleaseEnterOwnerPhone'), trigger: 'blur' }],
+  healthStatus: [{ required: true, message: t('adminPet.pleaseSelectHealthStatus'), trigger: 'change' }]
 }
 
 const tableData = ref([])
@@ -324,33 +325,33 @@ const fetchPetList = async () => {
   loading.value = true
   try {
     const res = await getPetList(searchForm.keyword)
-    console.log('宠物列表响应:', res)  // 添加调试日志
+    console.log('Pet list response:', res)  // 添加调试日志
     
     if (res.code === 200) {
       tableData.value = res.data || []
       if (tableData.value.length === 0) {
-        console.log('返回数据为空数组，检查数据库是否有数据')
+        console.log('Returned data is empty array, check if database has data')
       }
     } else {
-      ElMessage.error(res.message || '获取数据失败')
+      ElMessage.error(res.message || t('adminPet.fetchFailed'))
     }
   } catch (error) {
-    console.error('获取宠物列表失败:', error)
-    console.error('错误详情:', error.response?.data || error.message)
-    ElMessage.error(error.response?.data?.message || '获取宠物列表失败')
+    console.error('Failed to fetch pet list:', error)
+    console.error('Error details:', error.response?.data || error.message)
+    ElMessage.error(error.response?.data?.message || t('adminPet.fetchFailed'))
   } finally {
     loading.value = false
   }
 }
 
 const getPetEmoji = (type) => {
-  const emojis = { dog: '🐕', cat: '🐱', rabbit: '🐰', other: '🐹' }
+  const emojis = { dog: '🐕', cat: '🐱', rabbit: '🐰', other: '🐹', '狗': '🐕', '猫': '🐱', '兔': '🐰', '未知': '🐾' }
   return emojis[type] || '🐾'
 }
 
 const getPetTypeName = (type) => {
-  const names = { dog: '狗', cat: '猫', rabbit: '兔子', other: '其他' }
-  return names[type] || '未知'
+  const map = { dog: 'typeDog', cat: 'typeCat', rabbit: 'typeRabbit', other: 'typeOther', '狗': 'typeDog', '猫': 'typeCat', '兔': 'typeRabbit', '未知': 'typeUnknown' }
+  return map[type] ? t(`adminPet.${map[type]}`) : t('adminPet.typeUnknown')
 }
 
 const getHealthType = (status) => {
@@ -359,8 +360,26 @@ const getHealthType = (status) => {
 }
 
 const getHealthText = (status) => {
-  const texts = { healthy: '健康', treatment: '治疗中', checkup: '需复查' }
-  return texts[status] || '未知'
+  const map = { healthy: 'healthHealthy', treatment: 'healthTreatment', checkup: 'healthCheckup' }
+  return map[status] ? t(`adminPet.${map[status]}`) : t('adminPet.healthUnknown')
+}
+
+const getVaccineLabel = (vaccine) => {
+  const map = {
+    '狂犬疫苗': 'vaccineRabies',
+    '狂犬': 'vaccineRabies',
+    '犬六联': 'vaccineCanineHexavalent',
+    '犬细小': 'vaccineCanineParvovirus',
+    '猫三联': 'vaccineFelineTriple',
+    '猫四联': 'vaccineFelineQuadrivalent',
+    '兔瘟疫苗': 'vaccineRabbitPlague',
+    'Rabies Vaccine': 'vaccineRabies',
+    'Canine Hexavalent': 'vaccineCanineHexavalent',
+    'Canine Parvovirus': 'vaccineCanineParvovirus',
+    'Feline Triple': 'vaccineFelineTriple',
+    'Feline Quadrivalent': 'vaccineFelineQuadrivalent'
+  }
+  return map[vaccine] ? t(`adminPet.${map[vaccine]}`) : vaccine
 }
 
 const handleSearch = () => {
@@ -372,22 +391,8 @@ const handleReset = () => {
   handleSearch()
 }
 
-const handleExport = async () => {
-  try {
-    const res = await exportPets(searchForm)
-    const blob = new Blob([res], { type: 'application/vnd.ms-excel' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `宠物档案_${new Date().toLocaleDateString()}.xlsx`
-    link.click()
-    ElMessage.success('导出成功')
-  } catch (error) {
-    ElMessage.error('导出失败')
-  }
-}
-
 const handleAdd = () => {
-  dialogTitle.value = '新增档案'
+  dialogTitle.value = t('adminPet.addRecord')
   Object.assign(formData, {
     id: null,
     name: '',
@@ -412,25 +417,25 @@ const handleView = (row) => {
 }
 
 const handleEdit = (row) => {
-  dialogTitle.value = '编辑档案'
+  dialogTitle.value = t('adminPet.editRecord')
   Object.assign(formData, row)
   dialogVisible.value = true
 }
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定删除宠物 "${row.name}" 的档案吗？`, '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('adminPet.deleteConfirm', { name: row.name }), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await deletePet(row.id)
       if (res.code === 200) {
-        ElMessage.success('删除成功')
+        ElMessage.success(t('common.deleteSuccess'))
         fetchPetList()
       }
     } catch (error) {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('common.deleteFailed'))
     }
   })
 }
@@ -444,13 +449,13 @@ const handleSubmit = async () => {
     const res = await api(formData)
     
     if (res.code === 200) {
-      ElMessage.success(formData.id ? '编辑成功' : '新增成功')
+      ElMessage.success(formData.id ? t('common.updateSuccess') : t('common.addSuccess'))
       dialogVisible.value = false
       fetchPetList()
     }
   } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error(error.response?.data?.message || '操作失败')
+    console.error('Submit failed:', error)
+    ElMessage.error(error.response?.data?.message || t('common.operationFailed'))
   } finally {
     submitLoading.value = false
   }

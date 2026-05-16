@@ -18,6 +18,7 @@ const RegisterStatus = {
 }
 
 const ReserveStatus = {
+  PENDING: 'PENDING',
   BOOKED: 'BOOKED',
   VERIFIED: 'VERIFIED',
   CANCELED: 'CANCELED'
@@ -36,12 +37,12 @@ const DoctorStatus = {
   REST: 'REST'
 }
 const DEFAULT_DOCTORS = [
-  { id: 'd_3001', name: '王医生', status: DoctorStatus.FREE },
-  { id: 'd_3002', name: '刘医生', status: DoctorStatus.BUSY },
-  { id: 'd_3003', name: '陈医生', status: DoctorStatus.REST }
+  { id: 'd_3001', name: 'Dr. Wang', status: DoctorStatus.FREE },
+  { id: 'd_3002', name: 'Dr. Liu', status: DoctorStatus.BUSY },
+  { id: 'd_3003', name: 'Dr. Chen', status: DoctorStatus.REST }
 ]
 
-const PayMethods = ['现金', '微信', '支付宝', '刷卡']
+const PayMethods = ['Cash', 'WeChat', 'Alipay', 'Card']
 
 function nowIso() {
   return new Date().toISOString()
@@ -75,7 +76,7 @@ function normalizeDoctorList(list = []) {
     .filter(x => x && (x.id || x.name))
     .map(x => {
       const status = [DoctorStatus.FREE, DoctorStatus.BUSY, DoctorStatus.REST].includes(x.status) ? x.status : DoctorStatus.FREE
-      return { id: String(x.id || genId('doc')), name: String(x.name || '医生'), status }
+      return { id: String(x.id || genId('doc')), name: String(x.name || 'Doctor'), status }
     })
 }
 
@@ -127,37 +128,37 @@ function seedOnce() {
     lsSetArray(LS_KEYS.customers, [
       {
         id: 'c_1001',
-        name: '张三',
+        name: 'Zhang San',
         phone: '13800000001',
-        address: '北京市朝阳区',
+        address: 'Beijing Chaoyang',
         isTemp: false,
         pets: [
           {
             id: 'p_2001',
-            name: '豆豆',
-            species: '猫',
-            gender: '母',
+            name: 'DouDou',
+            species: 'Cat',
+            gender: 'Female',
             age: 2,
-            allergyHistory: '海鲜过敏',
-            healthRecords: ['2026-03-12: 体检正常', '2026-04-01: 疫苗接种完成']
+            allergyHistory: 'Seafood allergy',
+            healthRecords: ['2026-03-12: Exam normal', '2026-04-01: Vaccination completed']
           }
         ]
       },
       {
         id: 'c_1002',
-        name: '李四',
+        name: 'Li Si',
         phone: '13800000002',
-        address: '上海市浦东新区',
+        address: 'Shanghai Pudong',
         isTemp: false,
         pets: [
           {
             id: 'p_2002',
-            name: '皮皮',
-            species: '狗',
-            gender: '公',
+            name: 'PiPi',
+            species: 'Dog',
+            gender: 'Male',
             age: 4,
             allergyHistory: '',
-            healthRecords: ['2026-02-08: 驱虫完成']
+            healthRecords: ['2026-02-08: Deworming completed']
           }
         ]
       }
@@ -170,13 +171,13 @@ function seedOnce() {
       {
         id: 'res_1',
         customerId: 'c_1001',
-        customerName: '张三',
+        customerName: 'Zhang San',
         phone: '13800000001',
         petId: 'p_2001',
-        petName: '豆豆',
+        petName: 'DouDou',
         doctorId: 'd_3001',
-        doctorName: '王医生',
-        serviceType: '普通门诊',
+        doctorName: 'Dr. Wang',
+        serviceType: 'General Clinic',
         reserveTime: t,
         status: ReserveStatus.BOOKED,
         createdAt: t,
@@ -188,11 +189,7 @@ function seedOnce() {
   if (lsGetArray(LS_KEYS.registers).length === 0) lsSetArray(LS_KEYS.registers, [])
   if (lsGetArray(LS_KEYS.charges).length === 0) lsSetArray(LS_KEYS.charges, [])
   if (lsGetArray(LS_KEYS.orders).length === 0) lsSetArray(LS_KEYS.orders, [])
-  if (lsGetArray(LS_KEYS.messages).length === 0) {
-    lsSetArray(LS_KEYS.messages, [
-      { id: genId('msg'), type: 'notice', content: '管理员通知：请核对今日收费', read: false, createdAt: nowIso() }
-    ])
-  }
+  // 不再预置默认消息，由前端根据语言动态显示
   if (lsGetArray(LS_KEYS.doctors).length === 0) {
     lsSetArray(LS_KEYS.doctors, DEFAULT_DOCTORS)
   }
@@ -249,8 +246,8 @@ export async function createTempCustomer(payload) {
           {
             id: genId('p'),
             name: payload.petName,
-            species: payload.petSpecies || '未知',
-            gender: payload.petGender || '未知',
+            species: payload.petSpecies || 'Unknown',
+            gender: payload.petGender || 'Unknown',
             age: Number(payload.petAge || 0),
             allergyHistory: payload.allergyHistory || '',
             healthRecords: []
@@ -278,6 +275,23 @@ export async function getReserveList(params = {}) {
   )
 }
 
+export async function confirmReserve(reserveId) {
+  seedOnce()
+  return tryRequestOrFallback(
+    () => request({ url: `/desk/reserves/${encodeURIComponent(reserveId)}/confirm`, method: 'put' }),
+    async () => {
+      const reserves = lsGetArray(LS_KEYS.reserves)
+      const idx = reserves.findIndex(r => r.id === reserveId)
+      if (idx < 0) throw new Error('Appointment does not exist')
+      if (reserves[idx].status !== ReserveStatus.PENDING) throw new Error('Only pending appointments can be confirmed')
+      reserves[idx].status = ReserveStatus.BOOKED
+      reserves[idx].updatedAt = nowIso()
+      lsSetArray(LS_KEYS.reserves, reserves)
+      return reserves[idx]
+    }
+  )
+}
+
 export async function verifyReserve(reserveId) {
   seedOnce()
   return tryRequestOrFallback(
@@ -285,7 +299,7 @@ export async function verifyReserve(reserveId) {
     async () => {
       const reserves = lsGetArray(LS_KEYS.reserves)
       const idx = reserves.findIndex(r => r.id === reserveId)
-      if (idx < 0) throw new Error('预约不存在')
+      if (idx < 0) throw new Error('Appointment does not exist')
       reserves[idx].status = ReserveStatus.VERIFIED
       reserves[idx].updatedAt = nowIso()
       lsSetArray(LS_KEYS.reserves, reserves)
@@ -325,7 +339,7 @@ export async function createRegister(payload) {
         petSpecies: payload.petSpecies || '',
         doctorId: payload.doctorId,
         doctorName: payload.doctorName,
-        serviceType: payload.serviceType || '普通门诊',
+        serviceType: payload.serviceType || 'General Clinic',
         reason: payload.reason || '',
         visitTime: payload.visitTime || createdAt,
         status: RegisterStatus.WAITING,
@@ -335,7 +349,7 @@ export async function createRegister(payload) {
       const registers = lsGetArray(LS_KEYS.registers)
       registers.unshift(register)
       lsSetArray(LS_KEYS.registers, registers)
-      pushMessage(`新挂号单 ${register.registerNo} 已创建`)
+      pushMessage(`New registration单 ${register.registerNo} created`)
       return register
     }
   )
@@ -413,7 +427,7 @@ function ensureChargeForRegister(register) {
     updatedAt: nowIso()
   })
   lsSetArray(LS_KEYS.charges, charges)
-  pushMessage(`医生处方/服务单已接收，待收费：${register.registerNo}`)
+  pushMessage(`Doctor处方/服务单已接收，待收费：${register.registerNo}`)
 }
 
 export async function getChargeList(params = {}) {
@@ -593,7 +607,7 @@ function pushMessage(content) {
 }
 
 export function buildRegisterExportCsv(list = []) {
-  const header = ['挂号编号', '客户', '手机号', '宠物', '医生', '服务类型', '主诉', '状态', '时间']
+  const header = ['挂号编号', 'Customer', '手机号', '宠物', 'Doctor', '服务类型', '主诉', '状态', '时间']
   const rows = list.map(x => [x.registerNo, x.customerName, x.phone, x.petName, x.doctorName, x.serviceType, x.reason, x.status, x.visitTime])
   return [header, ...rows].map(r => r.map(x => `"${String(x ?? '').replaceAll('"', '""')}"`).join(',')).join('\n')
 }
@@ -603,8 +617,8 @@ export function buildChargeExportText(charge) {
   return [
     '【宠物医院收费小票】',
     `订单号：${charge?.orderNo || ''}`,
-    `客户：${charge?.customerName || ''} 手机：${charge?.phone || ''}`,
-    `宠物：${charge?.petName || ''} 医生：${charge?.doctorName || ''}`,
+    `Customer：${charge?.customerName || ''} 手机：${charge?.phone || ''}`,
+    `宠物：${charge?.petName || ''} Doctor：${charge?.doctorName || ''}`,
     details,
     `小计：${Number(charge?.subtotal || 0).toFixed(2)}`,
     `优惠：${Number(charge?.discount || 0).toFixed(2)}`,
@@ -614,4 +628,13 @@ export function buildChargeExportText(charge) {
     `支付方式：${charge?.payMethod || ''}`,
     `支付时间：${charge?.paidAt || ''}`
   ].join('\n')
+}
+
+// ==================== 系统设置 ====================
+export function getDeskVersion() {
+  return request({ url: '/desk/version', method: 'get' })
+}
+
+export function submitDeskFeedback(data) {
+  return request({ url: '/desk/feedback', method: 'post', data })
 }

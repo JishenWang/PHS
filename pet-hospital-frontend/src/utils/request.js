@@ -23,7 +23,7 @@ request.interceptors.request.use(
     return config
   },
   error => {
-    console.error('请求错误:', error)
+    console.error('Request error:', error)
     return Promise.reject(error)
   }
 )
@@ -36,19 +36,21 @@ request.interceptors.response.use(
     // 标准 ResultVo 风格：{ code, message, data }
     if (typeof res?.code === 'number') {
       if (res.code === 200) return res
-      const errMsg = res.msg || res.message || '请求失败'
+      const errMsg = res.msg || res.message || 'Request failed'
 
       if (res.code === 401) {
-        ElMessage.error(res.msg || res.message || '登录已过期，请重新登录')
+        ElMessage.error(res.msg || res.message || 'Session expired, please log in again')
         clearAuth()
         router.push('/login')
-        return Promise.reject(new Error(res.msg || res.message || '未授权'))
+        return Promise.reject(new Error(res.msg || res.message || 'Unauthorized'))
       }
 
       if (res.code === 403) {
-        ElMessage.error(res.msg || res.message || '权限不足')
-        router.push('/403')
-        return Promise.reject(new Error(res.msg || res.message || '权限不足'))
+        ElMessage.error(res.msg || res.message || 'Insufficient permission')
+        // 清除认证并跳转登录（token 过期等情况）
+        clearAuth()
+        router.push('/login')
+        return Promise.reject(new Error(res.msg || res.message || 'Insufficient permission'))
       }
 
       ElMessage.error(errMsg)
@@ -58,7 +60,7 @@ request.interceptors.response.use(
     // Desk 模块大量接口返回：{ success, message, ... } 或直接分页对象
     if (typeof res === 'object' && res !== null) {
       if (res.success === false) {
-        const msg = res.message || '请求失败'
+        const msg = res.message || 'Request failed'
         ElMessage.error(msg)
         return Promise.reject(new Error(msg))
       }
@@ -68,34 +70,36 @@ request.interceptors.response.use(
     return res
   },
   error => {
-    console.error('响应错误:', error)
+    console.error('Response error:', error)
     
     if (error.response) {
       const { status } = error.response
       
       switch (status) {
         case 401:
-          ElMessage.error('登录已过期，请重新登录')
+          ElMessage.error('Session expired, please log in again')
           clearAuth()
           router.push('/login')
           break
         case 403:
-          ElMessage.error('权限不足')
-          router.push('/403')
+          ElMessage.error('Insufficient permission')
+          // 清除认证并跳转登录（token 过期等情况）
+          clearAuth()
+          router.push('/login')
           break
         case 404:
-          ElMessage.error('请求的资源不存在')
+          ElMessage.error('Requested resource not found')
           break
         case 500:
-          ElMessage.error('服务器内部错误')
+          ElMessage.error('Server internal error')
           break
         default:
-          ElMessage.error(error.response.data?.message || '请求失败')
+          ElMessage.error(error.response.data?.message || 'Request failed')
       }
     } else if (error.request) {
-      ElMessage.error('网络连接失败，请检查网络')
+      ElMessage.error('Network connection failed, please check network')
     } else {
-      ElMessage.error(error.message || '请求失败')
+      ElMessage.error(error.message || 'Request failed')
     }
     
     return Promise.reject(error)

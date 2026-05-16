@@ -49,6 +49,30 @@ export default [
     }
   },
   {
+    path: '/doctor/record/detail',
+    name: 'DoctorRecordDetail',
+    component: () => import('@/views/doctor/record/detail.vue'),
+    meta: {
+      title: '病历详情',
+      icon: 'Document',
+      role: 'DOCTOR',
+      permission: 'record:view',
+      hidden: true
+    }
+  },
+  {
+    path: '/doctor/prescription/detail',
+    name: 'DoctorPrescriptionDetail',
+    component: () => import('@/views/doctor/prescription/detail.vue'),
+    meta: {
+      title: '处方详情',
+      icon: 'Tickets',
+      role: 'DOCTOR',
+      permission: 'prescription:view',
+      hidden: true
+    }
+  },
+  {
     path: '/doctor/consult',
     name: 'DoctorConsult',
     component: () => import('@/views/doctor/consult/index.vue'),

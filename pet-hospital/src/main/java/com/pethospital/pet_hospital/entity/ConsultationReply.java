@@ -16,6 +16,9 @@ public class ConsultationReply {
     private Integer isRead;
     private LocalDateTime createTime;
 
+    @TableField(exist = false)
+    private String senderName;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -39,4 +42,7 @@ public class ConsultationReply {
 
     public LocalDateTime getCreateTime() { return createTime; }
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
+
+    public String getSenderName() { return senderName; }
+    public void setSenderName(String senderName) { this.senderName = senderName; }
 }

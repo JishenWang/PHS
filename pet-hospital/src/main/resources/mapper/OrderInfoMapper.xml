@@ -113,12 +113,13 @@
     <select id="listDeskCharges" resultType="java.util.HashMap">
         select oi.id as id,
                oi.order_no as orderNo,
+               oi.register_id as registerId,
                rr.register_no as registerNo,
                su.real_name as customerName,
                su.phone as phone,
                p.name as petName,
                p.species as petSpecies,
-               dp.name as doctorName,
+               coalesce(dp.name, doc_user.real_name, '-') as doctorName,
                oi.pay_method as payMethod,
                oi.pay_time as paidAt,
                oi.payable_amount as total,
@@ -135,6 +136,7 @@
                  left join sys_user su on su.id = oi.owner_user_id
                  left join pet p on p.id = oi.pet_id
                  left join doctor_profile dp on dp.id = rr.doctor_id
+                 left join sys_user doc_user on doc_user.id = rr.doctor_id
         where <include refid="deskChargeWhere"/>
         order by oi.id desc
         limit #{offset}, #{limit}

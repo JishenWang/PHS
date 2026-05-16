@@ -4,22 +4,22 @@
       <template v-if="!showForm">
         <el-card class="search-card" shadow="hover">
           <el-form :model="searchForm" inline>
-            <el-form-item label="宠物名称">
-              <el-input v-model="searchForm.petName" placeholder="请输入" clearable>
+            <el-form-item :label="$t('prescription.petName')">
+              <el-input v-model="searchForm.petName" :placeholder="$t('prescription.placeholderEnter')" clearable>
                 <template #prefix>
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
             </el-form-item>
-            <el-form-item label="处方号">
-              <el-input v-model="searchForm.prescriptionNo" placeholder="请输入" clearable />
+            <el-form-item :label="$t('prescription.prescriptionNo')">
+              <el-input v-model="searchForm.prescriptionNo" :placeholder="$t('prescription.placeholderEnter')" clearable />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="handleSearch">
-                <el-icon><Search /></el-icon>查询
+                <el-icon><Search /></el-icon>{{ $t('common.search') }}
               </el-button>
               <el-button @click="handleReset">
-                <el-icon><RefreshRight /></el-icon>重置
+                <el-icon><RefreshRight /></el-icon>{{ $t('common.reset') }}
               </el-button>
             </el-form-item>
           </el-form>
@@ -28,15 +28,15 @@
         <el-card shadow="hover" class="list-card">
           <template #header>
             <div class="card-header">
-              <span class="title">处方列表</span>
+              <span class="title">{{ $t('prescription.prescriptionList') }}</span>
               <el-button type="primary" @click="handleCreate">
-                <el-icon><Plus /></el-icon>新建处方
+                <el-icon><Plus /></el-icon>{{ $t('prescription.newPrescription') }}
               </el-button>
             </div>
           </template>
 
           <el-table :data="tableData" stripe v-loading="loading" class="prescription-table">
-            <el-table-column prop="prescriptionNo" label="处方号" width="170">
+            <el-table-column prop="prescriptionNo" :label="$t('prescription.prescriptionNo')" width="170">
               <template #default="{ row }">
                 <div class="prescription-no">
                   <el-icon><Tickets /></el-icon>
@@ -44,33 +44,33 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="petName" label="宠物" width="120" />
-            <el-table-column prop="diagnosis" label="诊断" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="totalAmount" label="金额" width="120" align="right">
+            <el-table-column prop="petName" :label="$t('prescription.pet')" width="120" />
+            <el-table-column prop="diagnosis" :label="$t('prescription.diagnosis')" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="totalAmount" :label="$t('prescription.amount')" width="120" align="right">
               <template #default="{ row }">
                 <span class="amount">¥{{ row.totalAmount?.toFixed(2) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="100" align="center">
+            <el-table-column prop="status" :label="$t('common.status')" width="100" align="center">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)" effect="light" round size="small">
-                  {{ row.statusDesc || '草稿' }}
+                  {{ getStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="170" />
-            <el-table-column label="操作" fixed="right" width="250" align="center">
+            <el-table-column prop="createTime" :label="$t('prescription.createTime')" width="170" />
+            <el-table-column :label="$t('common.operation')" fixed="right" width="250" align="center">
               <template #default="{ row }">
-                <el-button type="primary" link @click="handleView(row)">查看</el-button>
+                <el-button type="primary" link @click="handleView(row)">{{ $t('common.view') }}</el-button>
                 <el-button 
                   v-if="row.status === 0" 
                   type="success" 
                   link 
                   @click="handleSubmitPrescription(row)"
                 >
-                  提交
+                  {{ $t('common.submit') }}
                 </el-button>
-                <el-button type="warning" link @click="handlePrint(row)">打印</el-button>
+                <el-button type="warning" link @click="handlePrint(row)">{{ $t('prescription.print') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -94,31 +94,31 @@
           <template #header>
             <div class="form-header">
               <div class="header-left">
-                <el-button @click="showForm = false">
-                  <el-icon><ArrowLeft /></el-icon>返回
+                <el-button @click="handleBack">
+                  <el-icon><ArrowLeft /></el-icon>{{ $t('common.back') }}
                 </el-button>
-                <span class="title">开具处方</span>
+                <span class="title">{{ $t('prescription.createPrescription') }}</span>
               </div>
               <div class="form-actions">
-                <el-button @click="handleSubmit(0)" :icon="Document">保存草稿</el-button>
-                <el-button type="primary" @click="handleSubmit(1)" :icon="Check">提交处方</el-button>
+                <el-button @click="handleSubmit(0)" :icon="Document">{{ $t('prescription.saveDraft') }}</el-button>
+                <el-button type="primary" @click="handleSubmit(1)" :icon="Check">{{ $t('prescription.submitPrescription') }}</el-button>
               </div>
             </div>
           </template>
 
           <!-- 宠物信息 -->
           <el-descriptions :column="3" border class="info-section">
-            <el-descriptions-item label="宠物名称">{{ petInfo.name }}</el-descriptions-item>
-            <el-descriptions-item label="宠物类型">{{ petInfo.type }}</el-descriptions-item>
-            <el-descriptions-item label="诊断结果">
-              <el-input v-model="formData.diagnosis" placeholder="请输入诊断结果" />
+            <el-descriptions-item :label="$t('prescription.petName')">{{ petInfo.name }}</el-descriptions-item>
+            <el-descriptions-item :label="$t('prescription.petType')">{{ displayPetType }}</el-descriptions-item>
+            <el-descriptions-item :label="$t('prescription.diagnosisResult')">
+              <el-input v-model="formData.diagnosis" :placeholder="$t('prescription.placeholderDiagnosisResult')" />
             </el-descriptions-item>
           </el-descriptions>
 
           <!-- 过敏警告 -->
           <el-alert
             v-if="petInfo.allergy"
-            :title="`过敏史提醒：该宠物对 ${petInfo.allergy} 过敏`"
+            :title="$t('prescription.allergyAlert', { allergy: petInfo.allergy })"
             type="error"
             :closable="false"
             show-icon
@@ -126,90 +126,103 @@
           />
 
           <!-- 药品列表 -->
-          <div class="section-title">药品明细</div>
+          <div class="section-title">{{ $t('prescription.drugDetails') }}</div>
           <el-table :data="drugList" border class="detail-table">
             <el-table-column type="index" width="50" />
-            <el-table-column label="药品名称" width="200">
+            <el-table-column :label="$t('prescription.drugName')" width="220">
               <template #default="{ row, $index }">
                 <el-select 
                   v-model="row.drugId" 
                   filterable 
-                  placeholder="选择药品"
+                  :placeholder="$t('prescription.selectDrug')"
                   @change="(val) => handleDrugChange(val, $index)"
                 >
                   <el-option
                     v-for="drug in drugOptions"
                     :key="drug.drugId"
-                    :label="drug.drugName"
                     :value="drug.drugId"
-                  />
+                  >
+                    <span style="float: left">{{ drug.drugName }}</span>
+                    <span style="float: right; color: #8492a6; font-size: 12px">
+                      {{ $t('prescription.stock') }}: {{ drug.stockQty }}
+                      <el-tag v-if="drug.stockQty <= drug.warningStockQty" type="danger" size="small" style="margin-left:4px">{{ $t('prescription.outOfStock') }}</el-tag>
+                    </span>
+                  </el-option>
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column prop="specification" label="规格" width="150" />
-            <el-table-column label="数量" width="100">
+            <el-table-column prop="specification" :label="$t('prescription.specification')" width="120" />
+            <el-table-column :label="$t('prescription.stock')" width="100">
+              <template #default="{ row }">
+                <el-tag v-if="row.stockQty != null" :type="row.stockQty <= (row.warningStockQty || 0) ? 'danger' : 'success'" size="small">
+                  {{ row.stockQty }}
+                </el-tag>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('prescription.quantity')" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.quantity" :min="1" :max="999" />
               </template>
             </el-table-column>
-            <el-table-column label="用量" width="120">
+            <el-table-column :label="$t('prescription.dosage')" width="120">
               <template #default="{ row }">
-                <el-input v-model="row.dosage" placeholder="如：1片" />
+                <el-input v-model="row.dosage" :placeholder="$t('prescription.placeholderDosage')" />
               </template>
             </el-table-column>
-            <el-table-column label="用法" width="120">
+            <el-table-column :label="$t('prescription.usage')" width="120">
               <template #default="{ row }">
-                <el-select v-model="row.usage" placeholder="选择">
-                  <el-option label="口服" value="口服" />
-                  <el-option label="外用" value="外用" />
-                  <el-option label="注射" value="注射" />
+                <el-select v-model="row.usage" :placeholder="$t('common.select')">
+                  <el-option :label="$t('prescription.usageOral')" value="Oral" />
+                  <el-option :label="$t('prescription.usageExternal')" value="External use" />
+                  <el-option :label="$t('prescription.usageInjection')" value="Injection" />
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="频次" width="130">
+            <el-table-column :label="$t('prescription.frequency')" width="130">
               <template #default="{ row }">
-                <el-select v-model="row.frequency" placeholder="选择">
-                  <el-option label="每日一次" value="每日一次" />
-                  <el-option label="每日两次" value="每日两次" />
-                  <el-option label="每日三次" value="每日三次" />
+                <el-select v-model="row.frequency" :placeholder="$t('common.select')">
+                  <el-option :label="$t('prescription.frequencyOnceDaily')" value="Once daily" />
+                  <el-option :label="$t('prescription.frequencyTwiceDaily')" value="Twice daily" />
+                  <el-option :label="$t('prescription.frequencyThreeTimesDaily')" value="Three times daily" />
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="天数" width="100">
+            <el-table-column :label="$t('prescription.days')" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.days" :min="1" :max="30" />
               </template>
             </el-table-column>
-            <el-table-column label="单价" width="100">
+            <el-table-column :label="$t('prescription.unitPrice')" width="100">
               <template #default="{ row }">
                 ¥{{ row.price?.toFixed(2) }}
               </template>
             </el-table-column>
-            <el-table-column label="金额" width="100">
+            <el-table-column :label="$t('prescription.amount')" width="100">
               <template #default="{ row }">
                 ¥{{ (row.price * row.quantity).toFixed(2) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80">
+            <el-table-column :label="$t('common.operation')" width="80">
               <template #default="{ $index }">
-                <el-button type="danger" link @click="removeDrug($index)">删除</el-button>
+                <el-button type="danger" link @click="removeDrug($index)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
           
           <el-button type="primary" class="add-btn" @click="addDrug">
-            <el-icon><Plus /></el-icon>添加药品
+            <el-icon><Plus /></el-icon>{{ $t('prescription.addDrug') }}
           </el-button>
 
           <!-- 服务项目 -->
-          <div class="section-title">服务项目</div>
+          <div class="section-title">{{ $t('prescription.serviceItems') }}</div>
           <el-table :data="serviceList" border class="detail-table">
             <el-table-column type="index" width="50" />
-            <el-table-column label="项目名称" min-width="200">
+            <el-table-column :label="$t('prescription.itemName')" min-width="200">
               <template #default="{ row, $index }">
                 <el-select 
                   v-model="row.serviceId" 
-                  placeholder="选择服务"
+                  :placeholder="$t('prescription.selectService')"
                   @change="(val) => handleServiceChange(val, $index)"
                 >
                   <el-option
@@ -221,46 +234,46 @@
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="数量" width="100">
+            <el-table-column :label="$t('prescription.quantity')" width="100">
               <template #default="{ row }">
                 <el-input-number v-model="row.quantity" :min="1" :max="99" />
               </template>
             </el-table-column>
-            <el-table-column label="单价" width="120">
+            <el-table-column :label="$t('prescription.unitPrice')" width="120">
               <template #default="{ row }">
                 ¥{{ row.price?.toFixed(2) }}
               </template>
             </el-table-column>
-            <el-table-column label="金额" width="120">
+            <el-table-column :label="$t('prescription.amount')" width="120">
               <template #default="{ row }">
                 ¥{{ (row.price * row.quantity).toFixed(2) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80">
+            <el-table-column :label="$t('common.operation')" width="80">
               <template #default="{ $index }">
-                <el-button type="danger" link @click="removeService($index)">删除</el-button>
+                <el-button type="danger" link @click="removeService($index)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
           
           <el-button type="primary" class="add-btn" @click="addService">
-            <el-icon><Plus /></el-icon>添加服务
+            <el-icon><Plus /></el-icon>{{ $t('prescription.addService') }}
           </el-button>
 
           <!-- 合计 -->
           <div class="total-section">
-            <span class="label">合计金额：</span>
+            <span class="label">{{ $t('prescription.totalAmountLabel') }}</span>
             <span class="amount">¥{{ totalAmount.toFixed(2) }}</span>
           </div>
 
           <!-- 备注 -->
           <el-form label-width="80px">
-            <el-form-item label="备注">
+            <el-form-item :label="$t('prescription.remark')">
               <el-input 
                 v-model="formData.remark" 
                 type="textarea" 
                 :rows="2"
-                placeholder="请输入备注信息"
+                :placeholder="$t('prescription.placeholderRemark')"
               />
             </el-form-item>
           </el-form>
@@ -270,19 +283,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Search, RefreshRight, Plus, ArrowLeft, Tickets, Document, Check
 } from '@element-plus/icons-vue'
 import { prescriptionModule, acceptModule } from '@/api/doctor/doctor'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore } from '@/store/settings'
 
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 // 列表相关
 const loading = ref(false)
@@ -302,14 +319,33 @@ const pagination = reactive({
 
 // 表单相关
 const petInfo = reactive({
-  name: '豆豆',
-  type: '犬类',
-  breed: '金毛',
-  allergy: '青霉素'
+  name: 'DouDou',
+  type: 'Dog',
+  breed: 'Golden Retriever',
+  allergy: 'Penicillin'
+})
+
+const petTypeMap = {
+  'Cat': 'dashboard.typeCat',
+  'Dog': 'dashboard.typeDog',
+  'Rabbit': 'dashboard.typeRabbit',
+  'cat': 'dashboard.typeCat',
+  'dog': 'dashboard.typeDog',
+  'rabbit': 'dashboard.typeRabbit',
+  '猫': 'dashboard.typeCat',
+  '狗': 'dashboard.typeDog',
+  '兔': 'dashboard.typeRabbit',
+}
+const displayPetType = computed(() => {
+  const type = petInfo.type
+  if (!type || type === '-') return '-'
+  const key = petTypeMap[type]
+  return key ? t(key) : type
 })
 
 const formData = reactive({
   registerId: '',
+  recordId: '',
   petId: '',
   diagnosis: '',
   remark: ''
@@ -407,6 +443,20 @@ const fetchList = async () => {
         total = list.length
       }
       
+      // 处方支付/提交提醒
+      const notifiedKey = 'notified_prescriptions'
+      let notifiedIds = JSON.parse(localStorage.getItem(notifiedKey) || '[]')
+      const newPaid = list.filter(item => item.status === 1 && !notifiedIds.includes(item.prescriptionId))
+      if (newPaid.length > 0 && settingsStore.shouldNotify('prescriptionPaid')) {
+        settingsStore.sendDesktopNotification(
+          t('prescription.prescriptionPaymentAlertTitle'),
+          t('prescription.prescriptionPaymentAlertBody', { count: newPaid.length })
+        )
+        settingsStore.playNotificationSound()
+        notifiedIds = [...notifiedIds, ...newPaid.map(i => i.prescriptionId)]
+        localStorage.setItem(notifiedKey, JSON.stringify(notifiedIds.slice(-100))) // 保留最近100条
+      }
+      
       tableData.value = list
       pagination.total = total
     } else {
@@ -416,7 +466,7 @@ const fetchList = async () => {
   } catch (error) {
     console.error('获取处方列表失败:', error)
     tableData.value = []
-    ElMessage.error('获取列表失败')
+    ElMessage.error(t('prescription.failedFetchList'))
   } finally {
     loading.value = false
   }
@@ -470,14 +520,14 @@ const fetchOptions = async () => {
     console.log('最终服务选项:', serviceOptions.value)
     
     if (drugOptions.value.length === 0) {
-      ElMessage.warning('没有获取到药品数据，请检查数据库')
+      ElMessage.warning(t('prescription.noDrugData'))
     }
     if (serviceOptions.value.length === 0) {
-      ElMessage.warning('没有获取到服务数据，请检查数据库')
+      ElMessage.warning(t('prescription.noServiceData'))
     }
   } catch (error) {
     console.error('获取选项失败:', error)
-    ElMessage.error('获取药品/服务数据失败: ' + (error.message || '未知错误'))
+    ElMessage.error(t('prescription.failedFetchDrugService') + (error.message ? ': ' + error.message : ''))
   }
 }
 
@@ -486,9 +536,19 @@ const getStatusType = (status) => {
   return map[status] || 'info'
 }
 
+const getStatusText = (status) => {
+  const map = { 0: t('prescription.statusDraft'), 1: t('prescription.statusSubmitted'), 2: t('prescription.statusCancelled') }
+  return map[status] || t('prescription.statusUnknown')
+}
+
 // 搜索
 const handleSearch = () => {
   pagination.pageNum = 1
+  fetchList()
+}
+
+const handleBack = () => {
+  showForm.value = false
   fetchList()
 }
 
@@ -508,11 +568,31 @@ const handleCreate = () => {
   resetForm()
   showForm.value = true
   fetchOptions()
+  // 尝试恢复草稿
+  if (settingsStore.autoSavePrescription) {
+    const hasDraft = restoreDraft()
+    if (hasDraft) {
+      ElMessage.success(t('prescription.autoRestoredDraft'))
+    }
+    startAutoSave()
+  }
 }
 
 // 查看
 const handleView = (row) => {
-  ElMessage.info('查看处方详情')
+  router.push({
+    path: '/doctor/prescription/detail',
+    query: {
+      prescriptionId: row.prescriptionId || row.id,
+      prescriptionNo: row.prescriptionNo || '',
+      petName: row.petName || '',
+      diagnosis: row.diagnosis || '',
+      totalAmount: row.totalAmount || 0,
+      status: row.status ?? '',
+      statusDesc: row.statusDesc || '',
+      createTime: row.createTime || ''
+    }
+  })
 }
 
 // 提交处方
@@ -524,13 +604,13 @@ const handleSubmit = async (status = 1) => {
   
   // 2. 验证：至少有一项药品或服务
   if (validDrugs.length === 0 && validServices.length === 0) {
-    ElMessage.warning('请至少添加一项药品或服务')
+    ElMessage.warning(t('prescription.pleaseAddDrugOrService'))
     return
   }
   
   // 3. 验证：诊断结果不能为空
   if (!formData.diagnosis || formData.diagnosis.trim() === '') {
-    ElMessage.warning('请输入诊断结果')
+    ElMessage.warning(t('prescription.pleaseEnterDiagnosisResult'))
     return
   }
   
@@ -542,17 +622,18 @@ const handleSubmit = async (status = 1) => {
   
   // 6. 验证必要字段
   if (!formData.registerId) {
-    ElMessage.error('挂号ID不能为空，请从接诊列表重新进入')
+    ElMessage.error(t('prescription.registrationIdRequired'))
     return
   }
   if (!formData.petId) {
-    ElMessage.error('宠物ID不能为空，请从接诊列表重新进入')
+    ElMessage.error(t('prescription.petIdRequired'))
     return
   }
   
   // 7. 构建提交数据（匹配后端 PrescriptionCreateDto）
   const submitData = {
     registerId: Number(formData.registerId),
+    recordId: formData.recordId ? Number(formData.recordId) : null,
     petId: Number(formData.petId),
     doctorId: Number(doctorId),
     prescriptionType: 1,
@@ -588,11 +669,11 @@ const handleSubmit = async (status = 1) => {
       console.log('保存草稿返回:', res)
       
       if (res.code === 200) {
-        ElMessage.success('草稿保存成功')
+        ElMessage.success(t('prescription.draftSavedSuccess'))
         showForm.value = false
         fetchList()  // 刷新列表
       } else {
-        ElMessage.error(res.msg || '草稿保存失败')
+        ElMessage.error(res.msg || t('prescription.failedSaveDraft'))
       }
     } else {
       // ========== 提交处方：创建并立即提交 ==========
@@ -601,13 +682,13 @@ const handleSubmit = async (status = 1) => {
       console.log('创建处方返回:', createRes)
       
       if (createRes.code !== 200) {
-        ElMessage.error(createRes.msg || '创建处方失败')
+        ElMessage.error(createRes.msg || t('prescription.failedCreatePrescription'))
         return
       }
       
       const prescriptionId = createRes.data?.prescriptionId
       if (!prescriptionId) {
-        ElMessage.error('创建处方成功但未获取到处方ID')
+        ElMessage.error(t('prescription.createdButNoId'))
         return
       }
       
@@ -616,23 +697,23 @@ const handleSubmit = async (status = 1) => {
       console.log('提交处方返回:', submitRes)
       
       if (submitRes.code === 200) {
-        ElMessage.success('处方提交成功')
+        ElMessage.success(t('prescription.prescriptionSubmittedSuccess'))
         showForm.value = false
         fetchList()  // 刷新列表
       } else {
-        ElMessage.error(submitRes.msg || '处方提交失败')
+        ElMessage.error(submitRes.msg || t('prescription.failedSubmitPrescription'))
       }
     }
   } catch (error) {
     console.error('操作失败:', error)
-    const errorMsg = error.response?.data?.msg || error.message || '操作失败'
+    const errorMsg = error.response?.data?.msg || error.message || t('prescription.operationFailed')
     ElMessage.error(errorMsg)
   }
 }
 
 // 打印
 const handlePrint = (row) => {
-  ElMessage.success('开始打印')
+  ElMessage.success(t('prescription.printingStarted'))
 }
 
 // 药品操作
@@ -665,13 +746,20 @@ const handleDrugChange = (val, index) => {
   if (drug) {
     drugList.value[index].drugName = drug.drugName
     drugList.value[index].specification = drug.specification || ''
+    drugList.value[index].unit = drug.unit || ''
     drugList.value[index].price = drug.price || 0
+    drugList.value[index].stockQty = drug.stockQty || 0
+    drugList.value[index].warningStockQty = drug.warningStockQty || 0
     drugList.value[index].id = drug.drugId
     
     console.log('更新后的药品项:', drugList.value[index])
     
     if (petInfo.allergy && drug.drugName && drug.drugName.includes(petInfo.allergy)) {
-      ElMessage.warning(`警告：该药品可能引发过敏反应（${petInfo.allergy}）`)
+      ElMessage.warning(t('prescription.allergicReactionWarning', { allergy: petInfo.allergy }))
+    }
+    
+    if (drug.stockQty != null && drug.stockQty <= (drug.warningStockQty || 0)) {
+      ElMessage.warning(t('prescription.drugOutOfStockWarning', { drugName: drug.drugName, stockQty: drug.stockQty }))
     }
   } else {
     console.warn('未找到药品, drugId:', val)
@@ -710,11 +798,11 @@ const handleSave = async () => {
       totalAmount: totalAmount.value
     }
     await prescriptionModule.createPrescription(data)
-    ElMessage.success('保存成功')
+    ElMessage.success(t('prescription.savedSuccessfully'))
     showForm.value = false
     fetchList()
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error(t('prescription.saveFailed'))
   }
 }
 
@@ -722,9 +810,9 @@ const handleSave = async () => {
 // 提交列表中已有的处方（用于状态为草稿的处方）
 const handleSubmitPrescription = async (row) => {
   try {
-    await ElMessageBox.confirm('确定要提交该处方吗？提交后不可修改。', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('prescription.confirmSubmitPrescription'), t('common.notice'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
     
@@ -732,21 +820,22 @@ const handleSubmitPrescription = async (row) => {
     console.log('提交处方返回:', res)
     
     if (res.code === 200) {
-      ElMessage.success('提交成功')
+      ElMessage.success(t('prescription.submittedSuccessfully'))
       fetchList()  // 刷新列表
     } else {
-      ElMessage.error(res.msg || '提交失败')
+      ElMessage.error(res.msg || t('prescription.submissionFailed'))
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('提交失败:', error)
-      ElMessage.error('提交失败')
+      ElMessage.error(t('prescription.submissionFailed'))
     }
   }
 }
 
 const resetForm = () => {
   formData.registerId = ''
+  formData.recordId = ''
   formData.petId = ''
   formData.diagnosis = ''
   formData.remark = ''
@@ -758,6 +847,70 @@ const resetForm = () => {
   petInfo.type = ''
   petInfo.breed = ''
   petInfo.allergy = ''
+  
+  // 清除自动保存的草稿
+  localStorage.removeItem('prescription_draft')
+}
+
+// 自动保存草稿
+let autoSaveTimer = null
+const startAutoSave = () => {
+  if (!settingsStore.autoSavePrescription) return
+  if (autoSaveTimer) clearInterval(autoSaveTimer)
+  autoSaveTimer = setInterval(() => {
+    if (!showForm.value) return
+    const draft = {
+      formData: { ...formData },
+      drugList: drugList.value,
+      serviceList: serviceList.value,
+      petInfo: { ...petInfo },
+      saveTime: new Date().toISOString()
+    }
+    localStorage.setItem('prescription_draft', JSON.stringify(draft))
+  }, 30000) // 每30秒自动保存一次
+}
+
+const stopAutoSave = () => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
+
+const restoreDraft = (expectedPetId) => {
+  const draftStr = localStorage.getItem('prescription_draft')
+  if (!draftStr) return false
+  try {
+    const draft = JSON.parse(draftStr)
+    // 如果指定了期望的宠物ID，检查草稿是否匹配；不匹配则清除旧草稿
+    if (expectedPetId !== undefined) {
+      const draftPetId = draft.formData?.petId
+      if (draftPetId && Number(draftPetId) !== Number(expectedPetId)) {
+        console.log(`草稿宠物ID(${draftPetId})与当前宠物ID(${expectedPetId})不匹配，清除旧草稿`)
+        localStorage.removeItem('prescription_draft')
+        return false
+      }
+    }
+    if (draft.formData) {
+      formData.registerId = draft.formData.registerId || ''
+      formData.recordId = draft.formData.recordId || ''
+      formData.petId = draft.formData.petId || ''
+      formData.diagnosis = draft.formData.diagnosis || ''
+      formData.remark = draft.formData.remark || ''
+    }
+    if (draft.drugList) drugList.value = draft.drugList
+    if (draft.serviceList) serviceList.value = draft.serviceList
+    if (draft.petInfo) {
+      if (draft.petInfo.name) petInfo.name = draft.petInfo.name
+      if (draft.petInfo.type) petInfo.type = draft.petInfo.type
+      if (draft.petInfo.breed) petInfo.breed = draft.petInfo.breed
+      if (draft.petInfo.allergy) petInfo.allergy = draft.petInfo.allergy
+    }
+    return true
+  } catch (e) {
+    console.error('恢复草稿失败', e)
+    return false
+  }
 }
 
 // ========== 新增：获取宠物详情 ==========
@@ -770,10 +923,10 @@ const fetchPetDetail = async (petId) => {
     if (res.code === 200 && res.data) {
       const data = res.data
       // 更新宠物信息显示
-      petInfo.name = data.name || '未知'
+      petInfo.name = data.name || t('common.unknown')
       petInfo.type = data.type || '-'
       petInfo.breed = data.breed || '-'
-      petInfo.allergy = data.allergy || ''
+      petInfo.allergy = data.allergies || data.allergy || ''
       
       console.log('宠物信息已更新:', petInfo)
     } else {
@@ -799,9 +952,10 @@ onMounted(async () => {
   if (route.query.action === 'create') {
     const petId = route.query.petId
     const registerId = route.query.registerId
+    const recordId = route.query.recordId
     const petName = route.query.petName
     
-    console.log('接收到的参数:', { petId, registerId, petName })
+    console.log('接收到的参数:', { petId, registerId, recordId, petName })
     
     if (petId) {
       formData.petId = Number(petId)
@@ -809,16 +963,29 @@ onMounted(async () => {
     if (registerId) {
       formData.registerId = Number(registerId)
     }
+    if (recordId) {
+      formData.recordId = Number(recordId)
+    }
     
     console.log('设置后的 formData:', { 
       petId: formData.petId, 
-      registerId: formData.registerId 
+      registerId: formData.registerId,
+      recordId: formData.recordId
     })
     
     // 先显示表单
     showForm.value = true
     
-    // 并行获取数据和宠物详情
+    // 自动恢复草稿（仅当草稿宠物ID与当前一致时才恢复）
+    if (settingsStore.autoSavePrescription) {
+      const hasDraft = restoreDraft(formData.petId)
+      if (hasDraft) {
+        ElMessage.success(t('prescription.autoRestoredDraft'))
+      }
+      startAutoSave()
+    }
+    
+    // 并行获取数据和宠物详情（API数据会覆盖草稿中的空值）
     await Promise.all([
       fetchOptions(),
       formData.petId ? fetchPetDetail(formData.petId) : Promise.resolve()
@@ -828,6 +995,10 @@ onMounted(async () => {
   } else {
     fetchList()
   }
+})
+
+onUnmounted(() => {
+  stopAutoSave()
 })
 </script>
 

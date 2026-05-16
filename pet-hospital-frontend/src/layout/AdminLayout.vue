@@ -1,12 +1,12 @@
 <template>
   <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar">
+    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar" :class="sidebarClass">
       <div class="sidebar-logo">
         <div class="logo-icon">🐾</div>
         <div v-show="!isCollapse" class="logo-text">
-          <div class="logo-title">宠物医院</div>
-          <div class="logo-sub">管理后台</div>
+          <div class="logo-title">{{ $t('layout.hospitalName') }}</div>
+          <div class="logo-sub">{{ $t('layout.adminSub') }}</div>
         </div>
       </div>
 
@@ -39,7 +39,7 @@
             <Fold v-if="!isCollapse" />
             <Expand v-else />
           </el-icon>
-          <el-breadcrumb separator="/" class="layout-breadcrumb">
+          <el-breadcrumb v-if="showBreadcrumb" separator="/" class="layout-breadcrumb">
             <el-breadcrumb-item
               v-for="(item, index) in breadcrumbList"
               :key="index"
@@ -54,19 +54,19 @@
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-info">
               <el-avatar :size="32" :src="userStore.avatar || defaultAvatar" />
-              <span v-show="!isCollapse" class="username">{{ userStore.username || '管理员' }}</span>
+              <span v-show="!isCollapse" class="username">{{ displayName }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>个人中心
+                  <el-icon><User /></el-icon>{{ $t('layout.profile') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="settings">
-                  <el-icon><Setting /></el-icon>系统设置
+                  <el-icon><Setting /></el-icon>{{ $t('layout.settings') }}
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
-                  <el-icon><SwitchButton /></el-icon>退出登录
+                  <el-icon><SwitchButton /></el-icon>{{ $t('layout.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -78,7 +78,7 @@
       <el-main class="layout-main">
         <router-view v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" :key="refreshKey" />
           </transition>
         </router-view>
       </el-main>
@@ -87,20 +87,49 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/store/user'
+import { useSettingsStore } from '@/store/settings'
 import { useLayout } from '@/composables/useLayout'
 import {
   Fold, Expand, ArrowDown, User, Setting, SwitchButton, Menu
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const { t } = useI18n()
+
 const router = useRouter()
 const userStore = useUserStore()
-const { isCollapse, toggleCollapse, sidebarMenus, activeMenu, breadcrumbList } = useLayout()
+const settingsStore = useSettingsStore()
+const { sidebarMenus, activeMenu, breadcrumbList } = useLayout()
+const refreshKey = ref(0)
 
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+
+// 折叠状态从 store 管理
+const isCollapse = ref(settingsStore.collapseMenu)
+const toggleCollapse = () => {
+  isCollapse.value = !isCollapse.value
+  settingsStore.collapseMenu = isCollapse.value
+}
+watch(() => settingsStore.collapseMenu, (val) => {
+  isCollapse.value = val
+})
+
+// 侧边栏样式 class
+const sidebarClass = computed(() => {
+  return settingsStore.sidebarStyle === 'dark' ? 'sidebar-dark' : 'sidebar-light'
+})
+
+// 是否显示面包屑
+const showBreadcrumb = computed(() => settingsStore.showBreadcrumb)
+
+// 显示名称优先取真实姓名
+const displayName = computed(() => {
+  return userStore.userInfo?.realName || userStore.username || 'Admin'
+})
 
 const handleCommand = (command) => {
   switch (command) {
@@ -111,9 +140,9 @@ const handleCommand = (command) => {
       router.push('/admin/settings')
       break
     case 'logout':
-      ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      ElMessageBox.confirm(t('layout.logoutConfirm'), 'Tip', {
+        confirmButtonText: t('layout.confirm'),
+        cancelButtonText: t('layout.cancel'),
         type: 'warning'
       }).then(() => userStore.logout())
       break
@@ -235,6 +264,38 @@ const handleCommand = (command) => {
 .layout-menu:deep(.el-menu--collapse .el-icon) {
   margin-right: 0 !important;
   font-size: 22px;
+}
+
+/* ===== 深色侧边栏模式 ===== */
+.layout-sidebar.sidebar-dark {
+  background: #1e293b;
+  border-right-color: #334155;
+}
+
+.sidebar-dark .sidebar-logo {
+  border-bottom-color: #334155;
+}
+
+.sidebar-dark .logo-title {
+  color: #f1f5f9;
+}
+
+.sidebar-dark .logo-sub {
+  color: #94a3b8;
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item) {
+  color: #cbd5e1;
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--el-color-primary, #3b82f6);
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item.is-active) {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--el-color-primary, #3b82f6);
 }
 
 /* ===== 顶部 ===== */

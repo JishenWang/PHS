@@ -1,8 +1,10 @@
 package com.pethospital.pet_hospital.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
@@ -23,6 +25,18 @@ public class Consultation {
     private String ratingComment;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+
+    @TableField(exist = false)
+    private List<ConsultationReply> replies;
+
+    @TableField(exist = false)
+    private Integer replyCount;
+
+    @TableField(exist = false)
+    private String petName;
+
+    @TableField(exist = false)
+    private String doctorName;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -62,4 +76,16 @@ public class Consultation {
 
     public LocalDateTime getUpdateTime() { return updateTime; }
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
+
+    public List<ConsultationReply> getReplies() { return replies; }
+    public void setReplies(List<ConsultationReply> replies) { this.replies = replies; }
+
+    public Integer getReplyCount() { return replyCount; }
+    public void setReplyCount(Integer replyCount) { this.replyCount = replyCount; }
+
+    public String getPetName() { return petName; }
+    public void setPetName(String petName) { this.petName = petName; }
+
+    public String getDoctorName() { return doctorName; }
+    public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
 }

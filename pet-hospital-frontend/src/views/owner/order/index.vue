@@ -1,14 +1,14 @@
 <template>
   <div class="order-page">
-    <!-- 页面头部 -->
+    <!-- Page Header -->
     <div class="page-header">
       <div>
-        <h2 class="page-title">我的订单</h2>
-        <p class="page-subtitle">查看您的消费记录</p>
+        <h2 class="page-title">{{ $t('order.title') }}</h2>
+        <p class="page-subtitle">{{ $t('order.subtitle') }}</p>
       </div>
     </div>
 
-    <!-- 状态Tab -->
+    <!-- Status Tabs -->
     <div class="tabs-container">
       <div 
         v-for="tab in tabs" 
@@ -22,13 +22,13 @@
       </div>
     </div>
 
-    <!-- 订单列表 -->
+    <!-- Order List -->
     <div class="order-list" v-loading="loading">
       <div v-for="order in orderList" :key="order.id" class="order-card" @click="viewDetail(order.id)">
-        <!-- 订单头部 -->
+        <!-- Order Header -->
         <div class="order-header">
           <div class="order-info">
-            <span class="order-no">订单号：{{ order.orderNo }}</span>
+            <span class="order-no">{{ $t('order.orderNo') }}: {{ order.orderNo }}</span>
             <span class="order-time">{{ formatDate(order.createTime) }}</span>
           </div>
           <div class="order-status" :class="order.payStatus">
@@ -36,11 +36,11 @@
           </div>
         </div>
 
-        <!-- 订单内容 -->
+        <!-- Order Content -->
         <div class="order-content">
           <div class="order-icon">🐾</div>
           <div class="order-detail">
-            <div class="order-pet">{{ order.petName || '未指定宠物' }}</div>
+            <div class="order-pet">{{ order.petName || $t('order.unspecifiedPet') }}</div>
             <div class="order-items">
               <span v-for="(item, idx) in order.orderItems" :key="idx" class="item-name">
                 {{ item.itemName }}
@@ -49,12 +49,12 @@
             </div>
           </div>
           <div class="order-amount">
-            <span class="amount-label">实付</span>
+            <span class="amount-label">{{ $t('order.actualPayment') }}</span>
             <span class="amount-value">¥{{ order.totalAmount }}</span>
           </div>
         </div>
 
-        <!-- 订单底部 -->
+        <!-- Order Footer -->
         <div class="order-footer">
           <el-button 
             v-if="order.payStatus === 'pending'" 
@@ -63,7 +63,7 @@
             plain
             @click.stop="handlePay(order)"
           >
-            去支付
+            {{ $t('order.payNow') }}
           </el-button>
           <el-button 
             v-if="order.payStatus === 'pending'" 
@@ -71,7 +71,7 @@
             plain
             @click.stop="handleCancelOrder(order)"
           >
-            取消订单
+            {{ $t('order.cancelOrder') }}
           </el-button>
           <el-button 
             v-else 
@@ -79,20 +79,20 @@
             plain
             @click.stop="viewDetail(order.id)"
           >
-            查看详情
+            {{ $t('common.detail') }}
           </el-button>
         </div>
       </div>
 
-      <!-- 空状态 -->
+      <!-- Empty State -->
       <div v-if="!loading && orderList.length === 0" class="empty-state">
         <div class="empty-icon">📦</div>
-        <h3>暂无订单</h3>
-        <p>您还没有消费记录</p>
+        <h3>{{ $t('order.noOrders') }}</h3>
+        <p>{{ $t('order.noPurchaseRecords') }}</p>
       </div>
     </div>
 
-    <!-- 分页 -->
+    <!-- Pagination -->
     <div class="pagination" v-if="total > 0">
       <el-pagination
         v-model:current-page="page"
@@ -110,9 +110,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getOrderList } from '@/api/owner/owner'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const orderList = ref([])
@@ -122,18 +124,18 @@ const pageSize = ref(10)
 const activeTab = ref('all')
 
 const tabs = ref([
-  { label: '全部', value: 'all', count: 0 },
-  { label: '待支付', value: 'pending', count: 0 },
-  { label: '已支付', value: 'paid', count: 0 },
-  { label: '已取消', value: 'cancelled', count: 0 }
+  { label: t('common.all'), value: 'all', count: 0 },
+  { label: t('order.pending'), value: 'pending', count: 0 },
+  { label: t('order.paid'), value: 'paid', count: 0 },
+  { label: t('order.cancelled'), value: 'cancelled', count: 0 }
 ])
 
-// 获取 token
+// Get token
 const getToken = () => {
   return localStorage.getItem('pet_hospital_token')
 }
 
-// 格式化日期
+// Format date
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
@@ -141,11 +143,11 @@ const formatDate = (dateStr) => {
 }
 
 const getStatusText = (status) => {
-  const texts = { pending: '待支付', paid: '已支付', cancelled: '已取消' }
+  const texts = { pending: t('order.pending'), paid: t('order.paid'), cancelled: t('order.cancelled') }
   return texts[status] || status
 }
 
-// 加载订单列表
+// Load order list
 const loadOrders = async () => {
   loading.value = true
   try {
@@ -159,29 +161,29 @@ const loadOrders = async () => {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     const res = await response.json()
-    console.log('订单列表响应:', res)
+    console.log('Order list response:', res)
     
     if (res.code === 200) {
-      // 数据在 res.data.data 中
+      // Data is in res.data.data
       let records = res.data?.data || res.data?.records || []
-      // 补充宠物名称（如果后端没有返回）
+      // Supplement pet name (if not returned by backend)
       records = records.map(record => ({
         ...record,
-        petName: record.petName || '未知宠物',
+        petName: record.petName || t('order.unknownPet'),
         orderItems: record.orderItems || []
       }))
       orderList.value = records
       total.value = res.data?.total || records.length
       updateTabCounts(orderList.value)
     } else {
-      ElMessage.error(res.message || res.msg || '加载失败')
+      ElMessage.error(res.message || res.msg || t('order.failedToLoad'))
     }
   } catch (error) {
-    console.error('加载订单失败:', error)
-    // 使用模拟数据
+    console.error('Failed to load orders:', error)
+    // Use mock data
     const mockOrders = [
-      { id: 1, orderNo: 'ORD202404160001', petName: '旺财', totalAmount: 95, payStatus: 'paid', createTime: new Date().toISOString(), orderItems: [{ itemName: '挂号费', quantity: 1, amount: 10 }] },
-      { id: 2, orderNo: 'ORD202404160002', petName: '咪咪', totalAmount: 55, payStatus: 'pending', createTime: new Date().toISOString(), orderItems: [{ itemName: '驱虫药', quantity: 1, amount: 45 }] }
+      { id: 1, orderNo: 'ORD202404160001', petName: 'Buddy', totalAmount: 95, payStatus: 'paid', createTime: new Date().toISOString(), orderItems: [{ itemName: 'Registration Fee', quantity: 1, amount: 10 }] },
+      { id: 2, orderNo: 'ORD202404160002', petName: 'Luna', totalAmount: 55, payStatus: 'pending', createTime: new Date().toISOString(), orderItems: [{ itemName: 'Dewormer', quantity: 1, amount: 45 }] }
     ]
     orderList.value = mockOrders
     total.value = mockOrders.length
@@ -203,12 +205,12 @@ const viewDetail = (id) => {
 }
 
 const handlePay = (order) => {
-  ElMessage.info('支付功能由前台收银端处理')
+  ElMessage.info(t('order.paymentAtFrontDesk'))
 }
 
 const handleCancelOrder = (order) => {
-  ElMessageBox.confirm('确定要取消该订单吗？', '提示', { type: 'warning' }).then(() => {
-    ElMessage.success('订单已取消')
+  ElMessageBox.confirm(t('order.confirmCancelOrder'), t('common.tip'), { type: 'warning' }).then(() => {
+    ElMessage.success(t('order.orderCancelled'))
     loadOrders()
   })
 }

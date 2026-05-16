@@ -1,6 +1,6 @@
 <template>
   <el-breadcrumb separator="/">
-    <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">首页</el-breadcrumb-item>
+    <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">Home</el-breadcrumb-item>
     <el-breadcrumb-item v-for="item in breadcrumbs" :key="item.path">
       {{ item.title }}
     </el-breadcrumb-item>

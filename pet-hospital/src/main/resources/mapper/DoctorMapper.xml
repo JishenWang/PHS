@@ -20,6 +20,7 @@
         <result property="patientCount" column="patient_count"/>
         <result property="consultationFee" column="consultation_fee"/>
         <result property="workStatus" column="work_status"/>
+        <result property="consultVisible" column="consult_visible"/>
         <result property="authStatus" column="auth_status"/>
         <result property="authRemark" column="auth_remark"/>
         <result property="rating" column="rating"/>
@@ -33,7 +34,7 @@
     <sql id="baseColumns">
         id, user_id, doctor_no, dept_id, name, department, title, phone,
         specialty, introduction, avatar_url, patient_count, consultation_fee,
-        work_status, auth_status, auth_remark, rating, status,
+        work_status, consult_visible, auth_status, auth_remark, rating, status,
         create_time, update_time, is_deleted
     </sql>
 

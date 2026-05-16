@@ -2,18 +2,18 @@
   <div class="health-page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">健康记录</h2>
-        <p class="page-subtitle">记录毛孩子的健康数据</p>
+        <h2 class="page-title">{{ $t('health.title') }}</h2>
+        <p class="page-subtitle">{{ $t('health.subtitle') }}</p>
       </div>
       <el-button type="primary" size="large" @click="quickAdd" class="add-btn">
         <el-icon><Plus /></el-icon>
-        添加记录
+        {{ $t('health.addRecord') }}
       </el-button>
     </div>
 
     <!-- 宠物筛选 -->
     <div class="pet-filter-section">
-      <div class="filter-title">选择宠物</div>
+      <div class="filter-title">{{ $t('health.selectPet') }}</div>
       <div class="pet-filter">
         <div 
           v-for="pet in petList" 
@@ -31,7 +31,7 @@
           @click="selectPet(null)"
         >
           <span>📋</span>
-          <span>全部</span>
+          <span>{{ $t('common.all') }}</span>
         </div>
       </div>
     </div>
@@ -60,7 +60,7 @@
             <span class="date">{{ formatDate(record.createTime) }}</span>
           </div>
           <div class="pet-info-tag">
-            <span>🐾 {{ record.petName || '未知宠物' }}</span>
+            <span>🐾 {{ record.petName || $t('health.unknownPet') }}</span>
           </div>
         </div>
         
@@ -70,26 +70,31 @@
           
           <div v-if="record.diagnosis" class="diagnosis-box">
             <div class="diagnosis-header">
-              <span>🏥 诊断结果</span>
+              <span>🏥 {{ $t('health.diagnosisResult') }}</span>
             </div>
             <p>{{ record.diagnosis }}</p>
           </div>
           
           <div v-if="record.prescription" class="prescription-box">
             <div class="prescription-header">
-              <span>💊 用药方案</span>
+              <span>💊 {{ $t('health.medicationPlan') }}</span>
             </div>
             <p>{{ record.prescription }}</p>
           </div>
         </div>
         
-        <div class="card-footer" v-if="record.doctorName">
-          <el-icon><User /></el-icon>
-          <span>医生：{{ record.doctorName }}</span>
+        <div class="card-footer">
+          <div v-if="record.doctorName" class="doctor-info">
+            <el-icon><User /></el-icon>
+            <span>{{ $t('health.doctor') }}：{{ record.doctorName }}</span>
+          </div>
+          <el-button type="primary" link size="small" @click="viewRecordDetail(record)">
+            {{ $t('health.viewDetails') }} <el-icon><ArrowRight /></el-icon>
+          </el-button>
         </div>
       </div>
-      
-      <el-empty v-if="hospitalRecords.length === 0" description="暂无就诊记录" />
+
+      <el-empty v-if="hospitalRecords.length === 0" :description="$t('health.noMedicalRecords')" />
     </div>
 
     <!-- 自填记录列表 -->
@@ -97,8 +102,8 @@
       <div class="quick-add-card" @click="quickAdd">
         <div class="quick-add-icon">📝</div>
         <div class="quick-add-text">
-          <div class="title">记录日常健康数据</div>
-          <div class="desc">如体重变化、在家驱虫等</div>
+          <div class="title">{{ $t('health.recordDaily') }}</div>
+          <div class="desc">{{ $t('health.recordDailyDesc') }}</div>
         </div>
         <el-button type="primary" size="small" circle>
           <el-icon><Plus /></el-icon>
@@ -114,7 +119,7 @@
             <span class="date">{{ formatDate(record.createTime) }}</span>
           </div>
           <div class="pet-info-tag">
-            <span>🐾 {{ record.petName || '未知宠物' }}</span>
+            <span>🐾 {{ record.petName || $t('health.unknownPet') }}</span>
           </div>
           <el-button type="danger" link class="delete-btn" @click="deleteRecord(record)">
             <el-icon><Delete /></el-icon>
@@ -125,43 +130,149 @@
           <h4 class="title">{{ record.title }}</h4>
           <p class="content">{{ record.content }}</p>
           <div v-if="record.recordDate" class="record-date">
-            📅 记录日期：{{ record.recordDate }}
+            📅 {{ $t('health.recordDate') }}：{{ record.recordDate }}
           </div>
         </div>
       </div>
       
-      <el-empty v-if="ownerRecords.length === 0" description="暂无自填记录" />
+      <el-empty v-if="ownerRecords.length === 0" :description="$t('health.noOwnerRecords')" />
     </div>
 
+    <!-- 就诊详情弹窗（含处方） -->
+    <el-dialog v-model="detailDialogVisible" :title="$t('health.visitDetails')" width="720px" class="visit-detail-dialog">
+      <div v-loading="detailLoading" class="detail-content">
+        <div v-if="recordDetail" class="detail-info">
+          <!-- 顶部信息卡片 -->
+          <div class="detail-header-card">
+            <div class="header-item">
+              <el-icon><Calendar /></el-icon>
+              <div>
+                <div class="header-label">{{ $t('health.visitTime') }}</div>
+                <div class="header-value">{{ formatDateTime(recordDetail.createTime || recordDetail.visitTime) }}</div>
+              </div>
+            </div>
+            <div class="header-item">
+              <el-icon><User /></el-icon>
+              <div>
+                <div class="header-label">{{ $t('health.doctor') }}</div>
+                <div class="header-value">{{ recordDetail.doctorName || '-' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 诊断结果 -->
+          <div class="diagnosis-card" v-if="recordDetail.diagnosis">
+            <div class="diagnosis-label">
+              <el-icon><WarningFilled /></el-icon>
+              {{ $t('health.diagnosisLabel') }}
+            </div>
+            <div class="diagnosis-value">{{ recordDetail.diagnosis }}</div>
+          </div>
+
+          <!-- 主诉与症状 -->
+          <div class="detail-section">
+            <h4 class="section-title">{{ $t('health.chiefComplaintSymptoms') }}</h4>
+            <div class="info-grid">
+              <div class="info-item" v-if="recordDetail.chiefComplaint">
+                <span class="info-label">{{ $t('health.chiefComplaint') }}</span>
+                <span class="info-value">{{ recordDetail.chiefComplaint }}</span>
+              </div>
+              <div class="info-item" v-if="recordDetail.symptoms">
+                <span class="info-label">{{ $t('health.symptomDescription') }}</span>
+                <span class="info-value">{{ recordDetail.symptoms }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 治疗方案 -->
+          <div class="detail-section" v-if="recordDetail.treatmentPlan">
+            <h4 class="section-title">{{ $t('health.treatmentPlan') }}</h4>
+            <div class="text-block">{{ recordDetail.treatmentPlan }}</div>
+          </div>
+
+          <!-- 医嘱建议 -->
+          <div class="detail-section" v-if="recordDetail.doctorAdvice">
+            <h4 class="section-title">{{ $t('health.doctorsAdvice') }}</h4>
+            <div class="text-block advice-block">{{ recordDetail.doctorAdvice }}</div>
+          </div>
+
+          <!-- 备注 -->
+          <div class="detail-section" v-if="recordDetail.remark">
+            <h4 class="section-title">{{ $t('health.remarks') }}</h4>
+            <div class="text-block remark-block">{{ recordDetail.remark }}</div>
+          </div>
+
+          <!-- 处方 -->
+          <div class="detail-section">
+            <h4 class="section-title">{{ $t('health.prescription') }}</h4>
+            <div v-if="prescriptionList.length > 0">
+              <el-table :data="prescriptionList" size="small" border class="prescription-table">
+                <el-table-column :label="$t('health.drugName')" min-width="180">
+                  <template #default="{ row }">
+                    <span class="drug-name">{{ row.drugName || row.medicineName || '-' }}</span>
+                    <div v-if="row.specification" class="drug-spec">{{ row.specification }}</div>
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('health.dosage')" width="90" align="center">
+                  <template #default="{ row }">
+                    {{ row.dosage || row.dose || '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('health.usage')" width="90" align="center">
+                  <template #default="{ row }">
+                    {{ row.usage || row.usageMethod || '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('health.frequency')" width="90" align="center">
+                  <template #default="{ row }">
+                    {{ row.frequency || '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('health.days')" width="70" align="center">
+                  <template #default="{ row }">
+                    {{ row.days || row.duration || '-' }}
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <el-empty v-else :description="$t('health.noPrescriptionRecords')" :image-size="80" />
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">{{ $t('common.close') }}</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 添加记录弹窗 -->
-    <el-dialog v-model="dialogVisible" title="添加健康记录" width="480px" class="add-dialog">
+    <el-dialog v-model="dialogVisible" :title="$t('health.addHealthRecord')" width="480px" class="add-dialog">
       <el-form :model="recordForm" label-width="80px" size="small">
-        <el-form-item label="选择宠物">
-          <el-select v-model="recordForm.petId" placeholder="请选择宠物" style="width: 100%">
+        <el-form-item :label="$t('health.selectPet')">
+          <el-select v-model="recordForm.petId" :placeholder="$t('health.pleaseSelectAPet')" style="width: 100%">
             <el-option v-for="pet in petList" :key="pet.id" :label="pet.name" :value="pet.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="记录类型">
+        <el-form-item :label="$t('health.recordType')">
           <el-radio-group v-model="recordForm.type">
-            <el-radio value="weight">体重记录</el-radio>
-            <el-radio value="deworming">驱虫记录</el-radio>
-            <el-radio value="daily">日常观察</el-radio>
-            <el-radio value="other">其他</el-radio>
+            <el-radio value="weight">{{ $t('health.weightRecord') }}</el-radio>
+            <el-radio value="deworming">{{ $t('health.dewormingRecord') }}</el-radio>
+            <el-radio value="daily">{{ $t('health.dailyObservation') }}</el-radio>
+            <el-radio value="other">{{ $t('health.other') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="标题">
-          <el-input v-model="recordForm.title" placeholder="请输入标题" />
+        <el-form-item :label="$t('health.titleLabel')">
+          <el-input v-model="recordForm.title" :placeholder="$t('health.pleaseEnterATitle')" />
         </el-form-item>
-        <el-form-item label="内容">
-          <el-input type="textarea" v-model="recordForm.content" placeholder="请详细描述" :rows="4" />
+        <el-form-item :label="$t('health.content')">
+          <el-input type="textarea" v-model="recordForm.content" :placeholder="$t('health.pleaseDescribe')" :rows="4" />
         </el-form-item>
-        <el-form-item label="记录日期">
-          <el-date-picker v-model="recordForm.recordDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
+        <el-form-item :label="$t('health.recordDate')">
+          <el-date-picker v-model="recordForm.recordDate" type="date" :placeholder="$t('health.selectDate')" value-format="YYYY-MM-DD" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitRecord" :loading="submitting">保存</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="submitRecord" :loading="submitting">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -169,11 +280,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, User } from '@element-plus/icons-vue'
+import { Plus, Delete, User, ArrowRight, Calendar, WarningFilled } from '@element-plus/icons-vue'
 import { getPetList } from '@/api/owner/owner'
-import { getHealthRecords, getOwnerHealthRecords, addOwnerHealthRecord, deleteOwnerHealthRecord } from '@/api/owner/owner'
+import { getHealthRecords, getOwnerHealthRecords, addOwnerHealthRecord, deleteOwnerHealthRecord, getHealthRecordDetailWithPrescription } from '@/api/owner/owner'
 
+const { t } = useI18n()
 const loading = ref(false)
 const submitting = ref(false)
 const petList = ref([])
@@ -182,10 +295,14 @@ const activeRecordTab = ref('hospital')
 const hospitalRecords = ref([])
 const ownerRecords = ref([])
 const dialogVisible = ref(false)
+const detailDialogVisible = ref(false)
+const detailLoading = ref(false)
+const recordDetail = ref(null)
+const prescriptionList = ref([])
 
 const recordTabs = ref([
-  { key: 'hospital', label: '🏥 就诊记录' },
-  { key: 'owner', label: '📝 自填记录' }
+  { key: 'hospital', label: '🏥 ' + t('health.medicalRecords') },
+  { key: 'owner', label: '📝 ' + t('health.selfRecorded') }
 ])
 
 const recordForm = ref({
@@ -203,13 +320,31 @@ const formatDate = (dateStr) => {
 }
 
 const getTypeName = (type) => {
-  const names = { vaccine: '疫苗', deworming: '驱虫', exam: '体检', treatment: '诊疗' }
+  const names = { vaccine: t('health.vaccine'), deworming: t('health.deworming'), exam: t('health.exam'), treatment: t('health.treatment') }
   return names[type] || type
 }
 
 const getOwnerTypeName = (type) => {
-  const names = { weight: '体重', deworming: '驱虫', daily: '日常观察', other: '其他' }
+  const names = { weight: t('health.weight'), deworming: t('health.deworming'), daily: t('health.dailyObservation'), other: t('health.other') }
   return names[type] || type
+}
+
+const translateUsage = (val) => {
+  const map = {
+    'Oral': t('prescription.usageOral'),
+    'External use': t('prescription.usageExternal'),
+    'Injection': t('prescription.usageInjection')
+  }
+  return map[val] || val || '-'
+}
+
+const translateFrequency = (val) => {
+  const map = {
+    'Once daily': t('prescription.frequencyOnceDaily'),
+    'Twice daily': t('prescription.frequencyTwiceDaily'),
+    'Three times daily': t('prescription.frequencyThreeTimesDaily')
+  }
+  return map[val] || val || '-'
 }
 
 const loadPets = async () => {
@@ -241,8 +376,8 @@ const loadRecords = async () => {
       let hospitalData = hospitalRes.data?.data || hospitalRes.data?.records || []
       // 补充宠物名称
       hospitalData = hospitalData.map(record => {
-        const pet = petList.value.find(p => p.id === record.petId)
-        return { ...record, petName: pet?.name || '未知宠物' }
+        const pet = petList.value.find(p => String(p.id) === String(record.petId))
+        return { ...record, petName: pet?.name || t('health.unknownPet') }
       })
       hospitalRecords.value = hospitalData
       console.log('就诊记录数:', hospitalRecords.value.length)
@@ -252,8 +387,8 @@ const loadRecords = async () => {
       let ownerData = ownerRes.data?.data || ownerRes.data?.records || []
       // 补充宠物名称
       ownerData = ownerData.map(record => {
-        const pet = petList.value.find(p => p.id === record.petId)
-        return { ...record, petName: pet?.name || '未知宠物' }
+        const pet = petList.value.find(p => String(p.id) === String(record.petId))
+        return { ...record, petName: pet?.name || t('health.unknownPet') }
       })
       ownerRecords.value = ownerData
       console.log('自填记录数:', ownerRecords.value.length)
@@ -272,7 +407,7 @@ const selectPet = (petId) => {
 
 const quickAdd = () => {
   if (petList.value.length === 0) {
-    ElMessage.warning('请先添加宠物')
+    ElMessage.warning(t('health.pleaseAddPetFirst'))
     return
   }
   recordForm.value = {
@@ -287,53 +422,111 @@ const quickAdd = () => {
 
 const submitRecord = async () => {
   if (!recordForm.value.petId) {
-    ElMessage.warning('请选择宠物')
+    ElMessage.warning(t('health.pleaseSelectAPet'))
     return
   }
   if (!recordForm.value.title) {
-    ElMessage.warning('请输入标题')
+    ElMessage.warning(t('health.pleaseEnterATitle'))
     return
   }
   if (!recordForm.value.content) {
-    ElMessage.warning('请输入内容')
+    ElMessage.warning(t('health.pleaseEnterContent'))
     return
   }
   submitting.value = true
   try {
     const res = await addOwnerHealthRecord(recordForm.value)
     if (res.code === 200) {
-      ElMessage.success('添加成功')
+      ElMessage.success(t('health.addedSuccessfully'))
       dialogVisible.value = false
       // 延迟刷新，确保数据库已提交
       setTimeout(() => {
         loadRecords()
       }, 500)
     } else {
-      ElMessage.error(res.message || res.msg || '添加失败')
+      ElMessage.error(res.message || res.msg || t('health.failedToAdd'))
     }
   } catch (error) {
     console.error('添加失败:', error)
-    ElMessage.error('添加失败')
+    ElMessage.error(t('health.failedToAdd'))
   } finally {
     submitting.value = false
   }
 }
 
 const deleteRecord = (record) => {
-  ElMessageBox.confirm('确定删除这条记录吗？', '提示', { type: 'warning' }).then(async () => {
+  ElMessageBox.confirm(t('health.confirmDeleteRecord'), t('common.tip'), { type: 'warning' }).then(async () => {
     try {
       await deleteOwnerHealthRecord(record.id)
-      ElMessage.success('删除成功')
+      ElMessage.success(t('health.deletedSuccessfully'))
       loadRecords()
     } catch (error) {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('health.deleteFailed'))
     }
   })
 }
 
-onMounted(() => {
-  loadPets()
+// 格式化时间
+const formatDateTime = (time) => {
+  if (!time) return '-'
+  const str = String(time)
+  return str.replace('T', ' ').replace(/\.\d+$/, '')
+}
+
+// 查看就诊详情（含处方）
+const viewRecordDetail = async (record) => {
+  const recordId = record.id || record.recordId
+  if (!recordId) {
+    // 降级：直接显示列表中的数据
+    recordDetail.value = record
+    prescriptionList.value = []
+    detailDialogVisible.value = true
+    return
+  }
+
+  detailDialogVisible.value = true
+  detailLoading.value = true
+  prescriptionList.value = []
+  recordDetail.value = null
+
+  try {
+    const res = await getHealthRecordDetailWithPrescription(recordId)
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      recordDetail.value = data.medicalRecord || data
+      // 从 prescriptions 数组中提取所有处方明细并做字段映射
+      const items = []
+      if (data.prescriptions && Array.isArray(data.prescriptions)) {
+        data.prescriptions.forEach(pre => {
+          if (pre.items && Array.isArray(pre.items)) {
+            pre.items.forEach(item => {
+              items.push({
+                ...item,
+                drugName: item.itemName || item.drugName || item.medicineName,
+                medicineName: item.itemName || item.drugName || item.medicineName,
+                usage: translateUsage(item.usageMethod || item.usage),
+                frequency: translateFrequency(item.frequency),
+                days: item.useDays || item.days || item.duration
+              })
+            })
+          }
+        })
+      }
+      prescriptionList.value = items
+    } else {
+      recordDetail.value = record
+    }
+  } catch (error) {
+    console.error(t('health.failedToGetDetails'), error)
+    recordDetail.value = record
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+onMounted(async () => {
+  await loadPets()
   loadRecords()
 })
 </script>
@@ -599,12 +792,18 @@ onMounted(() => {
         border-top: 1px solid #e2e8f0;
         display: flex;
         align-items: center;
-        gap: 6px;
+        justify-content: space-between;
         font-size: 12px;
         color: #94a3b8;
+
+        .doctor-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
       }
     }
-    
+
     .quick-add-card {
       background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
       border-radius: 20px;
@@ -640,6 +839,178 @@ onMounted(() => {
           margin-top: 4px;
         }
       }
+    }
+  }
+}
+
+.detail-content {
+  .detail-header-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    .header-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 14px 16px;
+
+      .el-icon {
+        font-size: 22px;
+        color: #3b82f6;
+      }
+
+      .header-label {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 4px;
+      }
+
+      .header-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+    }
+  }
+
+  .diagnosis-card {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    border-radius: 0 10px 10px 0;
+    padding: 16px;
+    margin-bottom: 20px;
+
+    .diagnosis-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #dc2626;
+      margin-bottom: 8px;
+
+      .el-icon {
+        font-size: 16px;
+      }
+    }
+
+    .diagnosis-value {
+      font-size: 14px;
+      color: #7f1d1d;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+  }
+
+  .detail-section {
+    margin-bottom: 20px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+      padding-left: 10px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        line-height: 1.6;
+
+        .info-label {
+          width: 70px;
+          flex-shrink: 0;
+          color: #64748b;
+          font-size: 13px;
+          margin-right: 8px;
+          text-align: right;
+        }
+
+        .info-label::after {
+          content: '：';
+        }
+
+        .info-value {
+          flex: 1;
+          color: #1e293b;
+          font-size: 13px;
+          word-break: break-all;
+        }
+      }
+    }
+
+    .text-block {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #334155;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .advice-block {
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      color: #1e40af;
+    }
+
+    .remark-block {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      color: #92400e;
+    }
+
+    .prescription-table {
+      border-radius: 10px;
+      overflow: hidden;
+
+      :deep(.el-table__header-wrapper) {
+        th {
+          background-color: #f1f5f9;
+          color: #475569;
+          font-weight: 600;
+          font-size: 13px;
+          padding: 10px 0;
+        }
+      }
+
+      :deep(.el-table__cell) {
+        font-size: 13px;
+        padding: 10px 0;
+      }
+
+      .drug-name {
+        font-weight: 500;
+        color: #1e293b;
+      }
+
+      .drug-spec {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+    }
+
+    .el-empty {
+      padding: 32px 0;
+      background: #f8fafc;
+      border-radius: 10px;
     }
   }
 }

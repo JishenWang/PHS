@@ -3,5 +3,5 @@
 </template>
 
 <script setup>
-// 消息提示组件占位
-</script>index.vue
+// Message component placeholder
+</script>

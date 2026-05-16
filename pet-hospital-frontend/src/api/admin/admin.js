@@ -46,6 +46,34 @@ export function getRecentActivities() {
   })
 }
 
+export function getDeptDistribution() {
+  return request({
+    url: '/admin/dashboard/dept-distribution',
+    method: 'get'
+  })
+}
+
+export function getAppointmentStatusDistribution() {
+  return request({
+    url: '/admin/dashboard/appointment-status',
+    method: 'get'
+  })
+}
+
+export function getTodayAppointments() {
+  return request({
+    url: '/admin/dashboard/today-appointments',
+    method: 'get'
+  })
+}
+
+export function getNotices() {
+  return request({
+    url: '/admin/dashboard/notices',
+    method: 'get'
+  })
+}
+
 // ==================== 用户管理（不分页）====================
 export function getUserList(keyword) {
   return request({
@@ -216,6 +244,21 @@ export function saveBusinessConfig(data) {
   })
 }
 
+export function getNotificationConfig() {
+  return request({
+    url: '/admin/system/config/notification',
+    method: 'get'
+  })
+}
+
+export function saveNotificationConfig(data) {
+  return request({
+    url: '/admin/system/config/notification',
+    method: 'put',
+    data
+  })
+}
+
 export function backupData() {
   return request({
     url: '/admin/system/backup',
@@ -253,5 +296,68 @@ export function getOperationLogs(params) {
     url: '/admin/system/logs',
     method: 'get',
     params
+  })
+}
+
+// ==================== 药品管理 ====================
+export function getMedicineList(keyword) {
+  return request({
+    url: '/admin/medicine/list',
+    method: 'get',
+    params: { keyword }
+  })
+}
+
+export function getMedicineDetail(id) {
+  return request({
+    url: '/admin/medicine/detail/' + id,
+    method: 'get'
+  })
+}
+
+export function addMedicine(data) {
+  return request({
+    url: '/admin/medicine',
+    method: 'post',
+    data
+  })
+}
+
+export function updateMedicine(id, data) {
+  return request({
+    url: '/admin/medicine/' + id,
+    method: 'put',
+    data
+  })
+}
+
+export function deleteMedicine(id) {
+  return request({
+    url: '/admin/medicine/' + id,
+    method: 'delete'
+  })
+}
+
+export function updateMedicineStatus(id, status) {
+  return request({
+    url: '/admin/medicine/status',
+    method: 'put',
+    params: { id, status }
+  })
+}
+
+// ==================== 系统设置 ====================
+export function getAdminVersion() {
+  return request({
+    url: '/admin/version',
+    method: 'get'
+  })
+}
+
+export function submitAdminFeedback(data) {
+  return request({
+    url: '/admin/feedback',
+    method: 'post',
+    data
   })
 }

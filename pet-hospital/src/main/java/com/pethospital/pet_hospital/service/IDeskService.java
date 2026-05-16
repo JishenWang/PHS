@@ -29,6 +29,8 @@ public interface IDeskService {
 
     Map<String, Object> getReserveList(Map<String, Object> params);
 
+    Map<String, Object> confirmReserve(Long reserveId);
+
     Map<String, Object> verifyReserve(Long reserveId);
 
     Map<String, Object> createRegister(Map<String, Object> payload);
@@ -40,4 +42,6 @@ public interface IDeskService {
     Map<String, Object> getOrderList(Map<String, Object> params);
 
     Map<String, Object> getDoctorStatusList();
+
+    Map<String, Object> getTodayStats();
 }

@@ -3,7 +3,7 @@
     <div class="page-nav">
       <el-button link @click="goBack">
         <el-icon><ArrowLeft /></el-icon>
-        返回
+        {{ $t('reserveDetail.back') }}
       </el-button>
     </div>
 
@@ -11,7 +11,7 @@
       <el-card class="detail-card">
         <template #header>
           <div class="card-header">
-            <span>预约详情</span>
+            <span>{{ $t('reserveDetail.appointmentDetails') }}</span>
             <el-tag :type="getStatusType(detail.status)" size="large">
               {{ getStatusName(detail.status) }}
             </el-tag>
@@ -19,33 +19,36 @@
         </template>
 
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="预约号">{{ detail.reserveNo }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ detail.createTime }}</el-descriptions-item>
-          <el-descriptions-item label="宠物名称">{{ detail.petName }}</el-descriptions-item>
-          <el-descriptions-item label="宠物品种">{{ detail.petBreed }}</el-descriptions-item>
-          <el-descriptions-item label="服务类型">{{ getServiceTypeName(detail.serviceType) }}</el-descriptions-item>
-          <el-descriptions-item label="预约医生">{{ detail.doctorName || '待分配' }}</el-descriptions-item>
-          <el-descriptions-item label="预约时间">{{ detail.reserveTime }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
+          <el-descriptions-item :label="$t('reserveDetail.appointmentNo')">{{ detail.reserveNo || detail.appointmentNo }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.createdAt')">{{ detail.createTime }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.petName')">{{ detail.petName }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.petBreed')">{{ detail.petBreed }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.serviceType')">{{ getServiceTypeName(detail.serviceType) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.doctor')">{{ detail.doctorName || t('reserveDetail.toBeAssigned') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.appointmentTime')">{{ detail.reserveTime || detail.appointmentTime }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.status')">
             <el-tag :type="getStatusType(detail.status)">{{ getStatusName(detail.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="备注" :span="2">{{ detail.remark || '无' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.remarks')" :span="2">{{ detail.remark || t('reserveDetail.none') }}</el-descriptions-item>
+          <el-descriptions-item v-if="detail.cancelReason" :label="$t('reserveDetail.cancelReason')" :span="2">
+            <span style="color: #ef4444;">{{ detail.cancelReason }}</span>
+          </el-descriptions-item>
         </el-descriptions>
 
-        <div class="actions" v-if="detail.status === 'pending'">
-          <el-button type="danger" @click="handleCancel">取消预约</el-button>
+        <div class="actions" v-if="detail.status === '0' || detail.status === 'pending'">
+          <el-button type="danger" @click="handleCancel">{{ $t('reserveDetail.cancelAppointment') }}</el-button>
         </div>
       </el-card>
 
       <!-- 就诊记录（如果已完成） -->
-      <el-card class="record-card" v-if="detail.status === 'completed' && medicalRecord">
+      <el-card class="record-card" v-if="(detail.status === '2' || detail.status === 'completed') && medicalRecord">
         <template #header>
-          <span>就诊记录</span>
+          <span>{{ $t('reserveDetail.medicalRecord') }}</span>
         </template>
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="诊断结果">{{ medicalRecord.diagnosis }}</el-descriptions-item>
-          <el-descriptions-item label="用药方案">{{ medicalRecord.prescription }}</el-descriptions-item>
-          <el-descriptions-item label="医嘱">{{ medicalRecord.advice }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.diagnosis')">{{ medicalRecord.diagnosis }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.prescription')">{{ medicalRecord.prescription }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('reserveDetail.doctorAdvice')">{{ medicalRecord.advice }}</el-descriptions-item>
         </el-descriptions>
       </el-card>
     </div>
@@ -56,8 +59,11 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { getReserveList, cancelReserve } from '@/api/owner/owner'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const reserveId = ref(route.params.id)
@@ -66,18 +72,37 @@ const loading = ref(false)
 const detail = ref({})
 const medicalRecord = ref(null)
 
+// 统一使用数字字符串状态映射，与 index.vue 保持一致
 const getStatusType = (status) => {
-  const types = { pending: 'warning', confirmed: 'success', completed: 'info', cancelled: 'danger' }
+  const types = {
+    '0': 'warning',
+    '1': 'success',
+    '2': 'info',
+    '3': 'danger',
+    'pending': 'warning',
+    'confirmed': 'success',
+    'completed': 'info',
+    'cancelled': 'danger'
+  }
   return types[status] || 'info'
 }
 
 const getStatusName = (status) => {
-  const names = { pending: '待确认', confirmed: '已确认', completed: '已完成', cancelled: '已取消' }
-  return names[status] || status
+  const names = {
+    '0': t('reserveDetail.pending'),
+    '1': t('reserveDetail.confirmed'),
+    '2': t('reserveDetail.completed'),
+    '3': t('reserveDetail.cancelled'),
+    'pending': t('reserveDetail.pending'),
+    'confirmed': t('reserveDetail.confirmed'),
+    'completed': t('reserveDetail.completed'),
+    'cancelled': t('reserveDetail.cancelled')
+  }
+  return names[status] || status || t('reserveDetail.unknownStatus')
 }
 
 const getServiceTypeName = (type) => {
-  const names = { consultation: '门诊诊疗', vaccine: '疫苗接种', exam: '体检', grooming: '洗澡美容' }
+  const names = { consultation: t('reserveDetail.outpatientClinic'), vaccine: t('reserveDetail.vaccination'), exam: t('reserveDetail.physicalExam'), grooming: t('reserveDetail.bathGrooming') }
   return names[type] || type
 }
 
@@ -90,7 +115,8 @@ const loadDetail = async () => {
   try {
     const res = await getReserveList({ page: 1, pageSize: 100 })
     if (res.code === 200) {
-      const found = res.data.records.find(item => item.id == reserveId.value)
+      const records = res.data?.records || res.data?.data || []
+      const found = records.find(item => item.id == reserveId.value)
       if (found) {
         detail.value = found
         if (found.medicalRecord) {
@@ -99,28 +125,30 @@ const loadDetail = async () => {
       }
     }
   } catch (error) {
-    console.error('加载预约详情失败:', error)
+    console.error(t('reserveDetail.failedToLoadDetails'), error)
   } finally {
     loading.value = false
   }
 }
 
 const handleCancel = () => {
-  ElMessageBox.confirm('确定要取消该预约吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      const res = await cancelReserve(reserveId.value)
-      if (res.code === 200) {
-        ElMessage.success('已取消预约')
-        loadDetail()
+  ElMessageBox.prompt(t('reserveDetail.pleaseEnterCancelReason'), t('reserveDetail.cancelConfirm'), {
+    confirmButtonText: t('reserveDetail.confirmCancel'),
+    cancelButtonText: t('reserveDetail.notNow'),
+    inputPlaceholder: t('reserveDetail.cancelPlaceholder')
+  }).then(async ({ value }) => {
+    if (value) {
+      try {
+        const res = await cancelReserve(reserveId.value, { cancelReason: value })
+        if (res.code === 200) {
+          ElMessage.success(t('reserveDetail.appointmentCancelled'))
+          loadDetail()
+        }
+      } catch (error) {
+        ElMessage.error(t('reserveDetail.cancellationFailed'))
       }
-    } catch (error) {
-      ElMessage.error('取消失败')
     }
-  })
+  }).catch(() => {})
 }
 
 onMounted(() => {

@@ -19,13 +19,13 @@ public class DoctorStatisticsQueryDto {
     /**
      * 医生ID
      */
-    @NotNull(message = "医生ID不能为空")
+    @NotNull(message = "Doctor ID cannot be empty")
     private Long doctorId;
     
     /**
      * 统计类型：day-日，month-月，year-年
      */
-    @NotNull(message = "统计类型不能为空")
+    @NotNull(message = "Statistics type cannot be empty")
     private String statType;
     
     /**

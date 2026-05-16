@@ -23,6 +23,8 @@ public class Prescription {
     
     private Long registerId;
     
+    private Long hospitalizationId;
+    
     private Long recordId;
     
     private Long petId;
@@ -38,6 +40,9 @@ public class Prescription {
     private Integer status;
     
     private String remark;
+
+    @TableField(exist = false)
+    private String serviceNames;
     
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

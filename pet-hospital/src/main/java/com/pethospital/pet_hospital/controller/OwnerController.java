@@ -29,6 +29,7 @@ import com.pethospital.pet_hospital.mapper.UserMapper;
 import com.pethospital.pet_hospital.service.IOwnerService;
 import com.pethospital.pet_hospital.vo.common.PageResultVo;
 import com.pethospital.pet_hospital.vo.common.ResultVo;
+import com.pethospital.pet_hospital.vo.owner.HealthRecordDetailVo;
 
 @RestController
 @RequestMapping("/owner")
@@ -43,7 +44,7 @@ public class OwnerController {
     private Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("用户未登录");
+            throw new RuntimeException("User not logged in");
         }
         
         String username = authentication.getName();
@@ -53,7 +54,7 @@ public class OwnerController {
         User user = userMapper.selectOne(wrapper);
         
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new RuntimeException("User does not exist");
         }
         
         return user.getId();
@@ -81,7 +82,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Pet pet = ownerService.getPetDetail(petId, userId);
         if (pet == null) {
-            return ResultVo.error(HttpStatus.NOT_FOUND, "宠物不存在");
+            return ResultVo.error(HttpStatus.NOT_FOUND, "Pet does not exist");
         }
         return ResultVo.success(pet);
     }
@@ -91,8 +92,14 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         pet.setOwnerId(userId);
         pet.setOwnerUserId(userId);
+        // 填充主人信息
+        User user = userMapper.selectById(userId);
+        if (user != null) {
+            pet.setOwnerName(user.getRealName() != null ? user.getRealName() : user.getUsername());
+            pet.setOwnerPhone(user.getPhone());
+        }
         boolean success = ownerService.addPet(pet);
-        return success ? ResultVo.success() : ResultVo.error("添加失败");
+        return success ? ResultVo.success() : ResultVo.error("Add failed");
     }
 
     @PutMapping("/pet/{petId}")
@@ -100,14 +107,14 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         pet.setId(petId);
         boolean success = ownerService.updatePet(pet, userId);
-        return success ? ResultVo.success() : ResultVo.error("更新失败");
+        return success ? ResultVo.success() : ResultVo.error("Update failed");
     }
 
     @DeleteMapping("/pet/{petId}")
     public ResultVo<Void> deletePet(@PathVariable Long petId) {
         Long userId = getCurrentUserId();
         boolean success = ownerService.deletePet(petId, userId);
-        return success ? ResultVo.success() : ResultVo.error("删除失败");
+        return success ? ResultVo.success() : ResultVo.error("Delete failed");
     }
 
     // ==================== 健康记录（就诊记录） ====================
@@ -133,9 +140,22 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         MedicalRecord record = ownerService.getHealthRecordDetail(recordId, userId);
         if (record == null) {
-            return ResultVo.error(HttpStatus.NOT_FOUND, "记录不存在");
+            return ResultVo.error(HttpStatus.NOT_FOUND, "Record does not exist");
         }
         return ResultVo.success(record);
+    }
+
+    /**
+     * 获取就诊记录详情（含处方）
+     */
+    @GetMapping("/health/detail/{recordId}")
+    public ResultVo<HealthRecordDetailVo> getHealthRecordDetailWithPrescription(@PathVariable Long recordId) {
+        Long userId = getCurrentUserId();
+        HealthRecordDetailVo detail = ownerService.getHealthRecordDetailWithPrescription(recordId, userId);
+        if (detail == null) {
+            return ResultVo.error(HttpStatus.NOT_FOUND, "Record does not exist");
+        }
+        return ResultVo.success(detail);
     }
 
     // ==================== 自填记录 ====================
@@ -160,14 +180,14 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         record.setOwnerId(userId);
         boolean success = ownerService.addOwnerHealthRecord(record);
-        return success ? ResultVo.success() : ResultVo.error("添加失败");
+        return success ? ResultVo.success() : ResultVo.error("Add failed");
     }
 
     @DeleteMapping("/owner-health/{recordId}")
     public ResultVo<Void> deleteOwnerHealthRecord(@PathVariable Long recordId) {
         Long userId = getCurrentUserId();
         boolean success = ownerService.deleteOwnerHealthRecord(recordId, userId);
-        return success ? ResultVo.success() : ResultVo.error("删除失败");
+        return success ? ResultVo.success() : ResultVo.error("Delete failed");
     }
 
     // ==================== 预约管理 ====================
@@ -192,7 +212,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Appointment appointment = ownerService.getReserveDetail(reserveId, userId);
         if (appointment == null) {
-            return ResultVo.error(HttpStatus.NOT_FOUND, "预约不存在");
+            return ResultVo.error(HttpStatus.NOT_FOUND, "Appointment does not exist");
         }
         return ResultVo.success(appointment);
     }
@@ -201,8 +221,9 @@ public class OwnerController {
     public ResultVo<Void> createReserve(@RequestBody Appointment appointment) {
         Long userId = getCurrentUserId();
         appointment.setOwnerId(userId);
+        appointment.setOwnerUserId(userId);
         boolean success = ownerService.createReserve(appointment);
-        return success ? ResultVo.success() : ResultVo.error("创建失败");
+        return success ? ResultVo.success() : ResultVo.error("Create failed");
     }
 
     @PutMapping("/reserve/{reserveId}/cancel")
@@ -210,7 +231,14 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         String cancelReason = body != null ? body.get("cancelReason") : null;
         boolean success = ownerService.cancelReserve(reserveId, userId, cancelReason);
-        return success ? ResultVo.success() : ResultVo.error("取消失败");
+        return success ? ResultVo.success() : ResultVo.error("Cancel failed");
+    }
+
+    @PutMapping("/reserve/{reserveId}/confirm")
+    public ResultVo<Void> confirmReserve(@PathVariable Long reserveId) {
+        Long userId = getCurrentUserId();
+        boolean success = ownerService.confirmReserve(reserveId, userId);
+        return success ? ResultVo.success() : ResultVo.error("Confirm failed, only pending appointments can be confirmed");
     }
 
     @GetMapping("/reserve/doctors")
@@ -249,7 +277,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         Consultation consultation = ownerService.getConsultDetail(consultId, userId);
         if (consultation == null) {
-            return ResultVo.error(HttpStatus.NOT_FOUND, "咨询不存在");
+            return ResultVo.error(HttpStatus.NOT_FOUND, "Consultation does not exist");
         }
         return ResultVo.success(consultation);
     }
@@ -259,7 +287,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         consultation.setOwnerId(userId);
         boolean success = ownerService.createConsult(consultation);
-        return success ? ResultVo.success() : ResultVo.error("发起失败");
+        return success ? ResultVo.success() : ResultVo.error("Failed to initiate");
     }
 
     @PostMapping("/consult/{consultId}/reply")
@@ -267,7 +295,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         String content = body.get("content");
         boolean success = ownerService.replyConsult(consultId, userId, content);
-        return success ? ResultVo.success() : ResultVo.error("回复失败");
+        return success ? ResultVo.success() : ResultVo.error("Reply failed");
     }
 
     @PostMapping("/consult/{consultId}/rate")
@@ -276,7 +304,7 @@ public class OwnerController {
         Integer rating = (Integer) body.get("rating");
         String comment = (String) body.get("comment");
         boolean success = ownerService.rateConsult(consultId, userId, rating, comment);
-        return success ? ResultVo.success() : ResultVo.error("评价失败");
+        return success ? ResultVo.success() : ResultVo.error("Rating failed");
     }
 
     // ==================== 订单管理 ====================
@@ -301,7 +329,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         OrderInfo order = ownerService.getOrderDetail(orderId, userId);
         if (order == null) {
-            return ResultVo.error(HttpStatus.NOT_FOUND, "订单不存在");
+            return ResultVo.error(HttpStatus.NOT_FOUND, "Order does not exist");
         }
         return ResultVo.success(order);
     }
@@ -320,7 +348,7 @@ public class OwnerController {
         Long userId = getCurrentUserId();
         user.setId(userId);
         boolean success = ownerService.updateUserInfo(user);
-        return success ? ResultVo.success() : ResultVo.error("更新失败");
+        return success ? ResultVo.success() : ResultVo.error("Update failed");
     }
 
     @PostMapping("/profile/password")
@@ -329,7 +357,7 @@ public class OwnerController {
         String oldPassword = body.get("oldPassword");
         String newPassword = body.get("newPassword");
         boolean success = ownerService.changePassword(userId, oldPassword, newPassword);
-        return success ? ResultVo.success() : ResultVo.error("修改失败");
+        return success ? ResultVo.success() : ResultVo.error("Change failed");
     }
 
     @PostMapping("/profile/phone")
@@ -338,7 +366,7 @@ public class OwnerController {
         String phone = body.get("phone");
         String code = body.get("code");
         boolean success = ownerService.bindPhone(userId, phone, code);
-        return success ? ResultVo.success() : ResultVo.error("绑定失败");
+        return success ? ResultVo.success() : ResultVo.error("Bind failed");
     }
 
     @PostMapping("/profile/email")
@@ -347,6 +375,6 @@ public class OwnerController {
         String email = body.get("email");
         String code = body.get("code");
         boolean success = ownerService.bindEmail(userId, email, code);
-        return success ? ResultVo.success() : ResultVo.error("绑定失败");
+        return success ? ResultVo.success() : ResultVo.error("Bind failed");
     }
 }

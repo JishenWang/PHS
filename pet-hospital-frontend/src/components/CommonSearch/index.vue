@@ -3,9 +3,9 @@
     <slot></slot>
     <el-form-item>
       <el-button type="primary" @click="$emit('search')">
-        <el-icon><Search /></el-icon>搜索
+        <el-icon><Search /></el-icon>Search
       </el-button>
-      <el-button @click="$emit('reset')">重置</el-button>
+      <el-button @click="$emit('reset')">Reset</el-button>
     </el-form-item>
   </el-form>
 </template>

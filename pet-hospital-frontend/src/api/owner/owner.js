@@ -87,6 +87,17 @@ export function getHealthRecordDetail(recordId) {
 }
 
 /**
+ * 获取就诊记录详情（含处方）
+ * @param {Number} recordId - 记录ID
+ */
+export function getHealthRecordDetailWithPrescription(recordId) {
+  return request({
+    url: `/owner/health/detail/${recordId}`,
+    method: 'get'
+  })
+}
+
+/**
  * 获取健康统计数据
  */
 export function getHealthStatistics() {
@@ -167,6 +178,17 @@ export function createReserve(data) {
     url: '/owner/reserve',
     method: 'post',
     data
+  })
+}
+
+/**
+ * 确认预约
+ * @param {Number} reserveId - 预约ID
+ */
+export function confirmReserve(reserveId) {
+  return request({
+    url: `/owner/reserve/${reserveId}/confirm`,
+    method: 'put'
   })
 }
 
@@ -421,7 +443,7 @@ export function markAllMessagesRead() {
  */
 export function uploadAvatar(formData) {
   return request({
-    url: '/owner/profile/avatar',
+    url: '/common/upload',
     method: 'post',
     data: formData,
     headers: { 'Content-Type': 'multipart/form-data' }

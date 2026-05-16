@@ -1,9 +1,12 @@
 package com.pethospital.pet_hospital.controller;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,16 +16,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pethospital.pet_hospital.dto.desk.ChargeQueryDto;
 import com.pethospital.pet_hospital.dto.desk.CustomerQueryDto;
 import com.pethospital.pet_hospital.dto.desk.RegisterQueryDto;
+import com.pethospital.pet_hospital.entity.Feedback;
+import com.pethospital.pet_hospital.entity.User;
+import com.pethospital.pet_hospital.mapper.FeedbackMapper;
+import com.pethospital.pet_hospital.mapper.UserMapper;
 import com.pethospital.pet_hospital.service.IDeskService;
+import com.pethospital.pet_hospital.vo.common.ResultVo;
 
 @RestController
 @RequestMapping("/desk")
 public class DeskController {
     @Autowired
     private IDeskService deskService;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private FeedbackMapper feedbackMapper;
 
     /**
      * 前台端健康检查接口（占位）
@@ -80,6 +95,11 @@ public class DeskController {
         return deskService.getReserveList(params);
     }
 
+    @PutMapping("/reserves/{id}/confirm")
+    public Map<String, Object> confirmReserve(@PathVariable("id") Long id) {
+        return deskService.confirmReserve(id);
+    }
+
     @PostMapping("/reserves/{id}/verify")
     public Map<String, Object> verifyReserve(@PathVariable("id") Long id) {
         return deskService.verifyReserve(id);
@@ -111,5 +131,45 @@ public class DeskController {
     @GetMapping("/doctors/status")
     public Map<String, Object> doctorStatus() {
         return deskService.getDoctorStatusList();
+    }
+
+    @GetMapping("/today-stats")
+    public Map<String, Object> todayStats() {
+        return deskService.getTodayStats();
+    }
+
+    // ==================== 系统设置 ====================
+
+    @PostMapping("/feedback")
+    public ResultVo<String> submitFeedback(@RequestBody Map<String, String> body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication != null ? authentication.getName() : "desk";
+
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username);
+        wrapper.last("LIMIT 1");
+        User user = userMapper.selectOne(wrapper);
+
+        Feedback feedback = new Feedback();
+        feedback.setUserId(user != null ? user.getId() : null);
+        feedback.setUserName(user != null ? user.getRealName() : username);
+        feedback.setType(body.get("type"));
+        feedback.setContent(body.get("content"));
+        feedback.setContact(body.get("contact"));
+        feedback.setCreateTime(LocalDateTime.now());
+        feedbackMapper.insert(feedback);
+
+        return ResultVo.success("Feedback submitted");
+    }
+
+    @GetMapping("/version")
+    public ResultVo<Map<String, Object>> checkVersion() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("version", "v1.0.0");
+        data.put("buildDate", "2026-04-12");
+        data.put("forceUpdate", false);
+        data.put("updateUrl", "");
+        data.put("updateLog", "Already up to date");
+        return ResultVo.success(data);
     }
 }

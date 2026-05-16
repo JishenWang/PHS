@@ -45,7 +45,7 @@ public class EncryptUtil {
             }
             return sb.toString();
         } catch (Exception e) {
-            throw new RuntimeException("密码加密失败", e);
+            throw new RuntimeException("Password encryption failed", e);
         }
     }
 
@@ -76,7 +76,7 @@ public class EncryptUtil {
             }
             return sb.toString();
         } catch (Exception e) {
-            throw new RuntimeException("MD5加密失败", e);
+            throw new RuntimeException("MD5 encryption failed", e);
         }
     }
 
@@ -93,7 +93,7 @@ public class EncryptUtil {
             }
             return sb.toString();
         } catch (Exception e) {
-            throw new RuntimeException("SHA-256加密失败", e);
+            throw new RuntimeException("SHA-256 encryption failed", e);
         }
     }
 

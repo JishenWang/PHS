@@ -1,6 +1,7 @@
 package com.pethospital.pet_hospital.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -40,6 +41,8 @@ public class MedicineItem {
     
     @TableField(value = "usage_desc")
     private String instruction;
+    
+    private LocalDate expiryDate;
     
     private Integer status;
     

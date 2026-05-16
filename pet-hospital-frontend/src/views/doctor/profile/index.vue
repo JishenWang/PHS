@@ -4,7 +4,7 @@
       <div class="page-header">
         <h2 class="page-title">
           <el-icon><User /></el-icon>
-          个人中心
+          {{ $t('profile.title') }}
         </h2>
       </div>
 
@@ -30,27 +30,27 @@
                 >
                   <el-button type="primary" size="small" round>
                     <el-icon><Camera /></el-icon>
-                    更换头像
+                    {{ $t('profile.changeAvatar') }}
                   </el-button>
                 </el-upload>
               </div>
             </div>
             <div class="user-basic">
-              <h3 class="user-name">{{ localUserInfo.realName || localUserInfo.username || '医生' }}</h3>
-              <p class="user-title">{{ localUserInfo.title || '主治医师' }}</p>
+              <h3 class="user-name">{{ localUserInfo.realName || localUserInfo.username || $t('profile.title') }}</h3>
+              <p class="user-title">{{ localUserInfo.title || $t('profile.attendingPhysician') }}</p>
             </div>
             <div class="user-stats">
               <div class="stat-item">
                 <div class="stat-value">{{ statistics.acceptCount || 0 }}</div>
-                <div class="stat-label">接诊数</div>
+                <div class="stat-label">{{ $t('profile.acceptanceCount') }}</div>
               </div>
               <div class="stat-item">
                 <div class="stat-value">{{ statistics.consultCount || 0 }}</div>
-                <div class="stat-label">咨询数</div>
+                <div class="stat-label">{{ $t('profile.consultationCount') }}</div>
               </div>
               <div class="stat-item">
                 <div class="stat-value">{{ statistics.prescriptionCount || 0 }}</div>
-                <div class="stat-label">处方数</div>
+                <div class="stat-label">{{ $t('profile.prescriptionCount') }}</div>
               </div>
             </div>
           </el-card>
@@ -60,7 +60,7 @@
             <template #header>
               <div class="card-header">
                 <el-icon><Lock /></el-icon>
-                <span>账号安全</span>
+                <span>{{ $t('profile.accountSecurity') }}</span>
               </div>
             </template>
             <div class="security-list">
@@ -68,24 +68,24 @@
                 <div class="item-info">
                   <el-icon class="success"><CircleCheck /></el-icon>
                   <div class="item-text">
-                    <div class="item-title">登录密码</div>
-                    <div class="item-desc">已设置，建议定期更换</div>
+                    <div class="item-title">{{ $t('profile.loginPassword') }}</div>
+                    <div class="item-desc">{{ $t('profile.passwordDesc') }}</div>
                   </div>
                 </div>
                 <el-button type="primary" link @click="showPasswordDialog = true">
-                  修改
+                  {{ $t('profile.change') }}
                 </el-button>
               </div>
               <div class="security-item">
                 <div class="item-info">
                   <el-icon class="success"><CircleCheck /></el-icon>
                   <div class="item-text">
-                    <div class="item-title">手机绑定</div>
-                    <div class="item-desc">{{ maskPhone(localUserInfo.phone) || '未绑定' }}</div>
+                    <div class="item-title">{{ $t('profile.phoneBinding') }}</div>
+                    <div class="item-desc">{{ maskPhone(localUserInfo.phone) || $t('profile.notBound') }}</div>
                   </div>
                 </div>
                 <el-button type="primary" link @click="openPhoneDialog">
-                  {{ localUserInfo.phone ? '更换' : '绑定' }}
+                  {{ localUserInfo.phone ? $t('profile.change') : $t('profile.bind') }}
                 </el-button>
               </div>
               <div class="security-item">
@@ -94,14 +94,14 @@
                     <component :is="localUserInfo.email ? 'CircleCheck' : 'Warning'" />
                   </el-icon>
                   <div class="item-text">
-                    <div class="item-title">邮箱绑定</div>
+                    <div class="item-title">{{ $t('profile.emailBinding') }}</div>
                     <div class="item-desc">
-                      {{ localUserInfo.email ? maskEmail(localUserInfo.email) : '未绑定，建议绑定以接收通知' }}
+                      {{ localUserInfo.email ? maskEmail(localUserInfo.email) : $t('profile.emailNotBound') }}
                     </div>
                   </div>
                 </div>
                 <el-button type="primary" link @click="openEmailDialog">
-                  {{ localUserInfo.email ? '更换' : '绑定' }}
+                  {{ localUserInfo.email ? $t('profile.change') : $t('profile.bind') }}
                 </el-button>
               </div>
             </div>
@@ -115,7 +115,7 @@
               <div class="card-header">
                 <div class="header-left">
                   <el-icon><EditPen /></el-icon>
-                  <span>基本信息</span>
+                  <span>{{ $t('profile.basicInfo') }}</span>
                 </div>
                 <el-button 
                   :type="isEditing ? 'success' : 'primary'" 
@@ -123,7 +123,7 @@
                   :loading="saving"
                 >
                   <el-icon><component :is="isEditing ? 'Check' : 'Edit'" /></el-icon>
-                  {{ isEditing ? '保存' : '编辑' }}
+                  {{ isEditing ? $t('profile.save') : $t('profile.edit') }}
                 </el-button>
               </div>
             </template>
@@ -138,12 +138,12 @@
             >
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="真实姓名" prop="realName">
-                    <el-input v-model="formData.realName" placeholder="请输入真实姓名" />
+                  <el-form-item :label="$t('profile.realName')" prop="realName">
+                    <el-input v-model="formData.realName" :placeholder="$t('profile.placeholderRealName')" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="用户名">
+                  <el-form-item :label="$t('profile.username')">
                     <el-input v-model="formData.username" disabled />
                   </el-form-item>
                 </el-col>
@@ -151,15 +151,15 @@
 
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="性别" prop="gender">
+                  <el-form-item :label="$t('profile.gender')" prop="gender">
                     <el-radio-group v-model="formData.gender">
-                      <el-radio :value="1">男</el-radio>
-                      <el-radio :value="0">女</el-radio>
+                      <el-radio :value="1">{{ $t('profile.male') }}</el-radio>
+                      <el-radio :value="0">{{ $t('profile.female') }}</el-radio>
                     </el-radio-group>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="手机号">
+                  <el-form-item :label="$t('profile.phone')">
                     <el-input v-model="formData.phone" disabled />
                   </el-form-item>
                 </el-col>
@@ -167,59 +167,59 @@
 
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="职称" prop="title">
-                    <el-select v-model="formData.title" placeholder="请选择职称" class="full-width">
-                      <el-option label="主任医师" value="主任医师" />
-                      <el-option label="副主任医师" value="副主任医师" />
-                      <el-option label="主治医师" value="主治医师" />
-                      <el-option label="住院医师" value="住院医师" />
-                      <el-option label="助理医师" value="助理医师" />
+                  <el-form-item :label="$t('profile.title')" prop="title">
+                    <el-select v-model="formData.title" :placeholder="$t('profile.placeholderTitle')" class="full-width">
+                      <el-option :label="$t('profile.chiefPhysician')" value="主任医师" />
+                      <el-option :label="$t('profile.associateChiefPhysician')" value="副主任医师" />
+                      <el-option :label="$t('profile.attendingPhysician')" value="主治医师" />
+                      <el-option :label="$t('profile.residentPhysician')" value="住院医师" />
+                      <el-option :label="$t('profile.assistantPhysician')" value="助理医师" />
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="科室" prop="department">
-                    <el-select v-model="formData.department" placeholder="请选择科室" class="full-width">
-                      <el-option label="全科医疗部" value="全科医疗部" />
-                      <el-option label="内科" value="内科" />
-                      <el-option label="外科" value="外科" />
-                      <el-option label="皮肤科" value="皮肤科" />
-                      <el-option label="眼科" value="眼科" />
-                      <el-option label="牙科" value="牙科" />
-                      <el-option label="影像科" value="影像科" />
-                      <el-option label="检验科" value="检验科" />
+                  <el-form-item :label="$t('profile.department')" prop="department">
+                    <el-select v-model="formData.department" :placeholder="$t('profile.placeholderDepartment')" class="full-width">
+                      <el-option :label="$t('profile.generalPractice')" value="全科医疗部" />
+                      <el-option :label="$t('profile.internalMedicine')" value="内科" />
+                      <el-option :label="$t('profile.surgery')" value="外科" />
+                      <el-option :label="$t('profile.dermatology')" value="皮肤科" />
+                      <el-option :label="$t('profile.ophthalmology')" value="眼科" />
+                      <el-option :label="$t('profile.dentistry')" value="牙科" />
+                      <el-option :label="$t('profile.imaging')" value="影像科" />
+                      <el-option :label="$t('profile.laboratory')" value="检验科" />
                     </el-select>
                   </el-form-item>
                 </el-col>
               </el-row>
 
-              <el-form-item label="擅长领域" prop="specialty">
+              <el-form-item :label="$t('profile.specialty')" prop="specialty">
                 <el-input 
                   v-model="formData.specialty" 
                   type="textarea" 
                   :rows="2"
-                  placeholder="请输入擅长治疗的疾病或手术，如：小动物内科疾病、软组织外科手术等"
+                  :placeholder="$t('profile.placeholderSpecialty')"
                   maxlength="200"
                   show-word-limit
                 />
               </el-form-item>
 
-              <el-form-item label="个人简介" prop="introduction">
+              <el-form-item :label="$t('profile.introduction')" prop="introduction">
                 <el-input 
                   v-model="formData.introduction" 
                   type="textarea" 
                   :rows="4"
-                  placeholder="请输入个人简介，包括教育背景、工作经历、专业特长等"
+                  :placeholder="$t('profile.placeholderIntroduction')"
                   maxlength="500"
                   show-word-limit
                 />
               </el-form-item>
 
-              <el-form-item label="从业时间">
+              <el-form-item :label="$t('profile.workSince')">
                 <el-date-picker 
                   v-model="formData.workDate" 
                   type="date" 
-                  placeholder="选择日期"
+                  :placeholder="$t('profile.selectDate')"
                   value-format="YYYY-MM-DD"
                   class="full-width"
                 />
@@ -233,7 +233,7 @@
               <div class="card-header">
                 <div class="header-left">
                   <el-icon><DocumentChecked /></el-icon>
-                  <span>执业资质</span>
+                  <span>{{ $t('profile.practiceQualification') }}</span>
                 </div>
                 <el-tag :type="authStatusType" effect="light" round>
                   {{ authStatusText }}
@@ -244,22 +244,22 @@
             <!-- 已认证状态 -->
             <div v-if="qualification.authStatus === 2" class="qualification-info">
               <el-descriptions :column="2" border>
-                <el-descriptions-item label="执业兽医资格证号">
-                  {{ qualification.licenseNo || '未填写' }}
+                <el-descriptions-item :label="$t('profile.veterinaryLicenseNo')">
+                  {{ qualification.licenseNo || $t('profile.notFilled') }}
                 </el-descriptions-item>
-                <el-descriptions-item label="发证机关">
-                  {{ qualification.issueOrg || '未填写' }}
+                <el-descriptions-item :label="$t('profile.issuingAuthority')">
+                  {{ qualification.issueOrg || $t('profile.notFilled') }}
                 </el-descriptions-item>
-                <el-descriptions-item label="发证日期">
-                  {{ qualification.issueDate || '未填写' }}
+                <el-descriptions-item :label="$t('profile.issueDate')">
+                  {{ qualification.issueDate || $t('profile.notFilled') }}
                 </el-descriptions-item>
-                <el-descriptions-item label="有效期至">
-                  {{ qualification.expiryDate || '未填写' }}
+                <el-descriptions-item :label="$t('profile.validUntil')">
+                  {{ qualification.expiryDate || $t('profile.notFilled') }}
                 </el-descriptions-item>
               </el-descriptions>
               
               <div class="qualification-images" v-if="qualification.images && qualification.images.length > 0">
-                <div class="images-title">资质证书图片</div>
+                <div class="images-title">{{ $t('profile.qualificationImages') }}</div>
                 <div class="image-list">
                   <el-image
                     v-for="(img, index) in qualification.images"
@@ -277,7 +277,7 @@
             <div v-else class="qualification-upload">
               <el-alert
                 v-if="qualification.authStatus === 1"
-                title="您的资质正在审核中，请耐心等待"
+                :title="$t('profile.reviewMessage')"
                 type="warning"
                 :closable="false"
                 show-icon
@@ -285,37 +285,37 @@
               />
               
               <el-form :model="qualificationForm" label-width="120px" class="qualification-form">
-                <el-form-item label="资格证号" required>
-                  <el-input v-model="qualificationForm.licenseNo" placeholder="请输入执业兽医资格证号" />
+                <el-form-item :label="$t('profile.licenseNo')" required>
+                  <el-input v-model="qualificationForm.licenseNo" :placeholder="$t('profile.pleaseEnterLicenseNo')" />
                 </el-form-item>
-                <el-form-item label="发证机关" required>
-                  <el-input v-model="qualificationForm.issueOrg" placeholder="请输入发证机关" />
+                <el-form-item :label="$t('profile.issuingAuthority')" required>
+                  <el-input v-model="qualificationForm.issueOrg" :placeholder="$t('profile.pleaseEnterIssueOrg')" />
                 </el-form-item>
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="发证日期" required>
+                    <el-form-item :label="$t('profile.issueDate')" required>
                       <el-date-picker
                         v-model="qualificationForm.issueDate"
                         type="date"
-                        placeholder="选择日期"
+                        :placeholder="$t('profile.selectDate')"
                         value-format="YYYY-MM-DD"
                         class="full-width"
                       />
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="有效期至">
+                    <el-form-item :label="$t('profile.validUntil')">
                       <el-date-picker
                         v-model="qualificationForm.expiryDate"
                         type="date"
-                        placeholder="选择日期（选填）"
+                        :placeholder="$t('profile.selectDateOptional')"
                         value-format="YYYY-MM-DD"
                         class="full-width"
                       />
                     </el-form-item>
                   </el-col>
                 </el-row>
-                <el-form-item label="资质证书">
+                <el-form-item :label="$t('profile.qualificationCertificate')">
                   <el-upload
                     action="/api/common/upload"
                     list-type="picture-card"
@@ -330,13 +330,13 @@
                   >
                     <el-icon><Plus /></el-icon>
                   </el-upload>
-                  <div class="upload-tip">支持jpg、png格式，大小不超过2MB</div>
+                  <div class="upload-tip">{{ $t('profile.uploadTip2MB') }}</div>
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="submitQualification" :loading="submittingQualification">
-                    提交审核
+                    {{ $t('profile.submitForReview') }}
                   </el-button>
-                  <el-button @click="resetQualificationForm">重置</el-button>
+                  <el-button @click="resetQualificationForm">{{ $t('profile.reset') }}</el-button>
                 </el-form-item>
               </el-form>
             </div>
@@ -345,45 +345,45 @@
       </div>
 
       <!-- 修改密码对话框 -->
-      <el-dialog v-model="showPasswordDialog" title="修改密码" width="450px" destroy-on-close>
+      <el-dialog v-model="showPasswordDialog" :title="$t('profile.changePassword')" width="450px" destroy-on-close>
         <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
-          <el-form-item label="原密码" prop="oldPassword">
-            <el-input v-model="passwordForm.oldPassword" type="password" show-password placeholder="请输入原密码" />
+          <el-form-item :label="$t('profile.oldPassword')" prop="oldPassword">
+            <el-input v-model="passwordForm.oldPassword" type="password" show-password :placeholder="$t('profile.placeholderOldPassword')" />
           </el-form-item>
-          <el-form-item label="新密码" prop="newPassword">
-            <el-input v-model="passwordForm.newPassword" type="password" show-password placeholder="6-20位字母、数字或符号" />
+          <el-form-item :label="$t('profile.newPassword')" prop="newPassword">
+            <el-input v-model="passwordForm.newPassword" type="password" show-password :placeholder="$t('profile.placeholderNewPassword')" />
           </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input v-model="passwordForm.confirmPassword" type="password" show-password placeholder="请再次输入新密码" />
+          <el-form-item :label="$t('profile.confirmPassword')" prop="confirmPassword">
+            <el-input v-model="passwordForm.confirmPassword" type="password" show-password :placeholder="$t('profile.placeholderConfirmPassword')" />
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="showPasswordDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">确认修改</el-button>
+          <el-button @click="showPasswordDialog = false">{{ $t('profile.cancel') }}</el-button>
+          <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">{{ $t('profile.confirmChange') }}</el-button>
         </template>
       </el-dialog>
 
       <!-- 修改手机对话框 -->
       <el-dialog v-model="showPhoneDialog" :title="phoneDialogTitle" width="450px" destroy-on-close>
         <el-steps :active="phoneStep" finish-status="success" simple class="phone-steps">
-          <el-step title="验证身份" />
-          <el-step title="绑定新手机" />
+          <el-step :title="$t('profile.verifyIdentity')" />
+          <el-step :title="$t('profile.bindNewPhone')" />
         </el-steps>
         
         <div v-if="phoneStep === 0" class="verify-step">
           <p class="step-desc">
-            {{ localUserInfo.phone ? `已向 ${maskPhone(localUserInfo.phone)} 发送验证码` : '请输入您要绑定的手机号' }}
+            {{ localUserInfo.phone ? $t('profile.stepDescVerify', { phone: maskPhone(localUserInfo.phone) }) : $t('profile.stepDescBind') }}
           </p>
           <el-form :model="phoneForm" label-width="0">
             <el-form-item v-if="!localUserInfo.phone">
-              <el-input v-model="phoneForm.newPhone" placeholder="请输入手机号">
+              <el-input v-model="phoneForm.newPhone" :placeholder="$t('profile.placeholderPhone')">
                 <template #prefix>
                   <el-icon><Phone /></el-icon>
                 </template>
               </el-input>
             </el-form-item>
             <el-form-item>
-              <el-input v-model="phoneForm.code" placeholder="请输入验证码">
+              <el-input v-model="phoneForm.code" :placeholder="$t('profile.placeholderCode')">
                 <template #prefix>
                   <el-icon><Message /></el-icon>
                 </template>
@@ -393,7 +393,7 @@
                     @click="sendPhoneCode"
                     :loading="sendingCode"
                   >
-                    {{ codeCountdown > 0 ? `${codeCountdown}s后重试` : '发送验证码' }}
+                    {{ codeCountdown > 0 ? $t('profile.retryIn', { count: codeCountdown }) : $t('profile.sendCode') }}
                   </el-button>
                 </template>
               </el-input>
@@ -402,17 +402,17 @@
         </div>
         
         <div v-else class="bind-step">
-          <p class="step-desc">请输入要绑定的新手机号</p>
+          <p class="step-desc">{{ $t('profile.stepDescNewPhone') }}</p>
           <el-form :model="phoneForm" label-width="0">
             <el-form-item>
-              <el-input v-model="phoneForm.newPhone" placeholder="请输入新手机号">
+              <el-input v-model="phoneForm.newPhone" :placeholder="$t('profile.placeholderNewPhone')">
                 <template #prefix>
                   <el-icon><Phone /></el-icon>
                 </template>
               </el-input>
             </el-form-item>
             <el-form-item>
-              <el-input v-model="phoneForm.newCode" placeholder="请输入验证码">
+              <el-input v-model="phoneForm.newCode" :placeholder="$t('profile.placeholderCode')">
                 <template #prefix>
                   <el-icon><Message /></el-icon>
                 </template>
@@ -422,7 +422,7 @@
                     @click="sendNewPhoneCode"
                     :loading="sendingNewCode"
                   >
-                    {{ newCodeCountdown > 0 ? `${newCodeCountdown}s后重试` : '发送验证码' }}
+                    {{ newCodeCountdown > 0 ? $t('profile.retryIn', { count: newCodeCountdown }) : $t('profile.sendCode') }}
                   </el-button>
                 </template>
               </el-input>
@@ -431,9 +431,9 @@
         </div>
         
         <template #footer>
-          <el-button @click="showPhoneDialog = false">取消</el-button>
+          <el-button @click="showPhoneDialog = false">{{ $t('profile.cancel') }}</el-button>
           <el-button type="primary" @click="handlePhoneNext" :loading="changingPhone">
-            {{ phoneStep === 0 ? '下一步' : '确认绑定' }}
+            {{ phoneStep === 0 ? $t('profile.next') : $t('profile.confirmBinding') }}
           </el-button>
         </template>
       </el-dialog>
@@ -442,14 +442,14 @@
       <el-dialog v-model="showEmailDialog" :title="emailDialogTitle" width="450px" destroy-on-close>
         <el-form :model="emailForm" :rules="emailRules" ref="emailFormRef" label-width="0">
           <el-form-item prop="email">
-            <el-input v-model="emailForm.email" placeholder="请输入邮箱地址">
+            <el-input v-model="emailForm.email" :placeholder="$t('profile.placeholderEmail')">
               <template #prefix>
                 <el-icon><Message /></el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item prop="code">
-            <el-input v-model="emailForm.code" placeholder="请输入验证码">
+            <el-input v-model="emailForm.code" :placeholder="$t('profile.placeholderCode')">
               <template #prefix>
                 <el-icon><Lock /></el-icon>
               </template>
@@ -459,21 +459,22 @@
                   @click="sendEmailCode"
                   :loading="sendingEmailCode"
                 >
-                  {{ emailCodeCountdown > 0 ? `${emailCodeCountdown}s后重试` : '发送验证码' }}
+                  {{ emailCodeCountdown > 0 ? $t('profile.retryIn', { count: emailCodeCountdown }) : $t('profile.sendCode') }}
                 </el-button>
               </template>
             </el-input>
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="showEmailDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleBindEmail" :loading="bindingEmail">确认绑定</el-button>
+          <el-button @click="showEmailDialog = false">{{ $t('profile.cancel') }}</el-button>
+          <el-button type="primary" @click="handleBindEmail" :loading="bindingEmail">{{ $t('profile.confirmBindEmail') }}</el-button>
         </template>
       </el-dialog>
     </div>
 </template>
 
 <script setup>
+const { t } = useI18n()
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
@@ -483,6 +484,7 @@ import {
 import { useUserStore } from '@/store/user'
 // 在文件顶部添加导入
 import { profileModule } from '@/api/doctor/profile'
+import { useI18n } from 'vue-i18n'
 
 
 const userStore = useUserStore()
@@ -503,7 +505,7 @@ const localUserInfo = ref({
   gender: 1
 })
 
-// 页面加载状态
+// Page loading
 const pageLoading = ref(false)
 const saving = ref(false)
 
@@ -541,9 +543,9 @@ const formData = reactive({
 })
 
 const formRules = {
-  realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
-  title: [{ required: true, message: '请选择职称', trigger: 'change' }],
-  department: [{ required: true, message: '请选择科室', trigger: 'change' }]
+  realName: [{ required: true, message: t('profile.placeholderRealName'), trigger: 'blur' }],
+  title: [{ required: true, message: t('profile.placeholderTitle'), trigger: 'change' }],
+  department: [{ required: true, message: t('profile.placeholderDepartment'), trigger: 'change' }]
 }
 
 // 资质信息
@@ -562,8 +564,8 @@ const authStatusType = computed(() => {
 })
 
 const authStatusText = computed(() => {
-  const map = { 0: '未认证', 1: '审核中', 2: '已认证', 3: '认证失败' }
-  return map[qualification.value.authStatus] || '未知'
+  const map = { 0: t('profile.unverified'), 1: t('profile.underReview'), 2: t('profile.verified'), 3: t('profile.verificationFailed') }
+  return map[qualification.value.authStatus] || t('profile.unknown')
 })
 
 // 资质表单
@@ -592,7 +594,7 @@ const changingPassword = ref(false)
 
 const validateConfirmPassword = (rule, value, callback) => {
   if (value !== passwordForm.newPassword) {
-    callback(new Error('两次输入的密码不一致'))
+    callback(new Error(t('profile.passwordsDoNotMatch')))
   } else {
     callback()
   }
@@ -600,21 +602,21 @@ const validateConfirmPassword = (rule, value, callback) => {
 
 const passwordRules = {
   oldPassword: [
-    { required: true, message: '请输入原密码', trigger: 'blur' }
+    { required: true, message: t('profile.pleaseEnterOldPassword'), trigger: 'blur' }
   ],
   newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度应为6-20位', trigger: 'blur' }
+    { required: true, message: t('profile.pleaseEnterOldPassword'), trigger: 'blur' },
+    { min: 6, max: 20, message: t('profile.passwordLengthError'), trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
+    { required: true, message: t('profile.pleaseConfirmPassword'), trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }
   ]
 }
 
 // 手机绑定
 const phoneStep = ref(0)
-const phoneDialogTitle = computed(() => localUserInfo.value.phone ? '更换手机号' : '绑定手机号')
+const phoneDialogTitle = computed(() => localUserInfo.value.phone ? t('profile.changePhoneTitle') : t('profile.bindPhoneTitle'))
 const phoneForm = reactive({
   newPhone: '',
   code: '',
@@ -627,7 +629,7 @@ const sendingNewCode = ref(false)
 const changingPhone = ref(false)
 
 // 邮箱绑定
-const emailDialogTitle = computed(() => localUserInfo.value.email ? '更换邮箱' : '绑定邮箱')
+const emailDialogTitle = computed(() => localUserInfo.value.email ? t('profile.changeEmailTitle') : t('profile.bindEmailTitle'))
 const emailFormRef = ref(null)
 const emailForm = reactive({
   email: '',
@@ -635,11 +637,11 @@ const emailForm = reactive({
 })
 const emailRules = {
   email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: t('profile.pleaseEnterEmail'), trigger: 'blur' },
+    { type: 'email', message: t('profile.pleaseEnterValidEmail'), trigger: 'blur' }
   ],
   code: [
-    { required: true, message: '请输入验证码', trigger: 'blur' }
+    { required: true, message: t('profile.pleaseEnterCode'), trigger: 'blur' }
   ]
 }
 const emailCodeCountdown = ref(0)
@@ -664,13 +666,13 @@ const refreshLocalUserInfo = () => {
   const storeInfo = userStore.userInfo || {}
   localUserInfo.value = {
     userId: storeInfo.userId || storeInfo.id || '',
-    username: storeInfo.username || '医生',
-    realName: storeInfo.realName || storeInfo.username || '医生',
+    username: storeInfo.username || t('profile.doctorDefault'),
+    realName: storeInfo.realName || storeInfo.username || t('profile.doctorDefault'),
     phone: storeInfo.phone || '',
     email: storeInfo.email || '',
     avatar: storeInfo.avatar || '',
-    title: storeInfo.title || '主治医师',
-    department: storeInfo.department || '全科医疗部',
+    title: storeInfo.title || t('profile.attendingPhysician'),
+    department: storeInfo.department || t('profile.generalPractice'),
     specialty: storeInfo.specialty || '',
     introduction: storeInfo.introduction || '',
     workDate: storeInfo.workDate || '',
@@ -693,11 +695,24 @@ const loadUserInfo = async () => {
 }
 
 const loadStatistics = async () => {
-  // 模拟数据
-  statistics.value = {
-    acceptCount: 128,
-    consultCount: 56,
-    prescriptionCount: 89
+  try {
+    // 优先使用 doctor_profile.id，避免 userId / doctorId 混淆
+    const doctorId = userStore.userInfo?.doctorId || localUserInfo.value.userId
+    if (!doctorId) {
+      statistics.value = { acceptCount: 0, consultCount: 0, prescriptionCount: 0 }
+      return
+    }
+    const res = await profileModule.getStatistics(doctorId)
+    if (res.code === 200 && res.data) {
+      statistics.value = {
+        acceptCount: res.data.totalAccept || 0,
+        consultCount: res.data.totalConsult || 0,
+        prescriptionCount: res.data.totalPrescription || 0
+      }
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+    statistics.value = { acceptCount: 0, consultCount: 0, prescriptionCount: 0 }
   }
 }
 
@@ -707,11 +722,11 @@ const beforeAvatarUpload = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isJPG) {
-    ElMessage.error('只支持 JPG/PNG 格式!')
+    ElMessage.error(t('profile.onlyJpgPng'))
     return false
   }
   if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB!')
+    ElMessage.error(t('profile.imageSizeExceeded'))
     return false
   }
   console.log('准备上传头像:', file.name, file.size)
@@ -725,15 +740,15 @@ const handleAvatarSuccess = (res) => {
     localUserInfo.value.avatar = res.data
     // 更新 store
     userStore.updateAvatar(res.data)
-    ElMessage.success('头像更新成功')
+    ElMessage.success(t('profile.avatarUpdated'))
   } else {
-    ElMessage.error(res.message || res.msg || '上传失败')
+    ElMessage.error(res.message || res.msg || t('profile.uploadFailed'))
   }
 }
 
 const handleAvatarError = (error) => {
   console.error('头像上传失败:', error)
-  ElMessage.error('头像上传失败，请检查网络或文件格式')
+  ElMessage.error(t('profile.avatarUploadFailed'))
 }
 
 // ========== 基本信息编辑 ==========
@@ -743,6 +758,17 @@ const toggleEdit = async () => {
     try {
       await formRef.value.validate()
       saving.value = true
+      
+      // 调用后端 API 保存医生信息
+      const doctorId = userStore.userInfo?.doctorId || localUserInfo.value.userId
+      await profileModule.updateDoctorInfo({
+        doctorId: doctorId,
+        realName: formData.realName,
+        title: formData.title,
+        department: formData.department,
+        specialty: formData.specialty,
+        introduction: formData.introduction
+      })
       
       // 更新本地用户信息
       localUserInfo.value.realName = formData.realName
@@ -764,11 +790,11 @@ const toggleEdit = async () => {
         workDate: formData.workDate
       })
       
-      ElMessage.success('保存成功')
+      ElMessage.success(t('profile.savedSuccessfully'))
       isEditing.value = false
     } catch (error) {
       if (error !== false) {
-        ElMessage.error('请完善必填信息')
+        ElMessage.error(error?.message || t('profile.pleaseCompleteRequired'))
       }
     } finally {
       saving.value = false
@@ -789,7 +815,7 @@ const handleChangePassword = async () => {
     // 模拟修改密码
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    ElMessage.success('密码修改成功，请重新登录')
+    ElMessage.success(t('profile.passwordChanged'))
     showPasswordDialog.value = false
     
     // 清除表单
@@ -804,7 +830,7 @@ const handleChangePassword = async () => {
     }, 1500)
   } catch (error) {
     if (error !== false) {
-      ElMessage.error('修改失败')
+      ElMessage.error(t('profile.changeFailed'))
     }
   } finally {
     changingPassword.value = false
@@ -835,21 +861,21 @@ const startCountdown = (refName) => {
 const sendPhoneCode = async () => {
   const phone = localUserInfo.value.phone || phoneForm.newPhone
   if (!phone) {
-    ElMessage.warning('请输入手机号')
+    ElMessage.warning(t('profile.pleaseEnterPhone'))
     return
   }
   if (!/^1[3-9]\d{9}$/.test(phone)) {
-    ElMessage.warning('请输入正确的手机号')
+    ElMessage.warning(t('profile.pleaseEnterValidPhone'))
     return
   }
   
   sendingCode.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 500))
-    ElMessage.success('验证码已发送')
+    ElMessage.success(t('profile.codeSent'))
     startCountdown('codeCountdown')
   } catch (error) {
-    ElMessage.error('发送失败')
+    ElMessage.error(t('profile.sendFailed'))
   } finally {
     sendingCode.value = false
   }
@@ -857,21 +883,21 @@ const sendPhoneCode = async () => {
 
 const sendNewPhoneCode = async () => {
   if (!phoneForm.newPhone) {
-    ElMessage.warning('请输入新手机号')
+    ElMessage.warning(t('profile.pleaseEnterPhone'))
     return
   }
   if (!/^1[3-9]\d{9}$/.test(phoneForm.newPhone)) {
-    ElMessage.warning('请输入正确的手机号')
+    ElMessage.warning(t('profile.pleaseEnterValidPhone'))
     return
   }
   
   sendingNewCode.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 500))
-    ElMessage.success('验证码已发送')
+    ElMessage.success(t('profile.codeSent'))
     startCountdown('newCodeCountdown')
   } catch (error) {
-    ElMessage.error('发送失败')
+    ElMessage.error(t('profile.sendFailed'))
   } finally {
     sendingNewCode.value = false
   }
@@ -880,7 +906,7 @@ const sendNewPhoneCode = async () => {
 const handlePhoneNext = async () => {
   if (phoneStep.value === 0) {
     if (!phoneForm.code) {
-      ElMessage.warning('请输入验证码')
+      ElMessage.warning(t('profile.pleaseEnterCode'))
       return
     }
     
@@ -889,17 +915,17 @@ const handlePhoneNext = async () => {
       await new Promise(resolve => setTimeout(resolve, 500))
       phoneStep.value = 1
     } catch (error) {
-      ElMessage.error('验证失败')
+      ElMessage.error(t('profile.verificationFailed'))
     } finally {
       changingPhone.value = false
     }
   } else {
     if (!phoneForm.newPhone) {
-      ElMessage.warning('请输入新手机号')
+      ElMessage.warning(t('profile.pleaseEnterPhone'))
       return
     }
     if (!phoneForm.newCode) {
-      ElMessage.warning('请输入验证码')
+      ElMessage.warning(t('profile.pleaseEnterCode'))
       return
     }
     
@@ -911,10 +937,10 @@ const handlePhoneNext = async () => {
       localUserInfo.value.phone = phoneForm.newPhone
       userStore.updateUserInfo({ phone: phoneForm.newPhone })
       
-      ElMessage.success('手机号更换成功')
+      ElMessage.success(t('profile.phoneChanged'))
       showPhoneDialog.value = false
     } catch (error) {
-      ElMessage.error('更换失败')
+      ElMessage.error(t('profile.changeFailed'))
     } finally {
       changingPhone.value = false
     }
@@ -930,17 +956,17 @@ const openEmailDialog = () => {
 
 const sendEmailCode = async () => {
   if (!emailForm.email) {
-    ElMessage.warning('请输入邮箱地址')
+    ElMessage.warning(t('profile.pleaseEnterEmail'))
     return
   }
   
   sendingEmailCode.value = true
   try {
     await new Promise(resolve => setTimeout(resolve, 500))
-    ElMessage.success('验证码已发送到您的邮箱')
+    ElMessage.success(t('profile.emailSent'))
     startCountdown('emailCodeCountdown')
   } catch (error) {
-    ElMessage.error('发送失败')
+    ElMessage.error(t('profile.sendFailed'))
   } finally {
     sendingEmailCode.value = false
   }
@@ -957,11 +983,11 @@ const handleBindEmail = async () => {
     localUserInfo.value.email = emailForm.email
     userStore.updateUserInfo({ email: emailForm.email })
     
-    ElMessage.success(localUserInfo.value.email ? '邮箱更换成功' : '邮箱绑定成功')
+    ElMessage.success(localUserInfo.value.email ? t('profile.emailChanged') : t('profile.emailBound'))
     showEmailDialog.value = false
   } catch (error) {
     if (error !== false) {
-      ElMessage.error('操作失败')
+      ElMessage.error(t('profile.operationFailed'))
     }
   } finally {
     bindingEmail.value = false
@@ -974,11 +1000,11 @@ const beforeImageUpload = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isJPG) {
-    ElMessage.error('只支持 JPG/PNG 格式!')
+    ElMessage.error(t('profile.onlyJpgPng'))
     return false
   }
   if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB!')
+    ElMessage.error(t('profile.imageSizeExceeded'))
     return false
   }
   console.log('准备上传资质图片:', file.name, file.size)
@@ -992,15 +1018,15 @@ const handleQualificationImageSuccess = (res, file) => {
       name: file.name,
       url: res.data
     })
-    ElMessage.success('图片上传成功')
+    ElMessage.success(t('profile.imageUploaded'))
   } else {
-    ElMessage.error(res.message || res.msg || '上传失败')
+    ElMessage.error(res.message || res.msg || t('profile.uploadFailed'))
   }
 }
 
 const handleQualificationImageError = (error) => {
   console.error('资质图片上传失败:', error)
-  ElMessage.error('图片上传失败，请检查网络或文件格式')
+  ElMessage.error(t('profile.imageUploadFailed'))
 }
 
 const handleQualificationImageRemove = (file) => {
@@ -1012,19 +1038,19 @@ const handleQualificationImageRemove = (file) => {
 
 const submitQualification = async () => {
   if (!qualificationForm.licenseNo) {
-    ElMessage.warning('请输入资格证号')
+    ElMessage.warning(t('profile.pleaseEnterLicenseNo'))
     return
   }
   if (!qualificationForm.issueOrg) {
-    ElMessage.warning('请输入发证机关')
+    ElMessage.warning(t('profile.pleaseEnterIssueOrg'))
     return
   }
   if (!qualificationForm.issueDate) {
-    ElMessage.warning('请选择发证日期')
+    ElMessage.warning(t('profile.pleaseSelectIssueDate'))
     return
   }
   if (qualificationImageList.value.length === 0) {
-    ElMessage.warning('请上传资质证书图片')
+    ElMessage.warning(t('profile.pleaseUploadQualification'))
     return
   }
   
@@ -1032,9 +1058,9 @@ const submitQualification = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000))
     qualification.value.authStatus = 1
-    ElMessage.success('资质已提交，请等待审核')
+    ElMessage.success(t('profile.qualificationSubmitted'))
   } catch (error) {
-    ElMessage.error('提交失败')
+    ElMessage.error(t('profile.submissionFailed'))
   } finally {
     submittingQualification.value = false
   }

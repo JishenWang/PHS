@@ -9,10 +9,11 @@ export const profileModule = {
   /**
    * 获取医生详细信息
    */
-  getDoctorDetail() {
+  getDoctorDetail(doctorId) {
     return request({
-      url: '/doctor/profile/detail',
-      method: 'get'
+      url: '/doctor/info',
+      method: 'get',
+      params: { doctorId }
     })
   },
   
@@ -22,7 +23,7 @@ export const profileModule = {
    */
   updateDoctorInfo(data) {
     return request({
-      url: '/doctor/profile/update',
+      url: '/doctor/info',
       method: 'put',
       data
     })
@@ -138,10 +139,11 @@ export const profileModule = {
   /**
    * 获取医生统计数据（接诊数、咨询数、处方数）
    */
-  getStatistics() {
+  getStatistics(doctorId) {
     return request({
       url: '/doctor/statistics',
-      method: 'get'
+      method: 'get',
+      params: { doctorId }
     })
   }
 }

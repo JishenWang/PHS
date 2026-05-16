@@ -11,18 +11,19 @@ import jakarta.validation.constraints.NotNull;
  */
 public class MedicalRecordCreateDto {
     
-    @NotNull(message = "挂号ID不能为空")
     private Long registerId;
     
-    @NotNull(message = "宠物ID不能为空")
+    private Long hospitalizationId;
+    
+    @NotNull(message = "Pet ID cannot be empty")
     private Long petId;
     
-    @NotNull(message = "医生ID不能为空")
+    @NotNull(message = "Doctor ID cannot be empty")
     private Long doctorId;
     
     private String doctorName;
     
-    @NotBlank(message = "主诉不能为空")
+    @NotBlank(message = "Chief complaint cannot be empty")
     private String chiefComplaint;
     
     private String symptoms;
@@ -31,7 +32,7 @@ public class MedicalRecordCreateDto {
     private String physicalExam;
     private String auxiliaryExam;
     
-    @NotBlank(message = "诊断结果不能为空")
+    @NotBlank(message = "Diagnosis cannot be empty")
     private String diagnosis;
     
     private String treatmentPlan;
@@ -46,6 +47,14 @@ public class MedicalRecordCreateDto {
     
     public void setRegisterId(Long registerId) {
         this.registerId = registerId;
+    }
+    
+    public Long getHospitalizationId() {
+        return hospitalizationId;
+    }
+    
+    public void setHospitalizationId(Long hospitalizationId) {
+        this.hospitalizationId = hospitalizationId;
     }
     
     public Long getPetId() {

@@ -5,8 +5,8 @@
       <div class="sidebar-logo">
         <div class="logo-icon">🐾</div>
         <div v-show="!isCollapse" class="logo-text">
-          <div class="logo-title">宠物医院</div>
-          <div class="logo-sub">客户自助端</div>
+          <div class="logo-title">{{ $t('layout.hospitalName') }}</div>
+          <div class="logo-sub">{{ $t('layout.ownerSub') }}</div>
         </div>
       </div>
 
@@ -17,7 +17,7 @@
         </el-avatar>
         <div class="user-card-info">
           <div class="user-name">{{ displayName }}</div>
-          <div class="user-role">宠物主人</div>
+          <div class="user-role">{{ $t('layout.ownerRole') }}</div>
         </div>
       </div>
 
@@ -62,7 +62,7 @@
 
         <div class="header-right">
           <div class="quick-actions">
-            <el-tooltip content="刷新数据" placement="bottom">
+            <el-tooltip content="Refresh" placement="bottom">
               <el-button circle @click="handleRefresh">
                 <el-icon><Refresh /></el-icon>
               </el-button>
@@ -86,13 +86,13 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>个人中心
+                  <el-icon><User /></el-icon>{{ $t('layout.profile') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="orders">
-                  <el-icon><Tickets /></el-icon>我的订单
+                  <el-icon><Tickets /></el-icon>{{ $t('layout.myOrders') }}
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
-                  <el-icon><SwitchButton /></el-icon>退出登录
+                  <el-icon><SwitchButton /></el-icon>{{ $t('layout.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -104,7 +104,7 @@
         <div class="content-wrapper">
           <router-view v-slot="{ Component }">
             <transition name="fade-slide" mode="out-in">
-              <component :is="Component" />
+              <component :is="Component" :key="refreshKey" />
             </transition>
           </router-view>
         </div>
@@ -116,6 +116,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/store/user'
 import { useLayout } from '@/composables/useLayout'
 import {
@@ -124,15 +125,18 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const { t } = useI18n()
+
 const router = useRouter()
 const userStore = useUserStore()
 const { isCollapse, toggleCollapse, sidebarMenus, activeMenu, breadcrumbList } = useLayout()
 
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 
-const displayName = computed(() => userStore.username || '宠物主人')
+const displayName = computed(() => userStore.username || 'Pet Owner')
 
 const unreadCount = ref(0)
+const refreshKey = ref(0)
 let refreshTimer = null
 
 const handleCommand = (command) => {
@@ -140,8 +144,8 @@ const handleCommand = (command) => {
     case 'profile': router.push('/owner/profile'); break
     case 'orders': router.push('/owner/orders'); break
     case 'logout':
-      ElMessageBox.confirm('确定要退出登录吗？', '退出确认', {
-        confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+      ElMessageBox.confirm(t('layout.logoutConfirm'), 'Confirm', {
+        confirmButtonText: t('layout.confirm'), cancelButtonText: t('layout.cancel'), type: 'warning'
       }).then(() => {
         userStore.logout()
         router.push('/login')
@@ -150,11 +154,11 @@ const handleCommand = (command) => {
   }
 }
 
-const goToMessages = () => ElMessage.info('消息通知功能开发中')
+const goToMessages = () => ElMessage.info('Messages coming soon')
 
 const handleRefresh = () => {
-  ElMessage.success('数据已刷新')
-  window.location.reload()
+  refreshKey.value++
+  ElMessage.success('Refreshed')
 }
 
 onMounted(() => {

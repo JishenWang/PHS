@@ -1,6 +1,5 @@
 package com.pethospital.pet_hospital.vo.admin;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public class PetVo {
     private String breed;
     private String gender;
     private Integer age;
-    private BigDecimal weight;
+    private Double weight;
     private String ownerName;
     private String ownerPhone;
     private String ownerAddress;

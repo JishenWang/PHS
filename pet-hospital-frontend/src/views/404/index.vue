@@ -2,8 +2,8 @@
   <div class="error-container">
     <div class="error-content">
       <div class="error-code">404</div>
-      <div class="error-message">抱歉，您访问的页面不存在</div>
-      <el-button type="primary" @click="goHome">返回首页</el-button>
+      <div class="error-message">{{ $t('error404.message') }}</div>
+      <el-button type="primary" @click="goHome">{{ $t('error404.backHome') }}</el-button>
     </div>
   </div>
 </template>

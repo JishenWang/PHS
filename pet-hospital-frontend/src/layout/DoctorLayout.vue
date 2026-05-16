@@ -1,12 +1,12 @@
 <template>
   <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar">
+    <el-aside :width="isCollapse ? '80px' : '240px'" class="layout-sidebar" :class="sidebarClass">
       <div class="sidebar-logo">
         <div class="logo-icon">🐾</div>
         <div v-show="!isCollapse" class="logo-text">
-          <div class="logo-title">宠物医院</div>
-          <div class="logo-sub">医生工作站</div>
+          <div class="logo-title">{{ $t('layout.hospitalName') }}</div>
+          <div class="logo-sub">{{ $t('layout.doctorSub') }}</div>
         </div>
       </div>
 
@@ -17,7 +17,7 @@
         </el-avatar>
         <div class="user-card-info">
           <div class="user-name">{{ displayName }}</div>
-          <div class="user-dept">{{ userInfo.department || '全科医疗部' }}</div>
+          <div class="user-dept">{{ displayDepartment }}</div>
         </div>
         <div class="status-dot" :class="statusClass"></div>
       </div>
@@ -33,6 +33,7 @@
           v-for="menu in sidebarMenus"
           :key="menu.path"
           :index="menu.path"
+          v-show="menu.path !== '/doctor/consult' || settingsStore.consultVisible"
         >
           <el-icon v-if="menu.icon">
             <component :is="menu.icon || Menu" />
@@ -52,7 +53,7 @@
       <!-- 工作状态切换 -->
       <div v-show="!isCollapse" class="sidebar-footer">
         <div class="work-status">
-          <span class="work-label">工作状态</span>
+          <span class="work-label">{{ $t('layout.workStatus') }}</span>
           <el-dropdown @command="handleStatusChange" trigger="click">
             <div class="status-btn" :class="statusClass">
               <el-icon v-if="doctorStatus === 1"><Sunny /></el-icon>
@@ -64,13 +65,13 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="1">
-                  <el-icon color="#059669"><Sunny /></el-icon> 空闲接诊
+                  <el-icon color="#059669"><Sunny /></el-icon> {{ t('layout.statusFree') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="2">
-                  <el-icon color="#f59e0b"><Loading /></el-icon> 接诊中
+                  <el-icon color="#f59e0b"><Loading /></el-icon> {{ t('layout.statusBusy') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="0">
-                  <el-icon color="#94a3b8"><Moon /></el-icon> 休息中
+                  <el-icon color="#94a3b8"><Moon /></el-icon> {{ t('layout.statusRest') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -87,7 +88,7 @@
             <Fold v-if="!isCollapse" />
             <Expand v-else />
           </el-icon>
-          <el-breadcrumb separator="/" class="layout-breadcrumb">
+          <el-breadcrumb v-if="showBreadcrumb" separator="/" class="layout-breadcrumb">
             <el-breadcrumb-item
               v-for="(item, index) in breadcrumbList"
               :key="index"
@@ -100,7 +101,7 @@
 
         <div class="header-right">
           <div class="quick-actions">
-            <el-tooltip content="刷新数据" placement="bottom">
+            <el-tooltip content="Refresh" placement="bottom">
               <el-button circle @click="handleManualRefresh" :loading="refreshing">
                 <el-icon><Refresh /></el-icon>
               </el-button>
@@ -121,13 +122,13 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>个人中心
+                  <el-icon><User /></el-icon>{{ $t('layout.profile') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="settings">
-                  <el-icon><Setting /></el-icon>系统设置
+                  <el-icon><Setting /></el-icon>{{ $t('layout.settings') }}
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
-                  <el-icon><SwitchButton /></el-icon>退出登录
+                  <el-icon><SwitchButton /></el-icon>{{ $t('layout.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -137,7 +138,7 @@
 
       <el-main class="layout-main">
         <div class="content-wrapper">
-          <router-view />
+          <router-view :key="refreshKey" />
         </div>
       </el-main>
     </el-container>
@@ -145,10 +146,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/store/user'
 import { useLayout } from '@/composables/useLayout'
+import { useSettingsStore } from '@/store/settings'
 import {
   Fold, Expand, ArrowDown, User, Setting, SwitchButton,
   UserFilled, Sunny, Loading, Moon, Refresh, Bell, Menu
@@ -156,22 +159,74 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { doctorModule, acceptModule } from '@/api/doctor/doctor'
 
+const { t } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
-const { isCollapse, toggleCollapse, sidebarMenus, activeMenu, breadcrumbList } = useLayout()
+const layout = useLayout()
+const { sidebarMenus, activeMenu, breadcrumbList } = layout
+
+// 从 settingsStore 读取折叠状态
+const settingsStore = useSettingsStore()
+const isCollapse = ref(settingsStore.collapseMenu)
+
+// 同步折叠状态到 store
+const toggleCollapse = () => {
+  isCollapse.value = !isCollapse.value
+  settingsStore.collapseMenu = isCollapse.value
+}
+
+// 监听 store 变化（恢复默认等操作）
+watch(() => settingsStore.collapseMenu, (val) => {
+  isCollapse.value = val
+})
+
+// 侧边栏样式 class
+const sidebarClass = computed(() => {
+  return settingsStore.sidebarStyle === 'dark' ? 'sidebar-dark' : 'sidebar-light'
+})
+
+// 是否显示面包屑
+const showBreadcrumb = computed(() => settingsStore.showBreadcrumb)
 
 const doctorStatus = ref(1)
 const waitAcceptCount = ref(0)
 const refreshing = ref(false)
+const refreshKey = ref(0)
 let refreshTimer = null
+let timeoutCheckTimer = null
+let notifiedTimeoutIds = new Set() // 避免重复通知
 
 const userInfo = computed(() => userStore.userInfo || {})
-const displayName = computed(() => userInfo.value.realName || userInfo.value.username || '医生')
+const displayName = computed(() => userInfo.value.realName || userInfo.value.username || 'Doctor')
 const displayAvatar = computed(() => userInfo.value.avatar || '')
 
+const departmentMap = {
+  'General Practice': 'profile.generalPractice',
+  'General Medicine': 'profile.generalPractice',
+  'Internal Medicine': 'profile.internalMedicine',
+  'Surgery': 'profile.surgery',
+  'Dentistry': 'profile.dentistry',
+  'Dermatology': 'profile.dermatology',
+  'Ophthalmology': 'profile.ophthalmology',
+  'Imaging': 'profile.imaging',
+  '全科医疗部': 'profile.generalPractice',
+  '内科': 'profile.internalMedicine',
+  '外科': 'profile.surgery',
+  '牙科': 'profile.dentistry',
+  '皮肤科': 'profile.dermatology',
+  '眼科': 'profile.ophthalmology',
+  '影像科': 'profile.imaging',
+}
+const displayDepartment = computed(() => {
+  const dept = userInfo.value.department
+  if (!dept) return t('profile.generalPractice')
+  const key = departmentMap[dept]
+  return key ? t(key) : dept
+})
+
 const statusText = computed(() => {
-  const map = { 0: '休息中', 1: '空闲', 2: '接诊中' }
-  return map[doctorStatus.value] || '未知'
+  const map = { 0: t('layout.statusRest'), 1: t('layout.statusFree'), 2: t('layout.statusBusy') }
+  return map[doctorStatus.value] || t('layout.statusUnknown')
 })
 
 const statusClass = computed(() => {
@@ -179,13 +234,22 @@ const statusClass = computed(() => {
   return map[doctorStatus.value] || 'status-rest'
 })
 
+// 监听 settingsStore 中的 defaultStatus，实现右侧设置页面保存后左侧实时同步
+watch(() => settingsStore.defaultStatus, (newVal) => {
+  if (newVal !== doctorStatus.value) {
+    doctorStatus.value = newVal
+  }
+})
+
 const handleStatusChange = async (status) => {
   try {
     await doctorModule.updateDoctorStatus({ status: parseInt(status) })
     doctorStatus.value = parseInt(status)
-    ElMessage.success('工作状态已更新')
+    // 同步到设置中的默认接诊状态
+    settingsStore.defaultStatus = parseInt(status)
+    ElMessage.success('Status updated')
   } catch {
-    ElMessage.error('状态更新失败')
+    ElMessage.error('Status update failed')
   }
 }
 
@@ -194,8 +258,8 @@ const handleCommand = (command) => {
     case 'profile': router.push('/doctor/profile'); break
     case 'settings': router.push('/doctor/settings'); break
     case 'logout':
-      ElMessageBox.confirm('确定要退出登录吗？', '退出确认', {
-        confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning'
+      ElMessageBox.confirm(t('layout.logoutConfirm'), 'Confirm', {
+        confirmButtonText: t('layout.confirm'), cancelButtonText: t('layout.cancel'), type: 'warning'
       }).then(() => {
         userStore.logoutAction()
         router.push('/login')
@@ -215,19 +279,82 @@ const fetchWaitAcceptCount = async () => {
   } catch (e) { console.error(e) }
 }
 
+// 检查接诊超时
+const checkAcceptTimeout = async () => {
+  if (!settingsStore.shouldNotify('timeout')) return
+  try {
+    const doctorId = userStore.userInfo?.id
+    if (!doctorId) return
+    const res = await acceptModule.getWaitAcceptList({
+      pageNum: 1,
+      pageSize: 100,
+      status: 0
+    })
+    if (res.code === 200 && res.data) {
+      const list = res.data.data || res.data.list || res.data.records || []
+      const now = new Date().getTime()
+      const THIRTY_MIN = 30 * 60 * 1000
+      list.forEach(item => {
+        const registerId = item.registerId || item.id
+        if (notifiedTimeoutIds.has(registerId)) return
+        const registerTime = item.registerTime || item.createTime
+        if (registerTime) {
+          const t = new Date(registerTime).getTime()
+          if (now - t > THIRTY_MIN) {
+            notifiedTimeoutIds.add(registerId)
+            settingsStore.sendDesktopNotification(
+              'Accept timeout',
+              `Pet ${item.petName || 'Unknown'} has waited over 30 min`
+            )
+            settingsStore.playNotificationSound()
+          }
+        }
+      })
+    }
+  } catch (e) { console.error('Check timeout failed', e) }
+}
+
 const handleManualRefresh = async () => {
   refreshing.value = true
   await fetchWaitAcceptCount()
-  setTimeout(() => { refreshing.value = false; ElMessage.success('数据已刷新') }, 500)
+  refreshKey.value++ // 强制刷新当前页面内容
+  setTimeout(() => { refreshing.value = false; ElMessage.success('Refreshed') }, 500)
+}
+
+// 加载医生当前工作状态
+const loadDoctorStatus = async () => {
+  try {
+    const res = await doctorModule.getDoctorInfo()
+    if (res.code === 200 && res.data) {
+      const status = res.data.status
+      // 只有当 status 是有效值 (0/1/2) 时才使用，否则用设置中的默认值
+      if (status === 0 || status === 1 || status === 2) {
+        doctorStatus.value = status
+        settingsStore.defaultStatus = status
+      } else {
+        doctorStatus.value = settingsStore.defaultStatus
+      }
+    } else {
+      doctorStatus.value = settingsStore.defaultStatus
+    }
+  } catch (error) {
+    console.error('Load doctor status failed', error)
+    doctorStatus.value = settingsStore.defaultStatus
+  }
 }
 
 onMounted(() => {
+  loadDoctorStatus()
   fetchWaitAcceptCount()
   refreshTimer = setInterval(fetchWaitAcceptCount, 30000)
+  // 启动接诊超时检查（每60秒检查一次）
+  checkAcceptTimeout()
+  timeoutCheckTimer = setInterval(checkAcceptTimeout, 60000)
 })
 
 onUnmounted(() => {
   if (refreshTimer) clearInterval(refreshTimer)
+  if (timeoutCheckTimer) clearInterval(timeoutCheckTimer)
 })
 </script>
 
@@ -260,7 +387,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: #f0fdf4;
+  background: var(--el-color-primary-light-9, #f0fdf4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -358,13 +485,13 @@ onUnmounted(() => {
 }
 
 .layout-menu :deep(.el-menu-item:hover) {
-  background: #f8fafc;
-  color: #059669;
+  background: var(--el-color-primary-light-9, #f8fafc);
+  color: var(--el-color-primary, #059669);
 }
 
 .layout-menu :deep(.el-menu-item.is-active) {
-  background: #f0fdf4;
-  color: #059669;
+  background: var(--el-color-primary-light-9, #f0fdf4);
+  color: var(--el-color-primary, #059669);
 }
 
 .layout-menu :deep(.el-menu-item.is-active::before) {
@@ -375,7 +502,7 @@ onUnmounted(() => {
   transform: translateY(-50%);
   width: 4px;
   height: 20px;
-  background: #059669;
+  background: var(--el-color-primary, #059669);
   border-radius: 0 2px 2px 0;
 }
 
@@ -483,8 +610,8 @@ onUnmounted(() => {
 }
 
 .collapse-btn:hover {
-  color: #059669;
-  background: #f0fdf4;
+  color: var(--el-color-primary, #059669);
+  background: var(--el-color-primary-light-9, #f0fdf4);
 }
 
 .layout-breadcrumb :deep(.el-breadcrumb__inner) {
@@ -517,8 +644,8 @@ onUnmounted(() => {
 }
 
 .quick-actions .el-button:hover {
-  background: #f0fdf4;
-  color: #059669;
+  background: var(--el-color-primary-light-9, #f0fdf4);
+  color: var(--el-color-primary, #059669);
 }
 
 .user-info {
@@ -532,7 +659,7 @@ onUnmounted(() => {
 }
 
 .user-info:hover {
-  background: #f0fdf4;
+  background: var(--el-color-primary-light-9, #f0fdf4);
 }
 
 .username {
@@ -550,5 +677,76 @@ onUnmounted(() => {
 .content-wrapper {
   padding: 20px;
   min-height: 100%;
+}
+
+/* ===== 深色侧边栏模式 ===== */
+.layout-sidebar.sidebar-dark {
+  background: #1e293b;
+  border-right-color: #334155;
+}
+
+.sidebar-dark .sidebar-logo {
+  border-bottom-color: #334155;
+}
+
+.sidebar-dark .logo-title {
+  color: #f1f5f9;
+}
+
+.sidebar-dark .logo-sub {
+  color: #94a3b8;
+}
+
+.sidebar-dark .user-card {
+  border-bottom-color: #334155;
+}
+
+.sidebar-dark .user-name {
+  color: #f1f5f9;
+}
+
+.sidebar-dark .user-dept {
+  color: #94a3b8;
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item) {
+  color: #cbd5e1;
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--el-color-primary, #3b82f6);
+}
+
+.sidebar-dark .layout-menu :deep(.el-menu-item.is-active) {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--el-color-primary, #3b82f6);
+}
+
+.sidebar-dark .sidebar-footer {
+  border-top-color: #334155;
+}
+
+.sidebar-dark .work-label {
+  color: #94a3b8;
+}
+
+.sidebar-dark .status-btn {
+  color: #cbd5e1;
+}
+
+.sidebar-dark .status-btn.status-free {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.sidebar-dark .status-btn.status-busy {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.sidebar-dark .status-btn.status-rest {
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.3);
 }
 </style>

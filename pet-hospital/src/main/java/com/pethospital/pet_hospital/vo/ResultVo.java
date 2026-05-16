@@ -24,11 +24,11 @@ public class ResultVo<T> {
 
     // ========== 成功响应 ==========
     public static <T> ResultVo<T> success() {
-        return new ResultVo<>(HttpStatus.SUCCESS, "操作成功", null);
+        return new ResultVo<>(HttpStatus.SUCCESS, "Operation successful", null);
     }
 
     public static <T> ResultVo<T> success(T data) {
-        return new ResultVo<>(HttpStatus.SUCCESS, "操作成功", data);
+        return new ResultVo<>(HttpStatus.SUCCESS, "Operation successful", data);
     }
 
     public static <T> ResultVo<T> success(String message, T data) {
@@ -37,7 +37,7 @@ public class ResultVo<T> {
 
     // ========== 失败响应 ==========
     public static <T> ResultVo<T> error() {
-        return new ResultVo<>(HttpStatus.INTERNAL_SERVER_ERROR, "操作失败", null);
+        return new ResultVo<>(HttpStatus.INTERNAL_SERVER_ERROR, "Operation failed", null);
     }
 
     public static <T> ResultVo<T> error(String message) {

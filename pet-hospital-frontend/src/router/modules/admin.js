@@ -31,6 +31,12 @@ export default [
         meta: { title: '宠物管理', requireAuth: true, role: 'admin' }
       },
       {
+        path: 'medicine',
+        name: 'AdminMedicine',
+        component: () => import('@/views/admin/medicine/index.vue'),
+        meta: { title: '药品管理', icon: 'FirstAidKit', requireAuth: true, role: 'admin' }
+      },
+      {
         path: 'system',
         name: 'AdminSystem',
         component: () => import('@/views/admin/system/index.vue'),

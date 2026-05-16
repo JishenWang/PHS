@@ -5,9 +5,9 @@
         <div v-if="unreadCount > 0" class="unread-banner">
           <div class="banner-content">
             <el-icon><Bell /></el-icon>
-            <span>您有 <strong>{{ unreadCount }}</strong> 条未回复的咨询消息等待处理</span>
+            <span>{{ $t('doctorConsult.unrepliedBanner', { count: unreadCount }) }}</span>
             <el-button type="primary" size="small" round @click="scrollToUnread">
-              立即查看
+              {{ $t('doctorConsult.viewNow') }}
             </el-button>
           </div>
           <el-icon class="close-icon" @click="unreadCount = 0"><Close /></el-icon>
@@ -41,7 +41,7 @@
           <div class="tabs-extra">
             <el-input
               v-model="searchForm.petName"
-              placeholder="搜索宠物名称"
+              :placeholder="$t('doctorConsult.searchPetName')"
               clearable
               :prefix-icon="Search"
               class="search-input"
@@ -72,7 +72,7 @@
                 <div class="pet-info">
                   <span class="pet-name">{{ item.petName }}</span>
                   <el-tag size="small" :type="item.replyStatus === 0 ? 'danger' : 'success'" round>
-                    {{ item.replyStatus === 0 ? '待回复' : '已回复' }}
+                    {{ item.replyStatus === 0 ? $t('doctorConsult.pendingReply') : $t('doctorConsult.replied') }}
                   </el-tag>
                 </div>
                 <span class="time">{{ formatTime(item.consultTime) }}</span>
@@ -98,11 +98,11 @@
                   round
                   class="reply-btn"
                 >
-                  立即回复
+                  {{ $t('doctorConsult.replyNow') }}
                 </el-button>
                 <span v-else class="reply-info">
                   <el-icon><CircleCheck /></el-icon>
-                  已回复
+                  {{ $t('doctorConsult.replied') }}
                 </span>
               </div>
             </div>
@@ -122,7 +122,7 @@
             </div>
           </div>
           
-          <el-empty v-if="tableData.length === 0" description="暂无咨询记录" />
+          <el-empty v-if="tableData.length === 0" :description="$t('doctorConsult.noConsultationRecords')" />
         </div>
 
         <!-- 分页 -->
@@ -141,7 +141,7 @@
       <!-- 回复对话框 -->
       <el-dialog
         v-model="replyDialogVisible"
-        title="咨询回复"
+        :title="$t('doctorConsult.consultationReply')"
         width="800px"
         destroy-on-close
         class="reply-dialog"
@@ -165,11 +165,11 @@
         </template>
         
         <div class="dialog-body">
-          <!-- 咨询内容 -->
+          <!-- {{ $t('doctorConsult.consultationContent') }} -->
           <div class="consult-section">
             <div class="section-label">
               <el-icon><ChatDotRound /></el-icon>
-              咨询内容
+              {{ $t('doctorConsult.consultationContent') }}
             </div>
             <div class="consult-content">
               <h4>{{ currentConsult.title }}</h4>
@@ -191,20 +191,20 @@
           <div class="reply-section">
             <div class="section-label">
               <el-icon><EditPen /></el-icon>
-              医生回复
+              {{ $t('doctorConsult.doctorReply') }}
             </div>
             <el-input
               v-model="replyForm.replyContent"
               type="textarea"
               :rows="5"
-              placeholder="请输入专业的诊疗建议，包括可能的原因、建议检查项目、临时处理措施等..."
+              :placeholder="$t('doctorConsult.replyPlaceholder')"
               maxlength="1000"
               show-word-limit
               class="reply-textarea"
             />
             
             <div class="upload-section">
-              <div class="upload-label">上传图片（可选）</div>
+              <div class="upload-label">{{ $t('doctorConsult.uploadImagesOptional') }}</div>
               <el-upload
                 action="/api/common/upload"
                 list-type="picture-card"
@@ -221,10 +221,10 @@
 
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="replyDialogVisible = false">取消</el-button>
+            <el-button @click="replyDialogVisible = false">{{ $t('doctorConsult.cancel') }}</el-button>
             <el-button type="primary" @click="submitReply" size="large" :disabled="!replyForm.replyContent.trim()">
               <el-icon><Promotion /></el-icon>
-              发送回复
+              {{ $t('doctorConsult.sendReply') }}
             </el-button>
           </div>
         </template>
@@ -233,7 +233,7 @@
       <!-- 查看对话框 -->
       <el-dialog
         v-model="viewDialogVisible"
-        title="咨询详情"
+        :title="$t('doctorConsult.consultationDetails')"
         width="800px"
         class="view-dialog"
       >
@@ -263,7 +263,7 @@
 
           <el-divider>
             <el-icon><Bottom /></el-icon>
-            医生回复
+            {{ $t('doctorConsult.doctorReply') }}
           </el-divider>
 
           <div class="reply-detail">
@@ -271,7 +271,7 @@
               <el-avatar :size="36" :src="userInfo.avatar">
                 <el-icon><UserFilled /></el-icon>
               </el-avatar>
-              <span class="doctor-name">{{ userInfo.realName || '医生' }}</span>
+              <span class="doctor-name">{{ userInfo.realName || $t('doctorConsult.doctor') }}</span>
               <span class="reply-time">{{ currentConsult.replyTime }}</span>
             </div>
             <div class="reply-body">
@@ -293,7 +293,7 @@
           <div v-if="currentConsult.rating" class="rating-section">
             <el-divider />
             <div class="rating-content">
-              <div class="rating-header">用户评价</div>
+              <div class="rating-header">{{ $t('doctorConsult.userRating') }}</div>
               <el-rate v-model="currentConsult.rating" disabled show-score />
               <p class="rating-text">{{ currentConsult.comment }}</p>
             </div>
@@ -304,6 +304,7 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
@@ -313,23 +314,27 @@ import {
 } from '@element-plus/icons-vue'
 
 import { useUserStore } from '@/store/user'
+import { useSettingsStore } from '@/store/settings'
 import { consultModule, doctorModule } from '@/api/doctor/doctor'
+import { useI18n } from 'vue-i18n'
 
 
 
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
 
-// 响应式数据
+// Reactive data
 const loading = ref(false)
 const activeTab = ref('unread')
 const unreadCount = ref(0)
 const tableData = ref([])
 let refreshTimer = null
+let lastUnreadCount = 0
 
 const tabs = [
-  { name: 'unread', label: '未回复', icon: 'Message', badge: true },
-  { name: 'replied', label: '已回复', icon: 'Check' },
-  { name: 'all', label: '全部', icon: 'ChatDotRound' }
+  { name: 'unread', label: t('doctorConsult.unreplied'), icon: 'Message', badge: true },
+  { name: 'replied', label: t('doctorConsult.replied'), icon: 'Check' },
+  { name: 'all', label: t('doctorConsult.all'), icon: 'ChatDotRound' }
 ]
 
 const searchForm = reactive({
@@ -343,7 +348,7 @@ const pagination = reactive({
   total: 0
 })
 
-// 对话框
+// Dialogs
 const replyDialogVisible = ref(false)
 const viewDialogVisible = ref(false)
 const currentConsult = ref({})
@@ -363,17 +368,29 @@ watch(activeTab, (newVal, oldVal) => {
   fetchList()  // 重新获取列表
 })
 
-// 获取未读数量
+// Get unread count
 const fetchUnreadCount = async () => {
   try {
     const res = await consultModule.getUnreadConsultCount()  // 不需要传参
-    unreadCount.value = res.data || 0
+    const newCount = res.data || 0
+    // 新消息到达时播放提示音和桌面通知
+    if (newCount > lastUnreadCount && settingsStore.shouldNotify('newConsult')) {
+      settingsStore.playNotificationSound()
+      if (settingsStore.desktopNotify) {
+        settingsStore.sendDesktopNotification(
+          t('doctorConsult.newConsultationReminder'),
+          t('doctorConsult.unrepliedBanner', { count: newCount })
+        )
+      }
+    }
+    lastUnreadCount = newCount
+    unreadCount.value = newCount
   } catch (error) {
     console.error('获取未读数量失败', error)
   }
 }
 
-// 获取列表
+// Get list
 const fetchList = async () => {
   loading.value = true
   try {
@@ -435,28 +452,28 @@ const fetchList = async () => {
   } catch (error) {
     console.error('获取咨询列表失败:', error)
     tableData.value = []
-    ElMessage.error('获取列表失败')
+    ElMessage.error(t('doctorConsult.failedToGetList'))
   } finally {
     loading.value = false
   }
 }
 
-// 格式化时间
+// Format time
 const formatTime = (datetime) => {
   if (!datetime) return ''
   const date = new Date(datetime)
   const now = new Date()
   const diff = now - date
   
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
+  if (diff < 60000) return t('doctorConsult.justNow')
+  if (diff < 3600000) return t('doctorConsult.minAgo', { n: Math.floor(diff / 60000) })
+  if (diff < 86400000) return t('doctorConsult.hoursAgo', { n: Math.floor(diff / 3600000) })
+  if (diff < 604800000) return t('doctorConsult.daysAgo', { n: Math.floor(diff / 86400000) })
   
   return datetime.split(' ')[0]
 }
 
-// 搜索
+// Search
 const handleSearch = () => {
   pagination.pageNum = 1
   fetchList()
@@ -467,7 +484,7 @@ const handlePageChange = (val) => {
   fetchList()
 }
 
-// 回复
+// Reply
 const handleReply = (row) => {
   currentConsult.value = row
   replyForm.consultId = row.consultId
@@ -476,7 +493,7 @@ const handleReply = (row) => {
   replyDialogVisible.value = true
 }
 
-// 查看
+// View
 const handleView = async (row) => {
   try {
     const res = await consultModule.getConsultDetail(row.consultId)
@@ -487,11 +504,11 @@ const handleView = async (row) => {
     }
     viewDialogVisible.value = true
   } catch (error) {
-    ElMessage.error('获取详情失败')
+    ElMessage.error(t('doctorConsult.failedToGetDetails'))
   }
 }
 
-// 上传成功
+// Upload success
 const handleUploadSuccess = (response, file) => {
   replyForm.imageList.push({
     name: file.name,
@@ -499,7 +516,7 @@ const handleUploadSuccess = (response, file) => {
   })
 }
 
-// 移除图片
+// Remove image
 const handleRemove = (file) => {
   const index = replyForm.imageList.findIndex(item => item.uid === file.uid)
   if (index > -1) {
@@ -507,11 +524,11 @@ const handleRemove = (file) => {
   }
 }
 
-// 提交回复
-// 提交回复
+// Submit reply
+// Submit reply
 const submitReply = async () => {
   if (!replyForm.replyContent.trim()) {
-    ElMessage.warning('请输入回复内容')
+    ElMessage.warning(t('doctorConsult.pleaseEnterReplyContent'))
     return
   }
   
@@ -528,7 +545,7 @@ const submitReply = async () => {
     }
     
     if (!doctorId) {
-      ElMessage.error('无法获取医生信息，请重新登录')
+      ElMessage.error(t('doctorConsult.unableToGetDoctorInfo'))
       return
     }
     
@@ -538,13 +555,13 @@ const submitReply = async () => {
       replyContent: replyForm.replyContent,
       replyImages: replyForm.imageList.map(img => img.url).join(',')
     })
-    ElMessage.success('回复成功')
+    ElMessage.success(t('doctorConsult.replySentSuccessfully'))
     replyDialogVisible.value = false
     fetchList()
     fetchUnreadCount()
   } catch (error) {
     console.error('回复失败:', error)
-    ElMessage.error(error.message || '回复失败')
+    ElMessage.error(error.message || t('doctorConsult.replyFailed'))
   }
 }
 

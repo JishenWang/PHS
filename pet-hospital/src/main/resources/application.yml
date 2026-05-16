@@ -22,6 +22,13 @@ spring:
       host: localhost
       port: 6379
       database: 0
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 100MB
 
 # ⚠️ 关键：mybatis-plus 必须和 spring 同级，绝对不能缩进！
 mybatis-plus:

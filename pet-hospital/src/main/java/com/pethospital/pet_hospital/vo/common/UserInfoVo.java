@@ -91,6 +91,8 @@ public class UserInfoVo {
     private Long doctorId;
     private String title;        // 职称
     private String department;   // 科室
+    private String specialty;    // 擅长领域
+    private String introduction; // 个人简介
     
     /**
      * 前台专属字段（仅当角色为前台时返回）

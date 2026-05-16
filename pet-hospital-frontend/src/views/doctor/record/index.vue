@@ -3,28 +3,28 @@
       <!-- 搜索区 -->
       <el-card class="search-card" shadow="hover">
         <el-form :model="searchForm" inline>
-          <el-form-item label="宠物名称">
+          <el-form-item :label="$t('record.petName')">
             <el-input 
               v-model="searchForm.petName" 
-              placeholder="搜索宠物" 
+              :placeholder="$t('record.placeholderSearchPet')" 
               clearable
               :prefix-icon="Search"
               class="search-input"
             />
           </el-form-item>
-          <el-form-item label="时间范围">
+          <el-form-item :label="$t('record.dateRange')">
             <el-date-picker
               v-model="searchForm.dateRange"
               type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :range-separator="$t('common.to')"
+              :start-placeholder="$t('record.startDate')"
+              :end-placeholder="$t('record.endDate')"
               value-format="YYYY-MM-DD"
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch" :icon="Search">查询</el-button>
-            <el-button @click="handleReset" :icon="RefreshRight">重置</el-button>
+            <el-button type="primary" @click="handleSearch" :icon="Search">{{ $t('common.search') }}</el-button>
+            <el-button @click="handleReset" :icon="RefreshRight">{{ $t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -35,7 +35,7 @@
           <template #header>
             <div class="card-header">
               <div class="header-left">
-                <span class="title">病历档案</span>
+                <span class="title">{{ $t('record.medicalRecords') }}</span>
                 <el-radio-group v-model="viewMode" size="small">
                   <el-radio-button label="table">
                     <el-icon><Grid /></el-icon>
@@ -46,7 +46,7 @@
                 </el-radio-group>
               </div>
               <el-button type="primary" @click="openCreateForm" :icon="Plus">
-                新建病历
+                {{ $t('record.createRecord') }}
               </el-button>
             </div>
           </template>
@@ -61,7 +61,7 @@
             :header-cell-style="{ background: '#f8fafc', color: '#475569' }"
           >
           >
-            <el-table-column prop="recordNo" label="病历编号" width="160">
+            <el-table-column prop="recordNo" :label="$t('record.recordNo')" width="160">
               <template #default="{ row }">
                 <div class="record-no">
                   <el-icon><Document /></el-icon>
@@ -69,7 +69,7 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="宠物信息" min-width="180">
+            <el-table-column :label="$t('record.petInfo')" min-width="180">
               <template #default="{ row }">
                 <div class="pet-info">
                   <div class="name">{{ row.petName }}</div>
@@ -77,13 +77,13 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="diagnosis" label="诊断结果" min-width="200" show-overflow-tooltip>
+            <el-table-column prop="diagnosis" :label="$t('record.diagnosis')" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="diagnosis-text">{{ row.diagnosis }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="doctorName" label="接诊医生" width="120" align="center" />
-            <el-table-column prop="status" label="状态" width="100" align="center">
+            <el-table-column prop="doctorName" :label="$t('record.doctor')" width="120" align="center" />
+            <el-table-column prop="status" :label="$t('common.status')" width="100" align="center">
               <template #default="{ row }">
                 <el-tag 
                   :type="row.status === 1 ? 'success' : 'warning'" 
@@ -91,14 +91,14 @@
                   round
                   size="small"
                 >
-                  {{ row.status === 1 ? '已完成' : '草稿' }}
+                  {{ row.status === 1 ? $t('record.statusCompleted') : $t('record.statusDraft') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="170" />
-            <el-table-column label="操作" fixed="right" width="200" align="center">
+            <el-table-column prop="createTime" :label="$t('record.createTime')" width="170" />
+            <el-table-column :label="$t('common.operation')" fixed="right" width="200" align="center">
               <template #default="{ row }">
-                <el-button type="primary" link :icon="View" @click="handleView(row)">查看</el-button>
+                <el-button type="primary" link :icon="View" @click="handleView(row)">{{ $t('common.view') }}</el-button>
                 <el-button 
                   v-if="row.status === 0" 
                   type="warning" 
@@ -106,9 +106,9 @@
                   :icon="Edit"
                   @click="handleEdit(row)"
                 >
-                  编辑
+                  {{ $t('common.edit') }}
                 </el-button>
-                <el-button type="success" link :icon="Download" @click="handleExport(row)">导出</el-button>
+                <el-button type="success" link :icon="Download" @click="handleExport(row)">{{ $t('record.export') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -120,7 +120,7 @@
                 <div class="record-card-item" :class="{ 'draft': row.status === 0 }">
                   <div class="card-header-mini">
                     <el-tag :type="row.status === 1 ? 'success' : 'warning'" size="small" round>
-                      {{ row.status === 1 ? '已完成' : '草稿' }}
+                      {{ row.status === 1 ? $t('record.statusCompleted') : $t('record.statusDraft') }}
                     </el-tag>
                     <span class="time">{{ formatDate(row.createTime) }}</span>
                   </div>
@@ -130,7 +130,7 @@
                     <div class="doctor">👨‍⚕️ {{ row.doctorName }}</div>
                   </div>
                   <div class="card-footer">
-                    <el-button type="primary" text size="small" @click="handleView(row)">查看</el-button>
+                    <el-button type="primary" text size="small" @click="handleView(row)">{{ $t('common.view') }}</el-button>
                     <el-button 
                       v-if="row.status === 0" 
                       type="warning" 
@@ -138,7 +138,7 @@
                       size="small" 
                       @click="handleEdit(row)"
                     >
-                      编辑
+                      {{ $t('common.edit') }}
                     </el-button>
                   </div>
                 </div>
@@ -165,23 +165,23 @@
           <template #header>
             <div class="form-header">
               <div class="header-left">
-                <span class="title">{{ isEdit ? '编辑病历' : '创建病历' }}</span>
+                <span class="title">{{ isEdit ? $t('record.editRecord') : $t('record.createRecord') }}</span>
               </div>
               <div class="header-actions">
-                <el-button @click="showForm = false">取消</el-button>
+                <el-button @click="showForm = false">{{ $t('common.cancel') }}</el-button>
                 <el-button type="success" @click="handleSubmitAndPrescription" :icon="FirstAidKit">
-                  保存并开处方
+                  {{ $t('record.saveAndCreatePrescription') }}
                 </el-button>
-                <el-button type="primary" @click="handleSubmit" :icon="Check">保存病历</el-button>
+                <el-button type="primary" @click="handleSubmit" :icon="Check">{{ $t('record.saveRecord') }}</el-button>
               </div>
             </div>
           </template>
 
           <el-steps :active="currentStep" finish-status="success" class="form-steps">
-            <el-step title="基本信息" />
-            <el-step title="主诉症状" />
-            <el-step title="检查结果" />
-            <el-step title="诊断治疗" />
+            <el-step :title="$t('record.stepBasicInfo')" />
+            <el-step :title="$t('record.stepChiefComplaint')" />
+            <el-step :title="$t('record.stepExaminationResults')" />
+            <el-step :title="$t('record.stepDiagnosisTreatment')" />
           </el-steps>
 
           <el-form 
@@ -195,11 +195,11 @@
             <div v-show="currentStep === 0" class="form-section">
               <el-divider content-position="left">
                 <el-icon><InfoFilled /></el-icon>
-                基本信息
+                {{ $t('record.stepBasicInfo') }}
               </el-divider>
               <el-row :gutter="24">
                 <el-col :span="8">
-                  <el-form-item label="挂号单号">
+                  <el-form-item :label="$t('record.registerNo')">
                     <el-input v-model="formData.registerId" disabled>
                       <template #prefix>
                         <el-icon><Document /></el-icon>
@@ -208,7 +208,7 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="宠物名称">
+                  <el-form-item :label="$t('record.petName')">
                     <el-input v-model="formData.petName" disabled>
                       <template #prefix>
                         <el-icon><User /></el-icon>
@@ -217,7 +217,7 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="接诊医生">
+                  <el-form-item :label="$t('record.doctor')">
                     <el-input v-model="formData.doctorName" disabled>
                       <template #prefix>
                         <el-icon><FirstAidKit /></el-icon>
@@ -232,25 +232,25 @@
             <div v-show="currentStep === 1" class="form-section">
               <el-divider content-position="left">
                 <el-icon><ChatDotRound /></el-icon>
-                主诉与症状
+                {{ $t('record.stepChiefComplaint') }}
               </el-divider>
-              <el-form-item label="主诉" prop="chiefComplaint">
+              <el-form-item :label="$t('record.chiefComplaint')" prop="chiefComplaint">
                 <el-input 
                   v-model="formData.chiefComplaint" 
                   type="textarea" 
                   :rows="3"
-                  placeholder="请输入患者主诉，如：呕吐、腹泻、精神萎靡等"
+                  :placeholder="$t('record.placeholderChiefComplaint')"
                   maxlength="500"
                   show-word-limit
                 />
               </el-form-item>
               
-              <el-form-item label="症状描述" prop="symptoms">
+              <el-form-item :label="$t('record.symptoms')" prop="symptoms">
                 <el-input 
                   v-model="formData.symptoms" 
                   type="textarea" 
                   :rows="4"
-                  placeholder="详细描述症状表现、持续时间、严重程度等"
+                  :placeholder="$t('record.placeholderSymptoms')"
                   maxlength="1000"
                   show-word-limit
                 />
@@ -258,22 +258,22 @@
 
               <el-row :gutter="24">
                 <el-col :span="12">
-                  <el-form-item label="现病史">
+                  <el-form-item :label="$t('record.presentIllness')">
                     <el-input 
                       v-model="formData.presentIllness" 
                       type="textarea" 
                       :rows="3"
-                      placeholder="疾病的发生、发展过程"
+                      :placeholder="$t('record.placeholderPresentIllness')"
                     />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="既往史">
+                  <el-form-item :label="$t('record.pastHistory')">
                     <el-input 
                       v-model="formData.pastHistory" 
                       type="textarea" 
                       :rows="3"
-                      placeholder="既往疾病史、手术史、过敏史等"
+                      :placeholder="$t('record.placeholderPastHistory')"
                     />
                   </el-form-item>
                 </el-col>
@@ -284,25 +284,25 @@
             <div v-show="currentStep === 2" class="form-section">
               <el-divider content-position="left">
                 <el-icon><FirstAidKit /></el-icon>
-                检查结果
+                {{ $t('record.stepExaminationResults') }}
               </el-divider>
-              <el-form-item label="体格检查">
+              <el-form-item :label="$t('record.physicalExam')">
                 <el-input 
                   v-model="formData.physicalExam" 
                   type="textarea" 
                   :rows="4"
-                  placeholder="体温、呼吸、心率、体重、精神状态、体表检查等"
+                  :placeholder="$t('record.placeholderPhysicalExam')"
                   maxlength="800"
                   show-word-limit
                 />
               </el-form-item>
 
-              <el-form-item label="辅助检查">
+              <el-form-item :label="$t('record.auxiliaryExam')">
                 <el-input 
                   v-model="formData.auxiliaryExam" 
                   type="textarea" 
                   :rows="4"
-                  placeholder="化验结果（血常规、生化、尿检等）、影像学检查（X光、B超等）"
+                  :placeholder="$t('record.placeholderAuxiliaryExam')"
                   maxlength="800"
                   show-word-limit
                 />
@@ -313,47 +313,47 @@
             <div v-show="currentStep === 3" class="form-section">
               <el-divider content-position="left">
                 <el-icon><CircleCheck /></el-icon>
-                诊断与治疗
+                {{ $t('record.stepDiagnosisTreatment') }}
               </el-divider>
-              <el-form-item label="诊断结果" prop="diagnosis">
+              <el-form-item :label="$t('record.diagnosis')" prop="diagnosis">
                 <el-input 
                   v-model="formData.diagnosis" 
                   type="textarea" 
                   :rows="3"
-                  placeholder="请输入诊断结果，可包含主要诊断和次要诊断"
+                  :placeholder="$t('record.placeholderDiagnosis')"
                   maxlength="500"
                   show-word-limit
                 />
               </el-form-item>
 
-              <el-form-item label="治疗方案">
+              <el-form-item :label="$t('record.treatmentPlan')">
                 <el-input 
                   v-model="formData.treatmentPlan" 
                   type="textarea" 
                   :rows="4"
-                  placeholder="药物治疗、手术治疗、护理方案等"
+                  :placeholder="$t('record.placeholderTreatmentPlan')"
                   maxlength="800"
                   show-word-limit
                 />
               </el-form-item>
 
-              <el-form-item label="医嘱建议">
+              <el-form-item :label="$t('record.doctorsAdvice')">
                 <el-input 
                   v-model="formData.doctorAdvice" 
                   type="textarea" 
                   :rows="3"
-                  placeholder="饮食建议、活动限制、复诊时间、注意事项等"
+                  :placeholder="$t('record.placeholderDoctorsAdvice')"
                   maxlength="500"
                   show-word-limit
                 />
               </el-form-item>
 
-              <el-form-item label="备注">
+              <el-form-item :label="$t('record.remarks')">
                 <el-input 
                   v-model="formData.remark" 
                   type="textarea" 
                   :rows="2"
-                  placeholder="其他需要记录的信息"
+                  :placeholder="$t('record.placeholderRemarks')"
                   maxlength="300"
                   show-word-limit
                 />
@@ -363,8 +363,8 @@
 
           <!-- 步骤导航 -->
           <div class="step-actions">
-            <el-button v-if="currentStep > 0" @click="currentStep--">上一步</el-button>
-            <el-button v-if="currentStep < 3" type="primary" @click="nextStep">下一步</el-button>
+            <el-button v-if="currentStep > 0" @click="currentStep--">{{ $t('record.previous') }}</el-button>
+            <el-button v-if="currentStep < 3" type="primary" @click="nextStep">{{ $t('record.next') }}</el-button>
           </div>
         </el-card>
       </template>
@@ -374,6 +374,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { 
   Search, RefreshRight, Plus, View, Edit, Download, 
@@ -386,6 +387,7 @@ import { useUserStore } from '@/store/user'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const settingsStore = useSettingsStore()
 const userStore = useUserStore()
 
@@ -429,9 +431,9 @@ const formData = reactive({
 })
 
 const formRules = {
-  chiefComplaint: [{ required: true, message: '请输入主诉', trigger: 'blur' }],
-  symptoms: [{ required: true, message: '请输入症状描述', trigger: 'blur' }],
-  diagnosis: [{ required: true, message: '请输入诊断结果', trigger: 'blur' }]
+  chiefComplaint: [{ required: true, message: t('record.pleaseEnterChiefComplaint'), trigger: 'blur' }],
+  symptoms: [{ required: true, message: t('record.pleaseEnterSymptoms'), trigger: 'blur' }],
+  diagnosis: [{ required: true, message: t('record.pleaseEnterDiagnosis'), trigger: 'blur' }]
 }
 
 // ========== 新增：根据挂号ID获取挂号单详情 ==========
@@ -547,12 +549,12 @@ const fetchList = async () => {
     } else {
       tableData.value = []
       pagination.total = 0
-      ElMessage.error(res.msg || '获取列表失败')
+      ElMessage.error(res.msg || t('record.failedFetchList'))
     }
   } catch (error) {
     console.error('获取病历列表失败:', error)
     tableData.value = []
-    ElMessage.error('获取列表失败')
+    ElMessage.error(t('record.failedFetchList'))
   } finally {
     loading.value = false
   }
@@ -687,13 +689,25 @@ const openCreateForm = async () => {
 
 // 查看
 const handleView = (row) => {
-  ElMessage.info('查看病历详情')
+  router.push({
+    path: '/doctor/record/detail',
+    query: {
+      recordId: row.recordId || row.id,
+      recordNo: row.recordNo || '',
+      petName: row.petName || '',
+      petType: row.petType || '',
+      doctorName: row.doctorName || '',
+      diagnosis: row.diagnosis || '',
+      status: row.status ?? '',
+      createTime: row.createTime || ''
+    }
+  })
 }
 
 // 编辑
 // 编辑 - 修复：确保所有字段都被正确赋值
 const handleEdit = (row) => {
-  console.log('编辑病历，原始数据:', row)
+  console.log('Edit record, raw data:', row)
   
   isEdit.value = true
   // 确保所有字段都被赋值
@@ -717,12 +731,12 @@ const handleEdit = (row) => {
   currentStep.value = 0
   showForm.value = true
   
-  console.log('编辑病历，赋值后 formData:', formData)
+  console.log('Edit record, formData after assign:', formData)
 }
 
 // 导出
 const handleExport = (row) => {
-  ElMessage.success('开始导出处历')
+  ElMessage.success(t('record.exportStarted'))
 }
 
 // 提交
@@ -746,11 +760,11 @@ const handleSubmit = async () => {
     
     // 校验转换后的值
     if (!registerIdValue || isNaN(registerIdValue) || registerIdValue <= 0) {
-      ElMessage.error('挂号ID无效，请从接诊列表重新进入')
+      ElMessage.error(t('record.invalidRegistrationId'))
       return
     }
     if (!petIdValue || isNaN(petIdValue) || petIdValue <= 0) {
-      ElMessage.error('宠物ID无效，请从接诊列表重新进入')
+      ElMessage.error(t('record.invalidPetId'))
       return
     }
     
@@ -760,7 +774,7 @@ const handleSubmit = async () => {
     if (isEdit.value) {
       // 编辑模式
       if (!formData.recordId) {
-        ElMessage.error('病历ID不能为空')
+        ElMessage.error(t('record.recordIdCannotBeEmpty'))
         return
       }
       
@@ -785,7 +799,7 @@ const handleSubmit = async () => {
       
       console.log('更新病历数据:', updateData)
       await recordModule.updateMedicalRecord(updateData)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('record.updatedSuccessfully'))
     } else {
       // 创建模式 - 严格按照后端 DTO 字段名
       const createData = {
@@ -807,7 +821,7 @@ const handleSubmit = async () => {
       
       console.log('创建病历数据:', createData)
       await recordModule.createMedicalRecord(createData)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('record.createdSuccessfully'))
     }
     
     showForm.value = false
@@ -817,21 +831,31 @@ const handleSubmit = async () => {
     if (error.response?.data?.msg) {
       ElMessage.error(error.response.data.msg)
     } else if (error.message) {
-      ElMessage.error('提交失败: ' + error.message)
+      ElMessage.error(t('record.submissionFailed') + ': ' + error.message)
     } else {
-      ElMessage.error('提交失败，请检查表单')
+      ElMessage.error(t('record.submissionFailedCheckForm'))
     }
   }
 }
 
 // 提交并开处方
 const handleSubmitAndPrescription = async () => {
+  // 先保存当前关键字段，避免 handleSubmit 中 showForm=false 触发响应式更新后数据被覆盖
+  const currentPetId = formData.petId
+  const currentRegisterId = formData.registerId
+  const currentRecordId = formData.recordId
+  const currentPetName = formData.petName
+  
   await handleSubmit()
+  
   router.push({
     path: '/doctor/prescription',
     query: {
-      petId: formData.petId,
-      recordId: formData.recordId
+      action: 'create',
+      petId: currentPetId,
+      registerId: currentRegisterId,
+      recordId: currentRecordId,
+      petName: currentPetName
     }
   })
 }
@@ -880,10 +904,10 @@ onMounted(async () => {
     
     // 检查是否有必要字段缺失
     if (!formData.registerId) {
-      ElMessage.warning('未获取到挂号ID，请从接诊列表重新进入')
+      ElMessage.warning(t('record.registrationIdNotObtained'))
     }
     if (!formData.petId) {
-      ElMessage.warning('未获取到宠物ID，请从接诊列表重新进入')
+      ElMessage.warning(t('record.petIdNotObtained'))
     }
     
     openCreateForm()

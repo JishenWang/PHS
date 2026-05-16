@@ -60,10 +60,34 @@ export const asyncRoutes = [
         meta: { title: '宠物管理', icon: 'Tickets' }
       },
       {
+        path: 'medicine',
+        name: 'AdminMedicine',
+        component: () => import('@/views/admin/medicine/index.vue'),
+        meta: { title: '药品管理', icon: 'FirstAidKit' }
+      },
+      {
+        path: 'cage',
+        name: 'AdminCage',
+        component: () => import('@/views/admin/cage/index.vue'),
+        meta: { title: '笼子管理', icon: 'Box' }
+      },
+      {
         path: 'system',
         name: 'AdminSystem',
         component: () => import('@/views/admin/system/index.vue'),
         meta: { title: '系统配置', icon: 'Setting' }
+      },
+      {
+        path: 'profile',
+        name: 'AdminProfile',
+        component: () => import('@/views/admin/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
+      },
+      {
+        path: 'settings',
+        name: 'AdminSettings',
+        component: () => import('@/views/admin/settings/index.vue'),
+        meta: { title: '系统设置', hidden: true }
       }
     ]
   },
@@ -137,6 +161,12 @@ export const asyncRoutes = [
         meta: { title: '我的订单', hidden: true }
       },
       {
+        path: 'hospitalization',
+        name: 'OwnerHospitalization',
+        component: () => import('@/views/owner/hospitalization/index.vue'),
+        meta: { title: '住院查询', icon: 'FirstAidKit' }
+      },
+      {
         path: 'order/:id',
         name: 'OwnerOrderDetail',
         component: () => import('@/views/owner/order/detail.vue'),
@@ -170,6 +200,24 @@ export const asyncRoutes = [
         name: 'DeskCharge',
         component: () => import('@/views/desk/charge/index.vue'),
         meta: { title: '收费管理', icon: 'Money' }
+      },
+      {
+        path: 'hospitalization',
+        name: 'DeskHospitalization',
+        component: () => import('@/views/desk/hospitalization/index.vue'),
+        meta: { title: '住院管理', icon: 'FirstAidKit' }
+      },
+      {
+        path: 'profile',
+        name: 'DeskProfile',
+        component: () => import('@/views/desk/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
+      },
+      {
+        path: 'settings',
+        name: 'DeskSettings',
+        component: () => import('@/views/desk/settings/index.vue'),
+        meta: { title: '系统设置', hidden: true }
       }
     ]
   },
@@ -207,10 +255,28 @@ export const asyncRoutes = [
         meta: { title: '处方开具', icon: 'Tickets' }
       },
       {
+        path: 'record/detail',
+        name: 'DoctorRecordDetail',
+        component: () => import('@/views/doctor/record/detail.vue'),
+        meta: { title: '病历详情', hidden: true }
+      },
+      {
+        path: 'prescription/detail',
+        name: 'DoctorPrescriptionDetail',
+        component: () => import('@/views/doctor/prescription/detail.vue'),
+        meta: { title: '处方详情', hidden: true }
+      },
+      {
         path: 'consult',
         name: 'DoctorConsult',
         component: () => import('@/views/doctor/consult/index.vue'),
         meta: { title: '在线咨询', icon: 'ChatDotRound' }
+      },
+      {
+        path: 'hospitalization',
+        name: 'DoctorHospitalization',
+        component: () => import('@/views/doctor/hospitalization/index.vue'),
+        meta: { title: '住院管理', icon: 'FirstAidKit' }
       },
       // ========== 新增：个人中心 ==========
       {

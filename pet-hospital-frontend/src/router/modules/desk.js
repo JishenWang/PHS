@@ -22,6 +22,18 @@ export default [
         name: 'DeskCharge',
         component: () => import('@/views/desk/charge/index.vue'),
         meta: { title: '收费管理' }
+      },
+      {
+        path: 'profile',
+        name: 'DeskProfile',
+        component: () => import('@/views/desk/profile/index.vue'),
+        meta: { title: '个人中心', hidden: true }
+      },
+      {
+        path: 'settings',
+        name: 'DeskSettings',
+        component: () => import('@/views/desk/settings/index.vue'),
+        meta: { title: '系统设置', hidden: true }
       }
     ]
   }

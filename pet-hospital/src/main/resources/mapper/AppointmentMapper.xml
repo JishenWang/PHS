@@ -100,11 +100,12 @@
                p.species as petSpecies,
                su.real_name as ownerName,
                su.phone as ownerPhone,
-               dp.name as doctorName
+               coalesce(dp.name, doc_user.real_name, '-') as doctorName
         from appointment a
                  left join pet p on p.id = a.pet_id
                  left join sys_user su on su.id = ifnull(a.owner_user_id, a.owner_id)
                  left join doctor_profile dp on dp.id = a.doctor_id
+                 left join sys_user doc_user on doc_user.id = a.doctor_id
         where a.is_deleted = 0
         order by a.id desc
     </select>

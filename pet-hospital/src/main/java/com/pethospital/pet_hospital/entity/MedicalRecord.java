@@ -14,6 +14,7 @@ public class MedicalRecord {
     private Long id;
     private String recordNo;           // 病历编号
     private Long registerId;           // 挂号ID
+    private Long hospitalizationId;    // 住院ID
     private Long petId;
     private Long ownerId;
     private Long doctorId;
@@ -54,6 +55,9 @@ public class MedicalRecord {
 
     public Long getRegisterId() { return registerId; }
     public void setRegisterId(Long registerId) { this.registerId = registerId; }
+
+    public Long getHospitalizationId() { return hospitalizationId; }
+    public void setHospitalizationId(Long hospitalizationId) { this.hospitalizationId = hospitalizationId; }
 
     public Long getPetId() { return petId; }
     public void setPetId(Long petId) { this.petId = petId; }

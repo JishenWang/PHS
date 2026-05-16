@@ -8,11 +8,11 @@
           </div>
           <div class="stat-info">
             <div class="number">{{ stats.waiting }}</div>
-            <div class="label">待接诊</div>
+            <div class="label">{{ $t('dashboard.pendingConfirm') }}</div>
           </div>
           <div class="trend up">
             <el-icon><ArrowUp /></el-icon>
-            <span>+{{ stats.waitingNew }} 新增</span>
+            <span>+{{ stats.waitingNew }} {{ $t('common.add') }}</span>
           </div>
         </div>
         
@@ -22,7 +22,7 @@
           </div>
           <div class="stat-info">
             <div class="number">{{ stats.processing }}</div>
-            <div class="label">接诊中</div>
+            <div class="label">{{ $t('layout.statusBusy') }}</div>
           </div>
         </div>
         
@@ -32,7 +32,7 @@
           </div>
           <div class="stat-info">
             <div class="number">{{ stats.completed }}</div>
-            <div class="label">今日已完成</div>
+            <div class="label">{{ $t('dashboard.completed') }}</div>
           </div>
         </div>
         
@@ -41,8 +41,8 @@
             <el-icon><Clock /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="number">{{ stats.avgTime }}min</div>
-            <div class="label">平均接诊时长</div>
+            <div class="number">{{ stats.avgTime }}{{ $t('accept.minutes') }}</div>
+            <div class="label">{{ $t('accept.avgTime') }}</div>
           </div>
         </div>
       </div>
@@ -52,68 +52,52 @@
         <div class="search-header">
           <div class="search-title">
             <el-icon><Search /></el-icon>
-            <span>筛选查询</span>
+            <span>{{ $t('common.search') }}</span>
           </div>
-          <el-button type="primary" text @click="toggleAdvanced">
-            {{ showAdvanced ? '收起' : '高级筛选' }}
-            <el-icon class="arrow" :class="{ rotate: showAdvanced }"><ArrowDown /></el-icon>
-          </el-button>
+
         </div>
         
         <el-form :model="searchForm" inline class="search-form">
-          <el-form-item label="挂号状态">
-            <el-select v-model="searchForm.status" placeholder="请选择" clearable class="status-select">
-              <el-option label="待接诊" :value="0">
-                <el-tag size="small" type="warning">待接诊</el-tag>
+          <el-form-item :label="$t('common.status')">
+            <el-select v-model="searchForm.status" :placeholder="$t('common.status')" clearable class="status-select">
+              <el-option :label="$t('dashboard.pendingConfirm')" :value="0">
+                <el-tag size="small" type="warning">{{ $t('dashboard.pendingConfirm') }}</el-tag>
               </el-option>
-              <el-option label="接诊中" :value="1">
-                <el-tag size="small" type="primary">接诊中</el-tag>
+              <el-option :label="$t('layout.statusBusy')" :value="1">
+                <el-tag size="small" type="primary">{{ $t('layout.statusBusy') }}</el-tag>
               </el-option>
-              <el-option label="已完成" :value="2">
-                <el-tag size="small" type="success">已完成</el-tag>
+              <el-option :label="$t('dashboard.completed')" :value="2">
+                <el-tag size="small" type="success">{{ $t('dashboard.completed') }}</el-tag>
               </el-option>
-              <el-option label="已取消" :value="3">
-                <el-tag size="small" type="info">已取消</el-tag>
+              <el-option :label="$t('dashboard.cancelled')" :value="3">
+                <el-tag size="small" type="info">{{ $t('dashboard.cancelled') }}</el-tag>
               </el-option>
             </el-select>
           </el-form-item>
           
-          <el-form-item label="宠物名称">
-            <el-input 
-              v-model="searchForm.petName" 
-              placeholder="请输入宠物名称" 
+          <el-form-item :label="$t('dashboard.petName')">
+            <el-input
+              v-model="searchForm.petName"
+              :placeholder="$t('dashboard.petName')" 
               clearable 
               class="search-input"
               :prefix-icon="Search"
             />
           </el-form-item>
           
-          <el-form-item label="客户手机号">
-            <el-input 
-              v-model="searchForm.ownerPhone" 
-              placeholder="请输入手机号" 
+          <el-form-item :label="$t('common.phone')">
+            <el-input
+              v-model="searchForm.ownerPhone"
+              :placeholder="$t('common.phone')" 
               clearable 
               class="search-input"
             />
           </el-form-item>
-          
-          <template v-if="showAdvanced">
-            <el-form-item label="挂号时间">
-              <el-date-picker
-                v-model="searchForm.dateRange"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                value-format="YYYY-MM-DD"
-                class="date-picker"
-              />
-            </el-form-item>
-          </template>
+
           
           <el-form-item class="search-btns">
-            <el-button type="primary" @click="handleSearch" :icon="Search">查询</el-button>
-            <el-button @click="handleReset" :icon="RefreshRight">重置</el-button>
+            <el-button type="primary" @click="handleSearch" :icon="Search">{{ $t('common.search') }}</el-button>
+            <el-button @click="handleReset" :icon="RefreshRight">{{ $t('common.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </el-card>
@@ -123,13 +107,13 @@
         <template #header>
           <div class="card-header">
             <div class="header-left">
-              <span class="title">接诊列表</span>
-              <el-tag type="info" effect="plain" round>共 {{ pagination.total }} 条</el-tag>
+              <span class="title">{{ $t('接诊列表') }}</span>
+              <el-tag type="info" effect="plain" round>{{ pagination.total }}</el-tag>
             </div>
             <div class="header-actions">
               <el-switch
                 v-model="autoRefresh"
-                active-text="自动刷新"
+                :active-text="$t('layout.refreshData')"
                 inline-prompt
                 :active-icon="Check"
                 :inactive-icon="Close"
@@ -137,7 +121,7 @@
               />
               <el-divider direction="vertical" />
               <el-button type="primary" @click="handleRefresh" :loading="loading" :icon="Refresh">
-                刷新
+                {{ $t('layout.refreshData') }}
               </el-button>
             </div>
           </div>
@@ -148,6 +132,7 @@
             v-loading="loading"
             :data="tableDataList"
             stripe
+            style="width: 100%"
             class="data-table"
             @selection-change="handleSelectionChange"
             :header-cell-style="{ background: '#f8fafc', color: '#475569', fontWeight: 600 }"
@@ -155,30 +140,30 @@
           >
             <el-table-column type="selection" width="55" align="center" />
             
-            <el-table-column prop="registerNo" label="挂号单号" width="160">
+            <el-table-column prop="registerNo" :label="$t('dashboard.appointmentNo')" width="160">
               <template #default="{ row }">
                 <div class="register-no">
                   <el-icon><Document /></el-icon>
-                  <span>{{ row?.registerNo || '无单号' }}</span>
+                  <span>{{ row?.registerNo || '-' }}</span>
                 </div>
               </template>
             </el-table-column>
-            
-            <el-table-column label="宠物信息" min-width="200">
+
+            <el-table-column :label="$t('dashboard.petName')" min-width="200">
               <template #default="{ row }">
                 <div class="pet-info">
-                  <div class="pet-name">{{ row?.petName || '未知宠物' }}</div>
+                  <div class="pet-name">{{ row?.petName || '-' }}</div>
                   <div class="pet-detail">
-                    {{ row?.petType || '-' }} · {{ row?.breed || '-' }} · {{ row?.age || '-' }}岁
+                    {{ getSpeciesLabel(row?.petType) }} · {{ row?.breed || '-' }} · {{ row?.age || '-' }}
                   </div>
                 </div>
               </template>
             </el-table-column>
-            
-            <el-table-column label="主人信息" min-width="180">
+
+            <el-table-column :label="$t('dashboard.owner')" min-width="180">
               <template #default="{ row }">
                 <div class="owner-info">
-                  <div class="owner-name">{{ row?.ownerName || '未知' }}</div>
+                  <div class="owner-name">{{ row?.ownerName || '-' }}</div>
                   <div class="owner-phone">
                     <el-icon><Phone /></el-icon>
                     {{ row?.ownerPhone || '-' }}
@@ -186,27 +171,26 @@
                 </div>
               </template>
             </el-table-column>
-            
-            <el-table-column prop="serviceType" label="服务类型" width="120">
+
+            <el-table-column prop="serviceType" :label="$t('common.type')" width="120">
               <template #default="{ row }">
                 <el-tag :type="getServiceType(row?.serviceType)" effect="light" round>
-                  {{ row?.serviceType || '普通诊疗' }}
+                  {{ getServiceTypeText(row?.serviceType) || '-' }}
                 </el-tag>
               </template>
             </el-table-column>
-            
-            <el-table-column prop="status" label="状态" width="100" align="center">
+
+            <el-table-column prop="status" :label="$t('common.status')" width="100" align="center">
               <template #default="{ row }">
                 <div class="status-wrapper">
                   <el-tag :type="getStatusType(row?.status)" effect="dark" round size="small">
                     {{ getStatusText(row?.status) }}
                   </el-tag>
-                  <div v-if="row?.status === 0" class="wait-time">{{ row?.waitTime }}分钟</div>
                 </div>
               </template>
             </el-table-column>
-            
-            <el-table-column prop="registerTime" label="挂号时间" width="170">
+
+            <el-table-column prop="registerTime" :label="$t('dashboard.appointmentTime')" width="210">
               <template #default="{ row }">
                 <div class="time-info">
                   <div class="date">{{ formatDate(row?.registerTime) }}</div>
@@ -216,7 +200,7 @@
             </el-table-column>
             
             <!-- 操作列 - 添加开具处方按钮 -->
-            <el-table-column label="操作" fixed="right" width="320" align="center">
+            <el-table-column :label="$t('accept.action')" fixed="right" width="320" align="center">
               <template #default="{ row }">
                 <div class="action-btns" v-if="row">
                   <!-- 接诊按钮（待接诊状态显示） -->
@@ -229,7 +213,7 @@
                     @click="handleAccept(row)"
                   >
                     <el-icon><Right /></el-icon>
-                    接诊
+                    {{ $t('accept.accept') }}
                   </el-button>
                   
                   <!-- 继续按钮（接诊中状态显示） -->
@@ -240,7 +224,7 @@
                     round
                     @click="handleContinue(row)"
                   >
-                    继续
+                    {{ $t('accept.continue') }}
                   </el-button>
                   
                   <!-- 创建病历按钮 -->
@@ -252,7 +236,7 @@
                     @click="handleCreateRecord(row)"
                   >
                     <el-icon><Document /></el-icon>
-                    病历
+                    {{ $t('accept.record') }}
                   </el-button>
                   
                   <!-- 开具处方按钮 -->
@@ -264,12 +248,12 @@
                     @click="handleCreatePrescription(row)"
                   >
                     <el-icon><FirstAidKit /></el-icon>
-                    处方
+                    {{ $t('accept.prescription') }}
                   </el-button>
                   
                   <!-- 详情按钮 -->
                   <el-button type="info" size="small" text @click="handleViewDetail(row)">
-                    详情
+                    {{ $t('accept.detail') }}
                   </el-button>
                 </div>
               </template>
@@ -306,13 +290,16 @@ import {
   Right, Document, Phone
 } from '@element-plus/icons-vue'
 import { acceptModule } from '@/api/doctor/doctor'
+import { useSettingsStore } from '@/store/settings'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const settingsStore = useSettingsStore()
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
 const autoRefresh = ref(false)
-const showAdvanced = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
 let refreshTimer = null
@@ -329,8 +316,7 @@ const stats = reactive({
 const searchForm = reactive({
   status: null,  // 改为 null
   petName: '',
-  ownerPhone: '',
-  dateRange: []
+  ownerPhone: ''
 })
 
 // 分页配置
@@ -410,13 +396,13 @@ const fetchList = async () => {
     } else {
       tableData.value = []
       pagination.total = 0
-      ElMessage.warning(res.msg || '获取数据失败')
+      ElMessage.warning(res.msg || t('accept.loadFailed'))
     }
   } catch (error) {
     console.error('获取列表失败:', error)
     tableData.value = []
     pagination.total = 0
-    ElMessage.error('获取列表失败: ' + (error.message || '未知错误'))
+    ElMessage.error(t('accept.loadFailed') + ': ' + (error.message || t('accept.unknownError')))
   } finally {
     loading.value = false
   }
@@ -444,30 +430,88 @@ const getStatusType = (status) => {
 const getStatusText = (status) => {
   console.log('getStatusText 接收到的 status:', status, '类型:', typeof status)
   // status 是数字 0,1,2,3
-  if (status === 0) return '待接诊'
-  if (status === 1) return '接诊中'
-  if (status === 2) return '已完成'
-  if (status === 3) return '已取消'
-  return '未知'
+  if (status === 0) return t('accept.statusWaiting')
+  if (status === 1) return t('accept.statusInProgress')
+  if (status === 2) return t('accept.statusDone')
+  if (status === 3) return t('accept.statusCanceled')
+  return t('accept.statusUnknown')
+}
+
+// 宠物种类翻译
+const getSpeciesLabel = (species) => {
+  const key = String(species || '').toLowerCase().trim()
+  const map = {
+    dog: 'dashboard.typeDog',
+    cat: 'dashboard.typeCat',
+    rabbit: 'dashboard.typeRabbit',
+    '狗': 'dashboard.typeDog',
+    '猫': 'dashboard.typeCat',
+    '兔': 'dashboard.typeRabbit',
+  }
+  return map[key] ? t(map[key]) : (species || '-')
+}
+
+const getServiceTypeText = (type) => {
+  const key = String(type || '').toLowerCase().trim()
+  const map = {
+    '普通门诊': t('accept.serviceGeneralClinic'),
+    '口腔基础检查': t('accept.serviceDentalBasicCheck'),
+    '疫苗接种': t('accept.serviceVaccination'),
+    '疾病诊疗': t('accept.serviceDiseaseTreatment'),
+    '健康体检': t('accept.serviceHealthCheck'),
+    '绝育手术': t('accept.serviceSpayNeuter'),
+    '美容洗护': t('accept.serviceGrooming'),
+    'vaccination': t('accept.serviceVaccination'),
+    'disease treatment': t('accept.serviceDiseaseTreatment'),
+    'health check': t('accept.serviceHealthCheck'),
+    'spay/neuter': t('accept.serviceSpayNeuter'),
+    'grooming': t('accept.serviceGrooming'),
+    'general clinic': t('accept.serviceGeneralClinic'),
+    'general': t('accept.serviceGeneralClinic'),
+    'consultation': t('accept.serviceGeneralClinic'),
+    'vaccine': t('accept.serviceVaccination'),
+    'exam': t('accept.serviceHealthCheck'),
+    'bath grooming': t('accept.serviceGrooming'),
+  }
+  if (map[key]) return map[key]
+  // 模糊匹配
+  if (key.includes('consult') || key.includes('门诊') || key.includes('clinic')) return t('accept.serviceGeneralClinic')
+  if (key.includes('vaccine') || key.includes('疫苗')) return t('accept.serviceVaccination')
+  if (key.includes('exam') || key.includes('体检') || key.includes('check')) return t('accept.serviceHealthCheck')
+  if (key.includes('groom') || key.includes('美容') || key.includes('bath') || key.includes('洗澡')) return t('accept.serviceGrooming')
+  return type || '-'
 }
 
 const getServiceType = (type) => {
+  const key = String(type || '').toLowerCase().trim()
   const map = {
+    '普通门诊': 'success',
     '疫苗接种': 'success',
+    'vaccination': 'success',
+    'vaccine': 'success',
     '疾病诊疗': 'danger',
+    'disease treatment': 'danger',
     '健康体检': 'primary',
+    'health check': 'primary',
+    'exam': 'primary',
     '绝育手术': 'warning',
+    'spay/neuter': 'warning',
     '美容洗护': 'info',
-    '普通诊疗': 'primary'
+    'grooming': 'info',
+    'general': 'primary',
+    'general clinic': 'primary',
+    'consultation': 'primary'
   }
-  return map[type] || 'info'
+  return map[key] || 'info'
 }
 
-// 格式化时间
+// 格式化时间（兼容空格分隔和 ISO 8601 T 分隔格式）
 const formatDate = (datetime) => {
   if (!datetime) return '-'
   if (typeof datetime === 'string') {
-    return datetime.split(' ')[0] || '-'
+    // 先按空格分割，再按 T 分割，兼容两种格式
+    const part = datetime.split(' ')[0] || datetime.split('T')[0]
+    return part || '-'
   }
   return '-'
 }
@@ -475,16 +519,17 @@ const formatDate = (datetime) => {
 const formatTime = (datetime) => {
   if (!datetime) return ''
   if (typeof datetime === 'string') {
-    return datetime.split(' ')[1] || ''
+    // 兼容空格分隔和 ISO 8601 T 分隔格式
+    let part = datetime.split(' ')[1]
+    if (!part && datetime.includes('T')) {
+      part = datetime.split('T')[1]
+    }
+    return part || ''
   }
   return ''
 }
 
 // 搜索重置
-const toggleAdvanced = () => {
-  showAdvanced.value = !showAdvanced.value
-}
-
 const handleSearch = () => {
   console.log('搜索前的 searchForm.status:', searchForm.status)
   pagination.current = 1
@@ -501,25 +546,35 @@ const handleReset = () => {
   searchForm.status = undefined
   searchForm.petName = ''
   searchForm.ownerPhone = ''
-  searchForm.dateRange = []
   handleSearch()
 }
 
 // 刷新
 const handleRefresh = () => {
   fetchList()
-  ElMessage.success('数据已刷新')
+  ElMessage.success(t('accept.refreshed'))
 }
 
 // 自动刷新
 const handleAutoRefreshChange = (val) => {
   if (val) {
-    refreshTimer = setInterval(fetchList, 30000)
-    ElMessage.success('已开启自动刷新（30秒）')
+    const interval = (settingsStore.refreshInterval || 30) * 1000
+    refreshTimer = setInterval(fetchList, interval)
+    ElMessage.success(t('accept.autoRefreshOn', { interval: settingsStore.refreshInterval || 30 }))
   } else {
     clearInterval(refreshTimer)
+    refreshTimer = null
   }
 }
+
+// 监听刷新间隔变化，自动更新定时器
+watch(() => settingsStore.refreshInterval, (newVal) => {
+  if (autoRefresh.value && refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = setInterval(fetchList, (newVal || 30) * 1000)
+    console.log('自动刷新间隔已更新为', newVal, '秒')
+  }
+})
 
 // 接诊准备
 const handleAccept = async (row) => {
@@ -529,7 +584,7 @@ const handleAccept = async (row) => {
   const registerId = row.registerId || row.register_id || row.id
   
   if (!petId) {
-    ElMessage.error('无法获取宠物ID，请刷新重试')
+    ElMessage.error(t('accept.cannotGetPetId'))
     console.error('row对象:', row)
     return
   }
@@ -538,14 +593,14 @@ const handleAccept = async (row) => {
     await ElMessageBox.confirm(
       `<div style="text-align: center;">
         <div style="font-size: 48px; margin-bottom: 15px;">🐾</div>
-        <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">开始接诊</div>
-        <div style="color: #666;">宠物：${row.petName || '未知'}（${row.breed || '-'}）</div>
-        <div style="color: #666; margin-top: 5px;">主人：${row.ownerName || '-'}</div>
+        <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">${t('accept.startAccept')}</div>
+        <div style="color: #666;">${t('accept.petLabel', { name: row.petName || t('common.unknown'), breed: row.breed || '-' })}</div>
+        <div style="color: #666; margin-top: 5px;">${t('accept.ownerLabel', { name: row.ownerName || '-' })}</div>
       </div>`,
-      '接诊确认',
+      t('accept.confirmAccept'),
       {
-        confirmButtonText: '确认接诊',
-        cancelButtonText: '取消',
+        confirmButtonText: t('accept.confirm'),
+        cancelButtonText: t('accept.cancel'),
         dangerouslyUseHTMLString: true,
         center: true
       }
@@ -556,7 +611,13 @@ const handleAccept = async (row) => {
       status: 1
     })
     
-    ElMessage.success('接诊成功，正在跳转...')
+    // 通知提醒
+    if (settingsStore.shouldNotify('newRegister')) {
+      settingsStore.sendDesktopNotification(t('accept.newRegistration'), t('accept.petAccepted', { name: row.petName || t('common.unknown') }))
+      settingsStore.playNotificationSound()
+    }
+    
+    ElMessage.success(t('accept.acceptedRedirecting'))
     router.push({
       path: '/doctor/pet',
       query: { 
@@ -567,7 +628,7 @@ const handleAccept = async (row) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('接诊失败:', error)
-      ElMessage.error('接诊失败')
+      ElMessage.error(t('accept.acceptFailed'))
     }
   }
 }
@@ -590,7 +651,7 @@ const handleContinue = (row) => {
 // ========== 关键修复：创建病历跳转函数 ==========
 const handleCreateRecord = (row) => {
   if (!row) {
-    ElMessage.error('数据异常，无法创建病历')
+    ElMessage.error(t('accept.dataErrorCannotCreateRecord'))
     return
   }
   
@@ -607,7 +668,7 @@ const handleCreateRecord = (row) => {
   })
   
   if (!petId || !registerId) {
-    ElMessage.error('无法获取宠物或挂号信息，请刷新后重试')
+    ElMessage.error(t('accept.cannotGetPetOrRegInfo'))
     console.error('row数据:', row)
     return
   }
@@ -617,7 +678,7 @@ const handleCreateRecord = (row) => {
   const numericRegisterId = Number(registerId)
   
   if (isNaN(numericPetId) || isNaN(numericRegisterId)) {
-    ElMessage.error('数据格式错误，请联系管理员')
+    ElMessage.error(t('accept.dataFormatErrorContactAdmin'))
     return
   }
   
@@ -642,7 +703,7 @@ const handleCreateRecord = (row) => {
 // ========== 开具处方跳转函数 ==========
 const handleCreatePrescription = (row) => {
   if (!row) {
-    ElMessage.error('数据异常，无法开具处方')
+    ElMessage.error(t('accept.dataErrorCannotCreatePrescription'))
     return
   }
   
@@ -658,7 +719,7 @@ const handleCreatePrescription = (row) => {
   })
   
   if (!petId || !registerId) {
-    ElMessage.error('无法获取宠物或挂号信息，请刷新后重试')
+    ElMessage.error(t('accept.cannotGetPetOrRegInfo'))
     console.error('row数据:', row)
     return
   }
@@ -668,7 +729,7 @@ const handleCreatePrescription = (row) => {
   const numericRegisterId = Number(registerId)
   
   if (isNaN(numericPetId) || isNaN(numericRegisterId)) {
-    ElMessage.error('数据格式错误，请联系管理员')
+    ElMessage.error(t('accept.dataFormatErrorContactAdmin'))
     return
   }
   
@@ -694,14 +755,18 @@ const handleCreatePrescription = (row) => {
 // 查看详情
 const handleViewDetail = (row) => {
   if (!row) return
-  const petId = row.petId || row.pet_id || row.id
+  const petId = row.petId || row.pet_id || row.petId
+  const registerId = row.registerId || row.id || row.register_id
   if (!petId) {
-    ElMessage.error('无法获取宠物ID')
+    ElMessage.error(t('accept.cannotGetPetId'))
     return
   }
   router.push({
     path: '/doctor/pet',
-    query: { petId: petId }
+    query: { 
+      petId: petId,
+      registerId: registerId
+    }
   })
 }
 

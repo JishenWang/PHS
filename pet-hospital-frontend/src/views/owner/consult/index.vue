@@ -2,19 +2,19 @@
   <div class="consult-page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">在线咨询</h2>
-        <p class="page-subtitle">专业医生在线解答您的疑问</p>
+        <h2 class="page-title">{{ $t('consult.title') }}</h2>
+        <p class="page-subtitle">{{ $t('consult.subtitle') }}</p>
       </div>
       <el-button type="primary" size="large" @click="handleCreate" class="add-btn">
         <el-icon><Plus /></el-icon>
-        发起咨询
+        {{ $t('consult.startConsultation') }}
       </el-button>
     </div>
 
-    <!-- 咨询列表 -->
+    <!-- Consultation List -->
     <div class="consult-list" v-loading="loading">
       <div v-for="item in consultList" :key="item.id" class="consult-card" @click="viewDetail(item.id)">
-        <!-- 医生头像和基本信息 -->
+        <!-- Doctor Avatar and Basic Info -->
         <div class="consult-header">
           <div class="doctor-info">
             <div class="doctor-avatar">
@@ -24,26 +24,26 @@
               <span class="online-dot" v-if="item.status === 'ongoing'"></span>
             </div>
             <div class="doctor-detail">
-              <div class="doctor-name">{{ item.doctorName || '等待分配' }}</div>
-              <div class="doctor-title">{{ item.doctorTitle || '执业医师' }}</div>
+              <div class="doctor-name">{{ item.doctorName || $t('consult.awaitingAssignment') }}</div>
+              <div class="doctor-title">{{ item.doctorTitle || $t('consult.licensedPhysician') }}</div>
             </div>
           </div>
           <div class="consult-meta">
             <div class="consult-status" :class="item.status">
-              {{ item.status === 'ongoing' ? '进行中' : '已完成' }}
+              {{ item.status === 'ongoing' ? $t('consult.ongoing') : $t('consult.completed') }}
             </div>
             <div class="consult-time">{{ formatDate(item.createTime) }}</div>
           </div>
         </div>
 
-        <!-- 咨询内容 -->
+        <!-- Consultation Content -->
         <div class="consult-body">
           <div class="consult-title">{{ item.title }}</div>
           <div class="consult-preview">{{ item.content }}</div>
           <div class="consult-tags">
             <span class="tag">
               <el-icon><ChatLineSquare /></el-icon>
-              {{ item.replyCount || 0 }} 条回复
+              {{ item.replyCount || 0 }} {{ $t('consult.replies') }}
             </span>
             <span class="tag" v-if="item.petName">
               <el-icon><Avatar /></el-icon>
@@ -52,37 +52,37 @@
           </div>
         </div>
 
-        <!-- 底部操作 -->
+        <!-- Bottom Actions -->
         <div class="consult-footer">
           <div class="reply-badge" v-if="item.unreadCount > 0">
             <span class="unread-dot"></span>
-            {{ item.unreadCount }} 条新回复
+            {{ item.unreadCount }} {{ $t('consult.newReplies') }}
           </div>
           <el-button type="primary" link class="view-btn">
-            查看详情
+            {{ $t('common.detail') }}
             <el-icon><ArrowRight /></el-icon>
           </el-button>
         </div>
       </div>
 
-      <!-- 空状态 -->
+      <!-- Empty State -->
       <div v-if="!loading && consultList.length === 0" class="empty-state">
         <div class="empty-icon">💬</div>
-        <h3>暂无咨询记录</h3>
-        <p>您还没有发起过咨询，点击下方按钮开始咨询</p>
-        <el-button type="primary" @click="handleCreate">发起咨询</el-button>
+        <h3>{{ $t('consult.noConsultationRecords') }}</h3>
+        <p>{{ $t('consult.noConsultationYet') }}</p>
+        <el-button type="primary" @click="handleCreate">{{ $t('consult.startConsultation') }}</el-button>
       </div>
     </div>
 
-    <!-- 发起咨询弹窗 -->
-    <el-dialog v-model="dialogVisible" title="发起咨询" width="520px" class="consult-dialog">
+    <!-- Start Consultation Dialog -->
+    <el-dialog v-model="dialogVisible" :title="$t('consult.startConsultation')" width="520px" class="consult-dialog">
       <div class="dialog-tip">
         <el-icon><InfoFilled /></el-icon>
-        <span>请详细描述您的问题，医生会尽快回复您</span>
+        <span>{{ $t('consult.dialogTip') }}</span>
       </div>
-      <el-form :model="form" label-width="80px" size="default">
-        <el-form-item label="选择宠物">
-          <el-select v-model="form.petId" placeholder="请选择宠物" style="width: 100%">
+      <el-form :model="form" label-width="100px" size="default">
+        <el-form-item :label="$t('consult.selectPet')">
+          <el-select v-model="form.petId" :placeholder="$t('consult.pleaseSelectPet')" style="width: 100%">
             <el-option v-for="pet in petList" :key="pet.id" :label="pet.name" :value="pet.id">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span>{{ pet.gender === 'male' ? '🐕' : '🐱' }}</span>
@@ -92,8 +92,8 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="选择医生">
-          <el-select v-model="form.doctorId" placeholder="请选择医生" style="width: 100%">
+        <el-form-item :label="$t('consult.selectDoctor')">
+          <el-select v-model="form.doctorId" :placeholder="$t('consult.pleaseSelectDoctor')" style="width: 100%">
             <el-option v-for="doc in doctorList" :key="doc.id" :label="doc.name" :value="doc.id">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span>👨‍⚕️</span>
@@ -103,18 +103,18 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="咨询标题">
-          <el-input v-model="form.title" placeholder="简要概括您的问题" />
+        <el-form-item :label="$t('consult.consultationTitle')">
+          <el-input v-model="form.title" :placeholder="$t('consult.brieflySummarize')" />
         </el-form-item>
-        <el-form-item label="问题描述">
+        <el-form-item :label="$t('consult.problemDescription')">
           <el-input 
             type="textarea" 
             v-model="form.content" 
-            placeholder="请详细描述宠物的症状、持续时间、用药情况等，方便医生准确判断"
+            :placeholder="$t('consult.describeSymptoms')"
             :rows="6"
           />
         </el-form-item>
-        <el-form-item label="上传图片">
+        <el-form-item :label="$t('consult.uploadImages')">
           <el-upload
             action="#"
             :auto-upload="false"
@@ -126,12 +126,12 @@
           >
             <el-icon><Plus /></el-icon>
           </el-upload>
-          <div class="upload-tip">支持上传图片，帮助医生更好地了解情况</div>
+          <div class="upload-tip">{{ $t('consult.uploadTip') }}</div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm" :loading="submitting">提交咨询</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="submitForm" :loading="submitting">{{ $t('consult.submitConsultation') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -140,9 +140,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus, User, ChatLineSquare, Avatar, ArrowRight, InfoFilled } from '@element-plus/icons-vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const submitting = ref(false)
@@ -151,11 +153,7 @@ const petList = ref([])
 const dialogVisible = ref(false)
 const fileList = ref([])
 
-const doctorList = ref([
-  { id: 1, name: '张医生', title: '主治医师' },
-  { id: 2, name: '李医生', title: '执业医师' },
-  { id: 3, name: '王医生', title: '主任医师' }
-])
+const doctorList = ref([])
 
 const form = ref({
   petId: '',
@@ -165,12 +163,12 @@ const form = ref({
   images: []
 })
 
-// 获取 token
+// Get token
 const getToken = () => {
   return localStorage.getItem('pet_hospital_token')
 }
 
-// 格式化日期
+// Format date
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
@@ -178,15 +176,42 @@ const formatDate = (dateStr) => {
   const diff = now - date
   
   if (diff < 3600000) {
-    return Math.floor(diff / 60000) + '分钟前'
+    return Math.floor(diff / 60000) + ' ' + t('consult.minutesAgo')
   } else if (diff < 86400000) {
-    return Math.floor(diff / 3600000) + '小时前'
+    return Math.floor(diff / 3600000) + ' ' + t('consult.hoursAgo')
   } else {
-    return `${date.getMonth() + 1}月${date.getDate()}日`
+    return `${date.getMonth() + 1}/${date.getDate()}`
   }
 }
 
-// 加载宠物列表
+// Load doctor list
+const loadDoctorList = async () => {
+  try {
+    const token = getToken()
+    const response = await fetch('/api/owner/reserve/doctors', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    const res = await response.json()
+    if (res.code === 200) {
+      const list = res.data || []
+      // Deduplicate by name, keep first (smallest id)
+      const seen = new Set()
+      doctorList.value = list.filter(d => {
+        if (seen.has(d.name)) return false
+        seen.add(d.name)
+        return true
+      }).map(d => ({
+        id: d.id,
+        name: d.name,
+        title: d.title || t('consult.doctor')
+      }))
+    }
+  } catch (error) {
+    console.error('Failed to load doctor list:', error)
+  }
+}
+
+// Load pet list
 const loadPetList = async () => {
   try {
     const token = getToken()
@@ -198,11 +223,11 @@ const loadPetList = async () => {
       petList.value = res.data?.data || res.data?.records || []
     }
   } catch (error) {
-    console.error('加载宠物列表失败:', error)
+    console.error('Failed to load pet list:', error)
   }
 }
 
-// 加载咨询列表
+// Load consultation list
 const loadConsultList = async () => {
   loading.value = true
   try {
@@ -211,33 +236,33 @@ const loadConsultList = async () => {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     const res = await response.json()
-    console.log('咨询列表响应:', res)
+    console.log('Consultation list response:', res)
     if (res.code === 200) {
       const records = res.data?.data || res.data?.records || []
       consultList.value = records.map(item => {
-        const pet = petList.value.find(p => p.id === item.petId)
-        const doctor = doctorList.value.find(d => d.id === item.doctorId)
+        const pet = petList.value.find(p => String(p.id) === String(item.petId))
+        const doctor = doctorList.value.find(d => String(d.id) === String(item.doctorId))
         return {
           ...item,
-          petName: pet?.name || '未知宠物',
-          doctorName: doctor?.name || '等待分配',
-          doctorTitle: doctor?.title || '执业医师',
-          replyCount: 0,
+          petName: item.petName || pet?.name || t('consult.unknownPet'),
+          doctorName: item.doctorName || doctor?.name || t('consult.awaitingAssignment'),
+          doctorTitle: doctor?.title || t('consult.licensedPhysician'),
+          replyCount: item.replyCount ?? 0,
           status: item.status === 'done' ? 'completed' : (item.status || 'ongoing')
         }
       })
     }
   } catch (error) {
-    console.error('加载咨询列表失败:', error)
+    console.error('Failed to load consultation list:', error)
   } finally {
     loading.value = false
   }
 }
 
-// 发起咨询
+// Start consultation
 const handleCreate = () => {
   if (petList.value.length === 0) {
-    ElMessage.warning('请先添加宠物')
+    ElMessage.warning(t('consult.pleaseAddPetFirst'))
     return
   }
   form.value = { petId: '', doctorId: '', title: '', content: '', images: [] }
@@ -245,13 +270,13 @@ const handleCreate = () => {
   dialogVisible.value = true
 }
 
-// 文件上传
+// File upload
 const handleFileChange = (file) => {
   form.value.images.push(file.raw)
   fileList.value.push({ name: file.name, url: URL.createObjectURL(file.raw) })
 }
 
-// 文件移除
+// File remove
 const handleFileRemove = (file) => {
   const index = fileList.value.findIndex(f => f.uid === file.uid)
   if (index !== -1) {
@@ -260,25 +285,25 @@ const handleFileRemove = (file) => {
   }
 }
 
-// 提交咨询
+// Submit consultation
 const submitForm = async () => {
-  console.log('=== 开始提交咨询 ===')
-  console.log('表单数据:', form.value)
+  console.log('=== Start submitting consultation ===')
+  console.log('Form data:', form.value)
   
   if (!form.value.petId) {
-    ElMessage.warning('请选择宠物')
+    ElMessage.warning(t('consult.pleaseSelectAPet'))
     return
   }
   if (!form.value.doctorId) {
-    ElMessage.warning('请选择医生')
+    ElMessage.warning(t('consult.pleaseSelectADoctor'))
     return
   }
   if (!form.value.title) {
-    ElMessage.warning('请输入标题')
+    ElMessage.warning(t('consult.pleaseEnterATitle'))
     return
   }
   if (!form.value.content) {
-    ElMessage.warning('请输入问题描述')
+    ElMessage.warning(t('consult.pleaseEnterProblemDesc'))
     return
   }
   
@@ -292,7 +317,7 @@ const submitForm = async () => {
       content: form.value.content,
       images: null
     }
-    console.log('提交数据:', submitData)
+    console.log('Submit data:', submitData)
     
     const response = await fetch('/api/owner/consult', {
       method: 'POST',
@@ -303,32 +328,33 @@ const submitForm = async () => {
       body: JSON.stringify(submitData)
     })
     const res = await response.json()
-    console.log('提交响应:', res)
+    console.log('Submit response:', res)
     
     if (res.code === 200) {
-      ElMessage.success('咨询提交成功，医生会尽快回复')
+      ElMessage.success(t('consult.consultationSubmitted'))
       dialogVisible.value = false
       form.value = { petId: '', doctorId: '', title: '', content: '', images: [] }
       fileList.value = []
       await loadConsultList()
     } else {
-      ElMessage.error(res.message || res.msg || '提交失败')
+      ElMessage.error(res.message || res.msg || t('consult.submissionFailed'))
     }
   } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error('提交失败：' + (error.message || '网络错误'))
+    console.error('Submission failed:', error)
+    ElMessage.error(t('consult.submissionFailed') + ': ' + (error.message || 'Network error'))
   } finally {
     submitting.value = false
   }
 }
 
-// 查看详情
+// View detail
 const viewDetail = (id) => {
   router.push(`/owner/consult/${id}`)
 }
 
-onMounted(() => {
-  loadPetList()
+onMounted(async () => {
+  await loadDoctorList()
+  await loadPetList()
   loadConsultList()
 })
 </script>

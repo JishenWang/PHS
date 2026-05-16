@@ -20,7 +20,7 @@ public class DoctorStatusUpdateDto {
         this.status = status;
     }
     
-    @NotNull(message = "医生ID不能为空")
+    @NotNull(message = "Doctor ID cannot be empty")
     public Long getDoctorId() {
         return doctorId;
     }
@@ -29,7 +29,7 @@ public class DoctorStatusUpdateDto {
         this.doctorId = doctorId;
     }
     
-    @NotNull(message = "接诊状态不能为空")
+    @NotNull(message = "Acceptance status cannot be empty")
     public Integer getStatus() {
         return status;
     }

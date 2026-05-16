@@ -4,88 +4,103 @@
       <div class="circle circle-1"></div>
       <div class="circle circle-2"></div>
     </div>
-    
+
     <div class="login-box">
+      <!-- 语言切换 -->
+      <div class="lang-switch">
+        <el-dropdown trigger="click" @command="switchLanguage">
+          <span class="lang-btn">
+            {{ currentLangLabel }}
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="zh">中文</el-dropdown-item>
+              <el-dropdown-item command="en">English</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+
       <!-- 角色选择 -->
       <div v-if="step === 'select'" class="role-select">
-        <h2 class="title">宠物医院管理系统</h2>
-        <p class="subtitle">请选择登录端</p>
-        
+        <h2 class="title">{{ $t('login.title') }}</h2>
+        <p class="subtitle">{{ $t('login.subtitle') }}</p>
+
         <div class="role-list">
           <div class="role-item" @click="selectRole('ADMIN')">
             <span class="role-icon">👨‍💼</span>
             <div class="role-info">
-              <h3>管理端</h3>
-              <p>系统管理、数据统计</p>
+              <h3>{{ $t('login.admin') }}</h3>
+              <p>{{ $t('login.adminDesc') }}</p>
             </div>
           </div>
-          
+
           <div class="role-item" @click="selectRole('DOCTOR')">
             <span class="role-icon">👨‍⚕️</span>
             <div class="role-info">
-              <h3>医生端</h3>
-              <p>接诊、病历管理</p>
+              <h3>{{ $t('login.doctor') }}</h3>
+              <p>{{ $t('login.doctorDesc') }}</p>
             </div>
           </div>
-          
+
           <div class="role-item" @click="selectRole('DESK')">
             <span class="role-icon">💁</span>
             <div class="role-info">
-              <h3>前台端</h3>
-              <p>挂号、收费、客户管理</p>
+              <h3>{{ $t('login.desk') }}</h3>
+              <p>{{ $t('login.deskDesc') }}</p>
             </div>
           </div>
-          
+
           <div class="role-item" @click="selectRole('OWNER')">
             <span class="role-icon">🐕</span>
             <div class="role-info">
-              <h3>客户端</h3>
-              <p>预约挂号、查看病历</p>
+              <h3>{{ $t('login.owner') }}</h3>
+              <p>{{ $t('login.ownerDesc') }}</p>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- 登录表单 -->
       <div v-else class="login-form-box">
         <div class="form-header">
-          <span class="back-link" @click="step = 'select'">← 返回</span>
-          <h2>{{ roleName }}登录</h2>
+          <span class="back-link" @click="step = 'select'">← {{ $t('login.back') }}</span>
+          <h2>{{ roleName }}{{ $t('login.login') }}</h2>
         </div>
-        
+
         <form @submit.prevent="handleLogin" class="form-body">
           <div class="form-item">
-            <label>手机号</label>
-            <input 
-              v-model="form.phone" 
-              type="text" 
-              placeholder="请输入手机号"
+            <label>{{ $t('login.phone') }}</label>
+            <input
+              v-model="form.phone"
+              type="text"
+              :placeholder="$t('login.phonePlaceholder')"
               maxlength="11"
             />
           </div>
-          
+
           <!-- 密码登录 -->
           <div class="form-item" v-if="loginType === 'password'">
-            <label>密码</label>
-            <input 
-              v-model="form.password" 
-              type="password" 
-              placeholder="请输入密码"
+            <label>{{ $t('login.password') }}</label>
+            <input
+              v-model="form.password"
+              type="password"
+              :placeholder="$t('login.passwordPlaceholder')"
             />
           </div>
-          
+
           <!-- 验证码登录 -->
           <div class="form-item" v-else>
-            <label>验证码</label>
+            <label>{{ $t('login.code') }}</label>
             <div class="code-box">
-              <input 
-                v-model="form.code" 
-                type="text" 
-                placeholder="请输入验证码"
+              <input
+                v-model="form.code"
+                type="text"
+                :placeholder="$t('login.codePlaceholder')"
                 maxlength="6"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 class="code-btn"
                 :disabled="codeSending"
                 @click="sendCode"
@@ -94,24 +109,24 @@
               </button>
             </div>
           </div>
-          
+
           <div class="form-options">
             <label class="remember">
-              <input type="checkbox" v-model="form.remember" /> 记住我
+              <input type="checkbox" v-model="form.remember" /> {{ $t('login.rememberMe') }}
             </label>
             <span class="switch-type" @click="toggleLoginType">
-              {{ loginType === 'password' ? '验证码登录' : '密码登录' }}
+              {{ loginType === 'password' ? $t('login.codeLogin') : $t('login.passwordLogin') }}
             </span>
           </div>
-          
+
           <button type="submit" class="submit-btn" :disabled="loading">
-            {{ loading ? '登录中...' : '登 录' }}
+            {{ loading ? $t('login.loggingIn') : $t('login.login') }}
           </button>
         </form>
-        
+
         <div class="form-tips">
-          <p>🐾 欢迎使用宠物医院管理系统</p>
-          <p class="sub-tip">请使用已注册的账号登录</p>
+          <p>🐾 {{ $t('login.welcome') }}</p>
+          <p class="sub-tip">{{ $t('login.useRegisteredAccount') }}</p>
         </div>
       </div>
     </div>
@@ -122,12 +137,14 @@
 import axios from 'axios'
 import { setToken, setUserInfo, setUserRole } from '@/utils/auth'
 import { usePermissionStore } from '@/store/permission'
+import { setLocale, getLocale } from '@/locales'
 
 axios.defaults.baseURL = ''
 axios.defaults.timeout = 10000
 
 export default {
   name: 'Login',
+
   data() {
     return {
       step: 'select',
@@ -135,7 +152,7 @@ export default {
       loginType: 'password',
       loading: false,
       codeSending: false,
-      codeText: '获取验证码',
+      codeText: this.$t('login.getCode'),
       codeTimer: null,
       form: {
         phone: '',
@@ -147,16 +164,35 @@ export default {
   },
   computed: {
     roleName() {
-      const names = {
-        'ADMIN': '管理端',
-        'DOCTOR': '医生端',
-        'DESK': '前台端',
-        'OWNER': '客户端'
+      const keyMap = {
+        'ADMIN': 'login.admin',
+        'DOCTOR': 'login.doctor',
+        'DESK': 'login.desk',
+        'OWNER': 'login.owner'
       }
-      return names[this.role] || ''
+      return this.$t(keyMap[this.role] || '')
+    },
+    currentLangLabel() {
+      return getLocale() === 'zh' ? '中文' : 'English'
+    }
+  },
+  watch: {
+    '$i18n.locale'() {
+      this.updateCodeText()
     }
   },
   methods: {
+    switchLanguage(lang) {
+      setLocale(lang)
+      window.location.reload()
+    },
+
+    updateCodeText() {
+      if (!this.codeSending) {
+        this.codeText = this.$t('login.getCode')
+      }
+    },
+
     selectRole(role) {
       this.role = role
       this.step = 'login'
@@ -164,104 +200,104 @@ export default {
       this.form.password = ''
       this.form.code = ''
     },
-    
+
     toggleLoginType() {
       this.loginType = this.loginType === 'password' ? 'code' : 'password'
     },
-    
+
     async sendCode() {
       if (!this.form.phone) {
-        alert('请输入手机号')
+        alert(this.$t('login.pleaseEnterPhone'))
         return
       }
       if (!/^1[3-9]\d{9}$/.test(this.form.phone)) {
-        alert('手机号格式不正确')
+        alert(this.$t('login.phoneFormatError'))
         return
       }
-      
+
       this.codeSending = true
-      this.codeText = '发送中...'
-      
+      this.codeText = this.$t('login.sending')
+
       try {
         const res = await axios.post('/api/auth/sendCode?phone=' + this.form.phone)
         if (res.data.code == 200) {
-          alert('验证码：' + res.data.data)
+          alert('Captcha: ' + res.data.data)
           this.startCountdown()
         } else {
-          alert(res.data.msg || res.data.message || '发送失败')
+          alert(res.data.msg || res.data.message || this.$t('login.sendFailed'))
           this.codeSending = false
-          this.codeText = '获取验证码'
+          this.codeText = this.$t('login.getCode')
         }
       } catch (err) {
-        alert('发送失败，请检查网络')
+        alert(this.$t('login.networkError'))
         this.codeSending = false
-        this.codeText = '获取验证码'
+        this.codeText = this.$t('login.getCode')
       }
     },
-    
+
     startCountdown() {
       let count = 60
-      this.codeText = count + '秒后重试'
-      
+      this.codeText = this.$t('login.retryAfter', { count })
+
       this.codeTimer = setInterval(() => {
         count--
         if (count <= 0) {
           clearInterval(this.codeTimer)
           this.codeSending = false
-          this.codeText = '获取验证码'
+          this.codeText = this.$t('login.getCode')
         } else {
-          this.codeText = count + '秒后重试'
+          this.codeText = this.$t('login.retryAfter', { count })
         }
       }, 1000)
     },
-    
+
     async handleLogin() {
       if (!this.form.phone) {
-        alert('请输入手机号')
+        alert(this.$t('login.pleaseEnterPhone'))
         return
       }
       if (this.loginType === 'password' && !this.form.password) {
-        alert('请输入密码')
+        alert(this.$t('login.pleaseEnterPassword'))
         return
       }
       if (this.loginType === 'code' && !this.form.code) {
-        alert('请输入验证码')
+        alert(this.$t('login.pleaseEnterCode'))
         return
       }
-      
+
       this.loading = true
-      
+
       const data = {
         phone: this.form.phone,
         role: this.role,
         loginType: this.loginType,
         remember: this.form.remember
       }
-      
+
       if (this.loginType === 'password') {
         data.password = this.form.password
       } else {
         data.code = this.form.code
       }
-      
+
       try {
         console.log('发送登录请求:', data)
         const res = await axios.post('/api/auth/login', data)
         console.log('登录响应:', res.data)
-        
+
         if (res.data.code == 200) {
           const result = res.data.data
-          
+
           // 存储登录信息
           setToken(result.token || '')
           setUserInfo(result)
           setUserRole(this.role.toLowerCase())
-          
+
           const role = this.role.toLowerCase()
           const permissionStore = usePermissionStore()
-          
+
           await permissionStore.generateRoutes(role)
-          
+
           const homePathMap = {
             'admin': '/admin/dashboard',
             'doctor': '/doctor/accept',
@@ -269,18 +305,18 @@ export default {
             'owner': '/owner/pet'
           }
           const homePath = homePathMap[role] || '/login'
-          
+
           console.log('登录成功，准备跳转到:', homePath)
-          
+
 
           this.$router.replace(homePath)
-          
+
         } else {
-          alert(res.data.msg || res.data.message || '登录失败')
+          alert(res.data.msg || res.data.message || this.$t('login.loginFailed'))
         }
       } catch (err) {
         console.error('登录失败:', err)
-        alert('登录失败：' + (err.message || '网络错误'))
+        alert(this.$t('login.loginFailed') + '：' + (err.message || this.$t('login.networkError2')))
       } finally {
         this.loading = false
       }
@@ -337,6 +373,29 @@ export default {
   backdrop-filter: blur(12px);
   position: relative;
   z-index: 1;
+}
+
+.lang-switch {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 2;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #3b82f6;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.lang-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .role-select {

@@ -136,7 +136,7 @@ public class CommonServiceImpl implements ICommonService {
     private User autoRegister(LoginDto loginDto) {
         User user = new User();
         user.setPhone(loginDto.getPhone());
-        user.setUsername("用户" + loginDto.getPhone().substring(7));
+        user.setUsername("User" + loginDto.getPhone().substring(7));
         user.setRole(loginDto.getRole());
         user.setRoleCode(loginDto.getRole());
         user.setStatus(1);
@@ -154,7 +154,7 @@ public class CommonServiceImpl implements ICommonService {
     public String refreshToken(Long userId) {
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException("User does not exist");
         }
         return jwtUtil.generateToken(user.getUsername(), user.getId(), user.getRole());
     }
@@ -163,7 +163,7 @@ public class CommonServiceImpl implements ICommonService {
     public UserInfoVo getUserInfo(Long userId) {
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException("User does not exist");
         }
         return buildUserInfo(user, null);
     }
@@ -192,15 +192,18 @@ public class CommonServiceImpl implements ICommonService {
         if (RoleConstant.ROLE_DOCTOR.equals(user.getRole())) {
             LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(Doctor::getUserId, user.getId());
-            Doctor doctor = doctorMapper.selectOne(wrapper);
+            wrapper.orderByDesc(Doctor::getId);
+            wrapper.last("LIMIT 1");
+            List<Doctor> doctors = doctorMapper.selectList(wrapper);
+            Doctor doctor = doctors.isEmpty() ? null : doctors.get(0);
             if (doctor == null) {
                 // 自动创建医生档案，避免后续外键约束失败
                 doctor = new Doctor();
                 doctor.setUserId(user.getId());
                 doctor.setName(user.getRealName() != null ? user.getRealName() : user.getUsername());
                 doctor.setPhone(user.getPhone());
-                doctor.setDepartment("全科医疗部");
-                doctor.setTitle("主治医师");
+                doctor.setDepartment("General Practice");
+                doctor.setTitle("Attending Physician");
                 doctor.setWorkStatus(1); // 空闲
                 doctor.setStatus(1);
                 doctor.setIsDeleted(0);
@@ -211,12 +214,14 @@ public class CommonServiceImpl implements ICommonService {
                 userInfo.setDoctorId(doctor.getId());
                 userInfo.setTitle(doctor.getTitle());
                 userInfo.setDepartment(doctor.getDepartment());
+                userInfo.setSpecialty(doctor.getSpecialty());
+                userInfo.setIntroduction(doctor.getIntroduction());
                 if (doctor.getWorkStatus() != null) {
                     switch (doctor.getWorkStatus()) {
-                        case 0: userInfo.setStatusDesc("休息"); break;
-                        case 1: userInfo.setStatusDesc("空闲"); break;
-                        case 2: userInfo.setStatusDesc("接诊中"); break;
-                        default: userInfo.setStatusDesc("未知");
+                        case 0: userInfo.setStatusDesc("Off duty"); break;
+                        case 1: userInfo.setStatusDesc("Available"); break;
+                        case 2: userInfo.setStatusDesc("In consultation"); break;
+                        default: userInfo.setStatusDesc("Unknown");
                     }
                 }
             }
@@ -306,9 +311,37 @@ public class CommonServiceImpl implements ICommonService {
     
     @Override
     public String uploadFile(MultipartFile file, String type) {
-        // TODO: 实际项目中需要实现文件上传到本地或OSS
-        log.info("上传文件，文件名: {}, 类型: {}", file.getOriginalFilename(), type);
-        return "/uploads/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        try {
+            // 创建上传目录
+            String uploadDir = "./uploads/";
+            java.io.File dir = new java.io.File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // 获取原始文件名和扩展名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            // 生成唯一文件名
+            String filename = System.currentTimeMillis() + "_"
+                    + java.util.UUID.randomUUID().toString().substring(0, 8) + extension;
+
+            // 保存文件到本地
+            java.io.File dest = new java.io.File(dir, filename);
+            file.transferTo(dest);
+
+            log.info("文件上传成功，文件名: {}, 保存路径: {}", originalFilename, dest.getAbsolutePath());
+
+            // 返回可访问URL（带 /api 前缀，与后端 context-path 一致）
+            return "/api/uploads/" + filename;
+        } catch (Exception e) {
+            log.error("文件上传失败", e);
+            throw new RuntimeException("File upload failed: " + e.getMessage());
+        }
     }
     
     @Override
@@ -350,12 +383,12 @@ public class CommonServiceImpl implements ICommonService {
         List<Map<String, Object>> breeds = new ArrayList<>();
         Map<String, Object> dog = new HashMap<>();
         dog.put("value", "dog");
-        dog.put("label", "犬");
+        dog.put("label", "Dog");
         breeds.add(dog);
         
         Map<String, Object> cat = new HashMap<>();
         cat.put("value", "cat");
-        cat.put("label", "猫");
+        cat.put("label", "Cat");
         breeds.add(cat);
         return breeds;
     }

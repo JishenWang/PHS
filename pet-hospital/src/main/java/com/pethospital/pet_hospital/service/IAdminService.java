@@ -1,6 +1,7 @@
 package com.pethospital.pet_hospital.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.pethospital.pet_hospital.vo.admin.DashboardVo;
 import com.pethospital.pet_hospital.vo.admin.DoctorVo;
@@ -40,4 +41,42 @@ public interface IAdminService {
     PetVo updatePet(PetVo petVo);   // 新增更新宠物
     
     void deletePet(Long id);        // 新增删除宠物
+
+    // ==================== 系统配置 ====================
+    Map<String, Object> getBasicConfig();
+
+    void saveBasicConfig(Map<String, Object> config, String operator);
+
+    Map<String, Object> getBusinessConfig();
+
+    void saveBusinessConfig(Map<String, Object> config, String operator);
+
+    Map<String, Object> getNotificationConfig();
+
+    void saveNotificationConfig(Map<String, Object> config, String operator);
+
+    // ==================== 操作日志 ====================
+    Map<String, Object> getOperationLogs(Integer page, Integer size);
+
+    void addOperationLog(String action, String actionType, String detail, String operator, String ip);
+
+    // ==================== 药品管理 ====================
+    List<com.pethospital.pet_hospital.entity.MedicineItem> getMedicineList(String keyword);
+
+    com.pethospital.pet_hospital.entity.MedicineItem getMedicineDetail(Long id);
+
+    com.pethospital.pet_hospital.entity.MedicineItem addMedicine(com.pethospital.pet_hospital.entity.MedicineItem medicine);
+
+    com.pethospital.pet_hospital.entity.MedicineItem updateMedicine(com.pethospital.pet_hospital.entity.MedicineItem medicine);
+
+    void deleteMedicine(Long id);
+
+    void updateMedicineStatus(Long id, Integer status);
+
+    // ==================== 数据维护 ====================
+    void backupData(String operator);
+
+    void clearCache();
+
+    void resetSystem(String operator);
 }

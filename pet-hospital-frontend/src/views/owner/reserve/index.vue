@@ -2,12 +2,12 @@
   <div class="reserve-page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">预约申请</h2>
-        <p class="page-subtitle">在线预约，省时省心</p>
+        <h2 class="page-title">{{ $t('reserve.title') }}</h2>
+        <p class="page-subtitle">{{ $t('reserve.subtitle') }}</p>
       </div>
       <el-button type="primary" size="large" @click="handleCreate" class="add-btn">
         <el-icon><Plus /></el-icon>
-        新建预约
+        {{ $t('reserve.newAppointment') }}
       </el-button>
     </div>
 
@@ -36,7 +36,7 @@
         <div class="reserve-content">
           <div class="reserve-icon">🐾</div>
           <div class="reserve-info">
-            <div class="reserve-pet">{{ item.petName || `宠物ID:${item.petId}` }}</div>
+            <div class="reserve-pet">{{ item.petName || t('reserve.petId', { id: item.petId }) }}</div>
             <div class="reserve-service">{{ getServiceName(item.serviceType) }}</div>
             <div class="reserve-doctor" v-if="item.doctorName">
               <el-icon><User /></el-icon>
@@ -45,24 +45,25 @@
           </div>
         </div>
         <div class="reserve-footer" v-if="item.status === '0'">
-          <el-button type="danger" plain size="small" @click.stop="handleCancelReserve(item)">取消预约</el-button>
+          <el-button type="danger" plain size="small" @click.stop="handleCancelReserve(item)">{{ $t('reserve.cancelAppointment') }}</el-button>
         </div>
         <div class="reserve-footer" v-else>
-          <el-button type="primary" plain size="small" @click.stop="viewDetail(item.id)">查看详情</el-button>
+          <el-button type="primary" plain size="small" @click.stop="viewDetail(item.id)">{{ $t('reserve.viewDetails') }}</el-button>
         </div>
       </div>
 
-      <el-empty v-if="!loading && reserveList.length === 0" description="暂无预约记录">
-        <el-button type="primary" @click="handleCreate">立即预约</el-button>
+      <el-empty v-if="!loading && reserveList.length === 0" :description="$t('reserve.noAppointments')">
+        <el-button type="primary" @click="handleCreate">{{ $t('reserve.bookNow') }}</el-button>
       </el-empty>
     </div>
 
     <!-- 创建预约弹窗 -->
-    <el-dialog v-model="dialogVisible" title="新建预约" width="500px">
+    <el-dialog v-model="dialogVisible" :title="$t('reserve.newAppointment')" width="500px">
       <el-steps :active="step" finish-status="success" align-center style="margin-bottom: 30px">
-        <el-step title="选择宠物" />
-        <el-step title="选择服务" />
-        <el-step title="确认信息" />
+        <el-step :title="$t('reserve.selectPet')" />
+        <el-step :title="$t('reserve.selectService')" />
+        <el-step :title="$t('reserve.selectDoctorTime')" />
+        <el-step :title="$t('reserve.confirmInfo')" />
       </el-steps>
 
       <div v-show="step === 0">
@@ -76,8 +77,8 @@
           </div>
         </div>
         <div v-if="petList.length === 0" class="empty-pets">
-          <el-empty description="暂无宠物，请先添加宠物" :image-size="80">
-            <el-button type="primary" @click="router.push('/owner/pets')">去添加宠物</el-button>
+          <el-empty :description="$t('reserve.noPetsYet')" :image-size="80">
+            <el-button type="primary" @click="router.push('/owner/pets')">{{ $t('reserve.goAddPet') }}</el-button>
           </el-empty>
         </div>
       </div>
@@ -94,7 +95,7 @@
           <el-date-picker
             v-model="form.appointmentTime"
             type="datetime"
-            placeholder="选择预约时间"
+            :placeholder="$t('reserve.selectAppointmentTime')"
             style="width: 100%"
             :disabled-date="disabledDate"
             format="YYYY-MM-DD HH:mm"
@@ -104,74 +105,96 @@
       </div>
 
       <div v-show="step === 2">
+        <div v-if="doctorList.length === 0" class="empty-doctors">
+          <el-empty :description="$t('reserve.noDoctorsAvailable')" :image-size="80" />
+        </div>
+        <div v-else class="doctor-selector">
+          <div v-for="doctor in doctorList" :key="doctor.id" class="doctor-option" :class="{ active: form.doctorId === doctor.id }" @click="form.doctorId = doctor.id">
+            <div class="doctor-avatar">
+              <el-avatar :size="40" :src="doctor.avatar || ''">{{ doctor.name?.charAt(0) }}</el-avatar>
+            </div>
+            <div class="doctor-info">
+              <div class="doctor-name">{{ doctor.name }}</div>
+              <div class="doctor-title">{{ doctor.title }} | {{ doctor.department }}</div>
+            </div>
+            <el-tag v-if="form.doctorId === doctor.id" type="success" size="small">{{ $t('reserve.selected') }}</el-tag>
+          </div>
+        </div>
+      </div>
+
+      <div v-show="step === 3">
         <div class="confirm-info">
           <div class="confirm-item">
-            <span class="label">宠物</span>
+            <span class="label">{{ $t('reserve.pet') }}</span>
             <span class="value">{{ selectedPet?.name }}</span>
           </div>
           <div class="confirm-item">
-            <span class="label">服务</span>
+            <span class="label">{{ $t('reserve.service') }}</span>
             <span class="value">{{ getServiceName(form.serviceType) }}</span>
           </div>
           <div class="confirm-item">
-            <span class="label">时间</span>
+            <span class="label">{{ $t('reserve.doctor') }}</span>
+            <span class="value">{{ selectedDoctor?.name }}</span>
+          </div>
+          <div class="confirm-item">
+            <span class="label">{{ $t('reserve.time') }}</span>
             <span class="value">{{ form.appointmentTime }}</span>
           </div>
           <div class="confirm-item">
-            <span class="label">费用</span>
+            <span class="label">{{ $t('reserve.cost') }}</span>
             <span class="value price">¥{{ getServicePrice(form.serviceType) }}</span>
           </div>
         </div>
-        <el-input type="textarea" v-model="form.remark" placeholder="备注（选填）" :rows="3" />
+        <el-input type="textarea" v-model="form.remark" :placeholder="$t('reserve.remarksOptional')" :rows="3" />
       </div>
 
       <template #footer>
-        <el-button v-if="step > 0" @click="step--">上一步</el-button>
-        <el-button v-if="step < 2" type="primary" @click="nextStep">下一步</el-button>
-        <el-button v-if="step === 2" type="primary" @click="submitReserve" :loading="submitting">提交预约</el-button>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button v-if="step > 0" @click="step--">{{ $t('reserve.previous') }}</el-button>
+        <el-button v-if="step < 3" type="primary" @click="nextStep">{{ $t('reserve.next') }}</el-button>
+        <el-button v-if="step === 3" type="primary" @click="submitReserve" :loading="submitting">{{ $t('reserve.submitAppointment') }}</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 预约详情弹窗 -->
-    <el-dialog v-model="detailVisible" title="预约详情" width="450px">
+    <el-dialog v-model="detailVisible" :title="$t('reserve.appointmentDetails')" width="450px">
       <div v-if="currentDetail">
         <div class="detail-item">
-          <span class="label">预约号</span>
+          <span class="label">{{ $t('reserve.appointmentNo') }}</span>
           <span class="value">{{ currentDetail.appointmentNo }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">状态</span>
+          <span class="label">{{ $t('common.status') }}</span>
           <span class="value" :style="{ color: getStatusColor(currentDetail.status) }">{{ getStatusName(currentDetail.status) }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">宠物</span>
+          <span class="label">{{ $t('reserve.pet') }}</span>
           <span class="value">{{ currentDetail.petName }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">服务</span>
+          <span class="label">{{ $t('reserve.service') }}</span>
           <span class="value">{{ getServiceName(currentDetail.serviceType) }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">医生</span>
-          <span class="value">{{ currentDetail.doctorName || '待分配' }}</span>
+          <span class="label">{{ $t('reserve.doctor') }}</span>
+          <span class="value">{{ currentDetail.doctorName || $t('reserve.toBeAssigned') }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">预约时间</span>
+          <span class="label">{{ $t('reserve.appointmentTime') }}</span>
           <span class="value">{{ formatDateTime(currentDetail.appointmentTime) }}</span>
         </div>
         <div class="detail-item" v-if="currentDetail.remark">
-          <span class="label">备注</span>
+          <span class="label">{{ $t('reserve.remarks') }}</span>
           <span class="value">{{ currentDetail.remark }}</span>
         </div>
         <div class="detail-item" v-if="currentDetail.cancelReason">
-          <span class="label">取消原因</span>
+          <span class="label">{{ $t('reserve.cancelReason') }}</span>
           <span class="value" style="color: #ef4444;">{{ currentDetail.cancelReason }}</span>
         </div>
       </div>
       <template #footer>
-        <el-button @click="detailVisible = false">关闭</el-button>
-        <el-button v-if="currentDetail?.status === '0'" type="danger" @click="cancelFromDetail">取消预约</el-button>
+        <el-button @click="detailVisible = false">{{ $t('common.close') }}</el-button>
+        <el-button v-if="currentDetail?.status === '0'" type="danger" @click="cancelFromDetail">{{ $t('reserve.cancelAppointment') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -179,15 +202,19 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, User, Avatar } from '@element-plus/icons-vue'
+import { getAvailableDoctors } from '@/api/owner/owner'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const submitting = ref(false)
 const reserveList = ref([])
 const petList = ref([])
+const doctorList = ref([])
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const currentDetail = ref(null)
@@ -195,28 +222,30 @@ const activeTab = ref('all')
 const step = ref(0)
 
 const stats = ref([
-  { key: 'all', label: '全部', count: 0, color: '#64748b' },
-  { key: '0', label: '待确认', count: 0, color: '#f59e0b' },
-  { key: '1', label: '已确认', count: 0, color: '#10b981' },
-  { key: '2', label: '已完成', count: 0, color: '#3b82f6' },
-  { key: '3', label: '已取消', count: 0, color: '#ef4444' }
+  { key: 'all', label: t('common.all'), count: 0, color: '#64748b' },
+  { key: '0', label: t('reserve.pending'), count: 0, color: '#f59e0b' },
+  { key: '1', label: t('reserve.confirmed'), count: 0, color: '#10b981' },
+  { key: '2', label: t('reserve.completed'), count: 0, color: '#3b82f6' },
+  { key: '3', label: t('reserve.canceled'), count: 0, color: '#ef4444' }
 ])
 
 const services = [
-  { value: 'consultation', label: '门诊诊疗', icon: '🏥', price: 100 },
-  { value: 'vaccine', label: '疫苗接种', icon: '💉', price: 80 },
-  { value: 'exam', label: '体检', icon: '📋', price: 150 },
-  { value: 'grooming', label: '洗澡美容', icon: '🛁', price: 60 }
+  { value: 'consultation', label: t('reserve.outpatientClinic'), icon: '🏥', price: 100 },
+  { value: 'vaccine', label: t('reserve.vaccination'), icon: '💉', price: 80 },
+  { value: 'exam', label: t('reserve.physicalExam'), icon: '📋', price: 150 },
+  { value: 'grooming', label: t('reserve.bathGrooming'), icon: '🛁', price: 60 }
 ]
 
 const form = ref({
   petId: '',
   serviceType: '',
+  doctorId: '',
   appointmentTime: '',
   remark: ''
 })
 
 const selectedPet = computed(() => petList.value.find(p => p.id === form.value.petId))
+const selectedDoctor = computed(() => doctorList.value.find(d => d.id === form.value.doctorId))
 
 // 获取 token
 const getToken = () => {
@@ -234,12 +263,12 @@ const formatDateTime = (dateStr) => {
 // 获取状态名称
 const getStatusName = (status) => {
   const statusMap = {
-    '0': '待确认',
-    '1': '已确认',
-    '2': '已完成',
-    '3': '已取消'
+    '0': t('reserve.pending'),
+    '1': t('reserve.confirmed'),
+    '2': t('reserve.completed'),
+    '3': t('reserve.canceled')
   }
-  return statusMap[status] || '未知状态'
+  return statusMap[status] || t('reserve.unknownStatus')
 }
 
 const getStatusColor = (status) => {
@@ -254,13 +283,13 @@ const getStatusColor = (status) => {
 
 const getServiceName = (value) => {
   const serviceMap = {
-    'consultation': '门诊诊疗',
-    'vaccine': '疫苗接种',
-    'exam': '体检',
-    'grooming': '洗澡美容',
-    '普通门诊': '门诊诊疗'
+    'consultation': t('reserve.outpatientClinic'),
+    'vaccine': t('reserve.vaccination'),
+    'exam': t('reserve.physicalExam'),
+    'grooming': t('reserve.bathGrooming'),
+    '普通门诊': t('reserve.outpatientClinic')
   }
-  return serviceMap[value] || value || '未知服务'
+  return serviceMap[value] || value || t('reserve.unknownService')
 }
 
 const getServicePrice = (value) => {
@@ -287,6 +316,24 @@ const loadPets = async () => {
   } catch (error) {
     console.error('加载宠物列表失败:', error)
     petList.value = []
+  }
+}
+
+// 加载可预约医生列表
+const loadDoctors = async () => {
+  try {
+    const res = await getAvailableDoctors({
+      serviceType: form.value.serviceType,
+      date: form.value.appointmentTime
+    })
+    if (res.code === 200) {
+      doctorList.value = res.data || []
+    } else {
+      doctorList.value = []
+    }
+  } catch (error) {
+    console.error('加载医生列表失败:', error)
+    doctorList.value = []
   }
 }
 
@@ -326,7 +373,7 @@ const loadReserveList = async () => {
         const pet = petList.value.find(p => p.id === item.petId)
         return {
           ...item,
-          petName: pet?.name || `宠物ID:${item.petId}`,
+          petName: pet?.name || t('reserve.petId', { id: item.petId }),
           status: String(item.status)
         }
       })
@@ -347,30 +394,38 @@ const handleTabChange = (key) => {
 
 const handleCreate = () => {
   if (petList.value.length === 0) {
-    ElMessage.warning('请先添加宠物')
+    ElMessage.warning(t('reserve.pleaseAddPetFirst'))
     router.push('/owner/pets')
     return
   }
   step.value = 0
-  form.value = { petId: '', serviceType: '', appointmentTime: '', remark: '' }
+  form.value = { petId: '', serviceType: '', doctorId: '', appointmentTime: '', remark: '' }
+  doctorList.value = []
   dialogVisible.value = true
 }
 
-const nextStep = () => {
+const nextStep = async () => {
   if (step.value === 0 && !form.value.petId) {
-    ElMessage.warning('请选择宠物')
+    ElMessage.warning(t('reserve.pleaseSelectAPet'))
     return
   }
   if (step.value === 1 && (!form.value.serviceType || !form.value.appointmentTime)) {
-    ElMessage.warning('请完整填写信息')
+    ElMessage.warning(t('reserve.pleaseFillInAllInfo'))
+    return
+  }
+  if (step.value === 1) {
+    await loadDoctors()
+  }
+  if (step.value === 2 && !form.value.doctorId) {
+    ElMessage.warning(t('reserve.pleaseSelectDoctor'))
     return
   }
   step.value++
 }
 
 const submitReserve = async () => {
-  if (!form.value.petId || !form.value.serviceType || !form.value.appointmentTime) {
-    ElMessage.warning('请填写完整信息')
+  if (!form.value.petId || !form.value.serviceType || !form.value.doctorId || !form.value.appointmentTime) {
+    ElMessage.warning(t('reserve.pleaseFillInAllInfo'))
     return
   }
   submitting.value = true
@@ -383,6 +438,7 @@ const submitReserve = async () => {
     const submitData = {
       petId: Number(form.value.petId),
       serviceType: form.value.serviceType,
+      doctorId: Number(form.value.doctorId),
       appointmentTime: formattedTime,
       remark: form.value.remark || ''
     }
@@ -398,25 +454,25 @@ const submitReserve = async () => {
     const res = await response.json()
 
     if (res.code === 200) {
-      ElMessage.success('预约提交成功')
+      ElMessage.success(t('reserve.appointmentSubmitted'))
       dialogVisible.value = false
       await loadReserveList()
     } else {
-      ElMessage.error(res.message || res.msg || '提交失败')
+      ElMessage.error(res.message || res.msg || t('reserve.submissionFailed'))
     }
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('提交失败')
+    ElMessage.error(t('reserve.submissionFailed'))
   } finally {
     submitting.value = false
   }
 }
 
 const handleCancelReserve = (item) => {
-  ElMessageBox.prompt('请输入取消原因', '取消预约', {
-    confirmButtonText: '确定取消',
-    cancelButtonText: '暂不取消',
-    inputPlaceholder: '请填写取消原因'
+  ElMessageBox.prompt(t('reserve.pleaseEnterCancellationReason'), t('reserve.cancelAppointmentTitle'), {
+    confirmButtonText: t('reserve.confirmCancel'),
+    cancelButtonText: t('reserve.notNow'),
+    inputPlaceholder: t('reserve.pleaseFillInCancellationReason')
   }).then(async ({ value }) => {
     if (value) {
       try {
@@ -431,14 +487,14 @@ const handleCancelReserve = (item) => {
         })
         const res = await response.json()
         if (res.code === 200) {
-          ElMessage.success('已取消预约')
+          ElMessage.success(t('reserve.appointmentCancelled'))
           await loadReserveList()
         } else {
-          ElMessage.error(res.message || '取消失败')
+          ElMessage.error(res.message || t('reserve.cancellationFailed'))
         }
       } catch (error) {
         console.error('取消失败:', error)
-        ElMessage.error('取消失败')
+        ElMessage.error(t('reserve.cancellationFailed'))
       }
     }
   }).catch(() => {})
@@ -707,6 +763,51 @@ onMounted(async () => {
         font-size: 12px;
         color: #f59e0b;
         margin-top: 4px;
+      }
+    }
+  }
+
+  .doctor-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+
+    .doctor-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+
+      &:hover {
+        background: #f1f5f9;
+      }
+
+      &.active {
+        border-color: #10b981;
+        background: #ecfdf5;
+      }
+
+      .doctor-info {
+        flex: 1;
+
+        .doctor-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .doctor-title {
+          font-size: 12px;
+          color: #64748b;
+          margin-top: 2px;
+        }
       }
     }
   }

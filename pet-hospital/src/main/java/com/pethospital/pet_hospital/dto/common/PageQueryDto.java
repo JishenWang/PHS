@@ -34,7 +34,7 @@ public class PageQueryDto {
         this.pageSize = pageSize;
     }
     
-    @Min(value = 1, message = "页码最小为1")
+    @Min(value = 1, message = "Page number must be at least 1")
     public Integer getPageNum() {
         return pageNum;
     }
@@ -43,8 +43,8 @@ public class PageQueryDto {
         this.pageNum = pageNum;
     }
     
-    @Min(value = 1, message = "每页条数最小为1")
-    @Max(value = 100, message = "每页条数最大为100")
+    @Min(value = 1, message = "Page size must be at least 1")
+    @Max(value = 100, message = "Page size must be at most 100")
     public Integer getPageSize() {
         return pageSize;
     }

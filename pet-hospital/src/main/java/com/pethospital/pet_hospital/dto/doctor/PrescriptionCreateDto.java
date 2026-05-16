@@ -22,8 +22,12 @@ public class PrescriptionCreateDto {
     /**
      * 挂号ID
      */
-    @NotNull(message = "挂号ID不能为空")
     private Long registerId;
+    
+    /**
+     * 住院ID（住院处方）
+     */
+    private Long hospitalizationId;
     
     /**
      * 病历ID
@@ -33,19 +37,19 @@ public class PrescriptionCreateDto {
     /**
      * 宠物ID
      */
-    @NotNull(message = "宠物ID不能为空")
+    @NotNull(message = "Pet ID cannot be empty")
     private Long petId;
     
     /**
      * 医生ID
      */
-    @NotNull(message = "医生ID不能为空")
+    @NotNull(message = "Doctor ID cannot be empty")
     private Long doctorId;
     
     /**
      * 处方类型：0-西药，1-中药，2-手术，3-检查
      */
-    @NotNull(message = "处方类型不能为空")
+    @NotNull(message = "Prescription type cannot be empty")
     private Integer prescriptionType;
     
     /**

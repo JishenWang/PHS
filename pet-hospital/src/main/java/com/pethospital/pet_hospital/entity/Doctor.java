@@ -59,6 +59,10 @@ public class Doctor {
     // 数据库字段：work_status
     private Integer workStatus;      
     
+    // 数据库字段：consult_visible（在线咨询是否可见：1-可见，0-不可见）
+    @TableField("consult_visible")
+    private Integer consultVisible;
+    
     // 数据库字段：auth_status
     private Integer authStatus;
     

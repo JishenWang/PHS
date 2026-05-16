@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResultVo<Void> handleBadCredentialsException(BadCredentialsException e) {
         log.warn("认证失败: {}", e.getMessage());
-        return ResultVo.error(401, "用户名或密码错误");
+        return ResultVo.error(401, "Incorrect username or password");
     }
 
     /**
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResultVo<Void> handleAccessDeniedException(AccessDeniedException e) {
         log.warn("权限不足: {}", e.getMessage());
-        return ResultVo.error(403, "权限不足，无法访问");
+        return ResultVo.error(403, "Insufficient permission, access denied");
     }
 
     /**
@@ -94,7 +94,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateKeyException.class)
     public ResultVo<Void> handleDuplicateKeyException(DuplicateKeyException e) {
         log.warn("数据重复: {}", e.getMessage());
-        return ResultVo.error(409, "数据已存在，请勿重复提交");
+        return ResultVo.error(409, "Data already exists, please do not resubmit");
     }
 
     /**
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     public ResultVo<Void> handleSQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
         log.warn("数据完整性约束违反: {}", e.getMessage());
-        return ResultVo.error(400, "数据操作失败，请检查关联数据");
+        return ResultVo.error(400, "Data operation failed, please check related data");
     }
 
     /**
@@ -121,7 +121,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NullPointerException.class)
     public ResultVo<Void> handleNullPointerException(NullPointerException e) {
         log.error("空指针异常: ", e);
-        return ResultVo.error(500, "系统内部错误");
+        return ResultVo.error(500, "Internal system error");
     }
 
     /**
@@ -136,7 +136,7 @@ public class GlobalExceptionHandler {
             rootMsg = e.getCause().getMessage();
         }
         if (rootMsg == null || rootMsg.isEmpty()) {
-            rootMsg = "系统繁忙，请稍后重试";
+            rootMsg = "System busy, please try again later";
         }
         return ResultVo.error(500, rootMsg);
     }

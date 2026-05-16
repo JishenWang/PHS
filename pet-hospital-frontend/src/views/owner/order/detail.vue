@@ -3,12 +3,12 @@
     <div class="page-nav">
       <el-button link @click="goBack" class="back-btn">
         <el-icon><ArrowLeft /></el-icon>
-        返回
+        {{ $t('common.back') }}
       </el-button>
     </div>
 
     <div v-loading="loading">
-      <!-- 订单状态卡片 -->
+      <!-- Order Status Card -->
       <div class="status-card">
         <div class="status-icon" :class="detail.payStatus">
           {{ getStatusIcon(detail.payStatus) }}
@@ -21,70 +21,70 @@
         </div>
       </div>
 
-      <!-- 订单信息卡片 -->
+      <!-- Order Info Card -->
       <div class="info-card">
         <div class="card-header">
-          <span class="card-title">订单信息</span>
+          <span class="card-title">{{ $t('order.orderInfo') }}</span>
         </div>
         <div class="info-list">
           <div class="info-item">
-            <span class="label">订单号</span>
+            <span class="label">{{ $t('order.orderNo') }}</span>
             <span class="value">{{ detail.orderNo }}</span>
           </div>
           <div class="info-item">
-            <span class="label">创建时间</span>
+            <span class="label">{{ $t('order.createTime') }}</span>
             <span class="value">{{ formatDate(detail.createTime) }}</span>
           </div>
           <div class="info-item" v-if="detail.payTime">
-            <span class="label">支付时间</span>
+            <span class="label">{{ $t('order.paymentTime') }}</span>
             <span class="value">{{ formatDate(detail.payTime) }}</span>
           </div>
           <div class="info-item" v-if="detail.payMethod">
-            <span class="label">支付方式</span>
+            <span class="label">{{ $t('order.paymentMethod') }}</span>
             <span class="value">{{ getPayMethodText(detail.payMethod) }}</span>
           </div>
         </div>
       </div>
 
-      <!-- 商品信息卡片 -->
+      <!-- Product Info Card -->
       <div class="goods-card">
         <div class="card-header">
-          <span class="card-title">商品信息</span>
+          <span class="card-title">{{ $t('order.productInfo') }}</span>
         </div>
         <div class="goods-list">
           <div v-for="item in detail.orderItems" :key="item.itemName" class="goods-item">
             <div class="goods-icon">🐾</div>
             <div class="goods-info">
               <div class="goods-name">{{ item.itemName }}</div>
-              <div class="goods-spec">单价 ¥{{ item.unitPrice }} × {{ item.quantity }}</div>
+              <div class="goods-spec">{{ $t('order.unitPrice') }} ¥{{ item.unitPrice }} × {{ item.quantity }}</div>
             </div>
             <div class="goods-price">¥{{ item.amount }}</div>
           </div>
         </div>
         <div class="total-amount">
-          <span>合计</span>
+          <span>{{ $t('order.total') }}</span>
           <span class="total-price">¥{{ detail.totalAmount }}</span>
         </div>
       </div>
 
-      <!-- 宠物信息卡片 -->
+      <!-- Pet Info Card -->
       <div class="pet-card" v-if="detail.petName">
         <div class="card-header">
-          <span class="card-title">宠物信息</span>
+          <span class="card-title">{{ $t('order.petInfo') }}</span>
         </div>
         <div class="pet-info">
           <div class="pet-icon">🐾</div>
           <div class="pet-detail">
             <div class="pet-name">{{ detail.petName }}</div>
-            <div class="pet-id">ID: {{ detail.petId }}</div>
+            <div class="pet-id">{{ $t('order.idLabel') }} {{ detail.petId }}</div>
           </div>
         </div>
       </div>
 
-      <!-- 底部按钮 -->
+      <!-- Bottom Buttons -->
       <div class="action-buttons" v-if="detail.payStatus === 'pending'">
-        <el-button type="primary" size="large" @click="handlePay">去支付</el-button>
-        <el-button size="large" @click="handleCancel">取消订单</el-button>
+        <el-button type="primary" size="large" @click="handlePay">{{ $t('order.payNow') }}</el-button>
+        <el-button size="large" @click="handleCancel">{{ $t('order.cancelOrder') }}</el-button>
       </div>
     </div>
   </div>
@@ -93,10 +93,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOrderDetail } from '@/api/owner/owner'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const orderId = route.params.id
@@ -114,12 +116,12 @@ const detail = ref({
   orderItems: []
 })
 
-// 获取 token
+// Get token
 const getToken = () => {
   return localStorage.getItem('pet_hospital_token')
 }
 
-// 格式化日期
+// Format date
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
@@ -127,15 +129,15 @@ const formatDate = (dateStr) => {
 }
 
 const getStatusText = (status) => {
-  const texts = { pending: '待支付', paid: '已支付', cancelled: '已取消' }
+  const texts = { pending: t('order.pending'), paid: t('order.paid'), cancelled: t('order.cancelled') }
   return texts[status] || status
 }
 
 const getStatusDesc = (status) => {
   const descs = { 
-    pending: '订单已提交，请尽快完成支付', 
-    paid: '订单已支付成功，感谢您的信任', 
-    cancelled: '订单已取消' 
+    pending: t('order.orderSubmitted'), 
+    paid: t('order.orderPaid'), 
+    cancelled: t('order.orderCancelledDesc') 
   }
   return descs[status] || ''
 }
@@ -146,8 +148,8 @@ const getStatusIcon = (status) => {
 }
 
 const getPayMethodText = (method) => {
-  const methods = { cash: '现金', wechat: '微信支付', alipay: '支付宝', card: '刷卡' }
-  return methods[method] || method || '未支付'
+  const methods = { cash: t('order.cash'), wechat: t('order.wechatPay'), alipay: t('order.alipay'), card: t('order.card') }
+  return methods[method] || method || t('order.unpaid')
 }
 
 const goBack = () => {
@@ -162,7 +164,7 @@ const loadDetail = async () => {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     const res = await response.json()
-    console.log('订单详情响应:', res)
+    console.log('Order detail response:', res)
     
     if (res.code === 200) {
       const data = res.data?.data || res.data
@@ -171,24 +173,24 @@ const loadDetail = async () => {
         orderItems: data.orderItems || []
       }
     } else {
-      ElMessage.error(res.message || res.msg || '加载失败')
+      ElMessage.error(res.message || res.msg || t('order.failedToLoad'))
     }
   } catch (error) {
-    console.error('加载订单详情失败:', error)
-    // 模拟数据
+    console.error('Failed to load order detail:', error)
+    // Mock data
     detail.value = {
       id: orderId,
       orderNo: 'ORD202404160001',
-      petName: '旺财',
+      petName: 'Buddy',
       totalAmount: 95,
       payStatus: 'pending',
       payMethod: '',
       payTime: '',
       createTime: new Date().toISOString(),
       orderItems: [
-        { itemName: '挂号费', unitPrice: 10, quantity: 1, amount: 10 },
-        { itemName: '诊疗费', unitPrice: 50, quantity: 1, amount: 50 },
-        { itemName: '药膏', unitPrice: 35, quantity: 1, amount: 35 }
+        { itemName: 'Registration Fee', unitPrice: 10, quantity: 1, amount: 10 },
+        { itemName: 'Consultation Fee', unitPrice: 50, quantity: 1, amount: 50 },
+        { itemName: 'Ointment', unitPrice: 35, quantity: 1, amount: 35 }
       ]
     }
   } finally {
@@ -197,12 +199,12 @@ const loadDetail = async () => {
 }
 
 const handlePay = () => {
-  ElMessage.info('支付功能由前台收银端处理')
+  ElMessage.info(t('order.paymentAtFrontDesk'))
 }
 
 const handleCancel = () => {
-  ElMessageBox.confirm('确定要取消该订单吗？', '提示', { type: 'warning' }).then(() => {
-    ElMessage.success('订单已取消')
+  ElMessageBox.confirm(t('order.confirmCancelOrder'), t('common.tip'), { type: 'warning' }).then(() => {
+    ElMessage.success(t('order.orderCancelled'))
     loadDetail()
   })
 }

@@ -68,6 +68,7 @@
             updated_time
         FROM pet
         WHERE is_deleted = 0
+          AND status = 1
           AND (owner_user_id = #{ownerId} OR owner_id = #{ownerId})
         ORDER BY id DESC 
     </select>

@@ -61,7 +61,7 @@ router.beforeEach(async (to, from, next) => {
         if (!userStore.role) {
           const userInfo = await userStore.getUserInfo()
           if (!userInfo?.role) {
-            throw new Error('获取角色失败')
+            throw new Error('Failed to get role')
           }
         }
 

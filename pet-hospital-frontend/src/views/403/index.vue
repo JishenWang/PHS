@@ -2,8 +2,8 @@
   <div class="error-container">
     <div class="error-content">
       <div class="error-code">403</div>
-      <div class="error-message">抱歉，您没有权限访问此页面</div>
-      <el-button type="primary" @click="goBack">返回首页</el-button>
+      <div class="error-message">{{ $t('error403.message') }}</div>
+      <el-button type="primary" @click="goBack">{{ $t('error403.backHome') }}</el-button>
     </div>
   </div>
 </template>

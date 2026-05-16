@@ -23,6 +23,7 @@ import com.pethospital.pet_hospital.entity.Pet;
 import com.pethospital.pet_hospital.entity.User;
 import com.pethospital.pet_hospital.mapper.DoctorMapper;
 import com.pethospital.pet_hospital.mapper.OrderInfoMapper;
+import com.pethospital.pet_hospital.mapper.OrderItemMapper;
 import com.pethospital.pet_hospital.mapper.PetMapper;
 import com.pethospital.pet_hospital.mapper.RegisterRecordMapper;
 import com.pethospital.pet_hospital.mapper.UserMapper;
@@ -41,6 +42,8 @@ public class DeskServiceImpl implements IDeskService {
     private RegisterRecordMapper registerRecordMapper;
     @Autowired
     private OrderInfoMapper orderInfoMapper;
+    @Autowired
+    private OrderItemMapper orderItemMapper;
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -188,15 +191,145 @@ public class DeskServiceImpl implements IDeskService {
         for (Map<String, Object> row : list) {
             Map<String, Object> one = new HashMap<>(row);
             double totalAmount = parseDouble(one.get("total"));
+            // 修复历史数据：若金额为默认值30，尝试从 register_record + service_item 重新计算
+            if (totalAmount == 30D || totalAmount == 0D) {
+                try {
+                    Long registerId = parseLongObj(one.get("registerId"));
+                    if (registerId != null) {
+                        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                                "SELECT rr.service_item_id, si.service_name, si.price FROM register_record rr LEFT JOIN service_item si ON rr.service_item_id = si.id WHERE rr.id = ?",
+                                registerId);
+                        if (!rows.isEmpty()) {
+                            Map<String, Object> rrRow = rows.get(0);
+                            Long sId = parseLongObj(rrRow.get("service_item_id"));
+                            String sName = rrRow.get("service_name") != null ? String.valueOf(rrRow.get("service_name")) : null;
+                            Double dbPrice = null;
+                            try { dbPrice = rrRow.get("price") != null ? Double.valueOf(String.valueOf(rrRow.get("price"))) : null; } catch (Exception e) {}
+                            double realPrice = resolveServicePrice(sId, sName);
+                            if (realPrice > 0) {
+                                totalAmount = realPrice;
+                                one.put("total", totalAmount);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("重新计算订单金额失败, orderId={}", one.get("id"), e);
+                }
+            }
             one.put("subtotal", totalAmount);
             one.put("reduction", 0);
             one.put("adjustAmount", 0);
             one.put("adjustReason", "");
+            // 查询真实订单明细（优先 order_item，其次 register_record + service_item）
             List<Map<String, Object>> detail = new ArrayList<>();
-            Map<String, Object> line = new HashMap<>();
-            line.put("name", "诊疗服务费");
-            line.put("amount", totalAmount);
-            detail.add(line);
+            try {
+                Long orderId = parseLongObj(one.get("id"));
+                if (orderId != null) {
+                    com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.pethospital.pet_hospital.entity.OrderItem> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+                    wrapper.eq(com.pethospital.pet_hospital.entity.OrderItem::getOrderId, orderId);
+                    List<com.pethospital.pet_hospital.entity.OrderItem> items = orderItemMapper.selectList(wrapper);
+                    if (items != null && !items.isEmpty()) {
+                        for (com.pethospital.pet_hospital.entity.OrderItem item : items) {
+                            Map<String, Object> line = new HashMap<>();
+                            line.put("name", item.getItemName() != null ? item.getItemName() : "收费项目");
+                            double itemAmount = item.getAmount() != null ? item.getAmount().doubleValue() : 0;
+                            // 若 item 金额为默认值30且 total 已被重新计算，则同步更新
+                            if ((itemAmount == 30D || itemAmount == 0D) && totalAmount != 30D && totalAmount > 0) {
+                                itemAmount = totalAmount;
+                            }
+                            line.put("amount", itemAmount);
+                            detail.add(line);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("查询订单明细失败, orderId={}", one.get("id"), e);
+            }
+            // 如果 order_item 无数据，尝试从 register_record + service_item 获取
+            if (detail.isEmpty()) {
+                try {
+                    Long registerId = parseLongObj(one.get("registerId"));
+                    if (registerId != null) {
+                        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                            "SELECT rr.amount, rr.service_item_id, si.service_name, si.price FROM register_record rr LEFT JOIN service_item si ON rr.service_item_id = si.id WHERE rr.id = ?",
+                            registerId);
+                        if (!rows.isEmpty()) {
+                            Map<String, Object> rrRow = rows.get(0);
+                            String serviceName = rrRow.get("service_name") != null ? String.valueOf(rrRow.get("service_name")) : "挂号费";
+                            Long sId = parseLongObj(rrRow.get("service_item_id"));
+                            double realPrice = resolveServicePrice(sId, serviceName);
+                            double amount = parseDouble(rrRow.get("amount"));
+                            double displayAmount = amount > 0 ? amount : (realPrice > 0 ? realPrice : totalAmount);
+                            Map<String, Object> line = new HashMap<>();
+                            line.put("name", serviceName);
+                            line.put("amount", displayAmount);
+                            detail.add(line);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("查询挂号记录明细失败, registerId={}", one.get("registerId"), e);
+                }
+            }
+            // 3. 查询医生处方明细（药品 + 检查服务）
+            try {
+                Long registerId = parseLongObj(one.get("registerId"));
+                if (registerId != null) {
+                    List<Map<String, Object>> prescRows = jdbcTemplate.queryForList(
+                            "SELECT id, total_amount FROM prescription WHERE register_id = ? AND status = 1 AND is_deleted = 0",
+                            registerId);
+                    for (Map<String, Object> prescRow : prescRows) {
+                        Long prescId = parseLongObj(prescRow.get("id"));
+                        if (prescId != null) {
+                            List<Map<String, Object>> itemRows = jdbcTemplate.queryForList(
+                                    "SELECT item_type, item_name, quantity, unit_price, line_amount FROM prescription_item WHERE prescription_id = ?",
+                                    prescId);
+                            for (Map<String, Object> itemRow : itemRows) {
+                                Map<String, Object> line = new HashMap<>();
+                                String itemName = itemRow.get("item_name") != null ? String.valueOf(itemRow.get("item_name")) : "处方项目";
+                                double lineAmount = parseDouble(itemRow.get("line_amount"));
+                                if (lineAmount <= 0) {
+                                    double qty = parseDouble(itemRow.get("quantity"));
+                                    double unitPrice = parseDouble(itemRow.get("unit_price"));
+                                    lineAmount = qty * unitPrice;
+                                }
+                                line.put("name", itemName);
+                                line.put("amount", lineAmount);
+                                detail.add(line);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("查询处方明细失败, registerId={}", one.get("registerId"), e);
+            }
+            // 如果仍然没有明细，fallback 到总金额
+            if (detail.isEmpty()) {
+                Map<String, Object> line = new HashMap<>();
+                line.put("name", "医疗服务费");
+                line.put("amount", totalAmount);
+                detail.add(line);
+            }
+            // 重新计算 totalAmount 为所有明细之和（挂号费 + 处方药品/检查费）
+            double calculatedTotal = 0;
+            for (Map<String, Object> d : detail) {
+                calculatedTotal += parseDouble(d.get("amount"));
+            }
+            if (calculatedTotal > 0 && Math.abs(calculatedTotal - totalAmount) > 0.01) {
+                totalAmount = calculatedTotal;
+                one.put("total", totalAmount);
+                // 同步更新数据库（仅未支付订单），确保确认收费时金额正确
+                try {
+                    Long orderId = parseLongObj(one.get("id"));
+                    if (orderId != null) {
+                        jdbcTemplate.update(
+                                "update order_info set total_amount=?, payable_amount=? where id=? and pay_status=0",
+                                totalAmount, totalAmount, orderId);
+                    }
+                } catch (Exception e) {
+                    log.warn("同步更新订单金额失败, orderId={}", one.get("id"), e);
+                }
+            }
+            one.put("subtotal", totalAmount);
             one.put("detail", detail);
             normalized.add(one);
         }
@@ -358,7 +491,7 @@ public class DeskServiceImpl implements IDeskService {
         Integer dbStatus = toDbRegisterStatus(status);
         if (id == null || dbStatus == null) {
             result.put("success", false);
-            result.put("message", "参数无效");
+            result.put("message", "Invalid parameter");
             return result;
         }
         try {
@@ -368,11 +501,11 @@ public class DeskServiceImpl implements IDeskService {
                 ensurePendingOrderForRegister(id);
             }
             result.put("success", updated > 0);
-            result.put("message", updated > 0 ? "状态更新成功" : "挂号单不存在");
+            result.put("message", updated > 0 ? "Status updated successfully" : "Register record does not exist");
         } catch (Exception ex) {
             log.error("updateRegisterStatus failed, id={}, status={}", id, status, ex);
             result.put("success", false);
-            result.put("message", "状态更新失败");
+            result.put("message", "Status update failed");
         }
         return result;
     }
@@ -400,18 +533,18 @@ public class DeskServiceImpl implements IDeskService {
         Map<String, Object> result = new HashMap<>();
         if (id == null) {
             result.put("success", false);
-            result.put("message", "参数无效");
+            result.put("message", "Invalid parameter");
             return result;
         }
-        String method = isBlank(payMethod) ? "现金" : payMethod.trim();
+        String method = isBlank(payMethod) ? "cash" : payMethod.trim();
         try {
             int updated = orderInfoMapper.confirmChargeById(id, method);
             result.put("success", updated > 0);
-            result.put("message", updated > 0 ? "收费成功" : "收费单不存在");
+            result.put("message", updated > 0 ? "Charge successful" : "Charge record does not exist");
         } catch (Exception ex) {
             log.error("confirmCharge failed, id={}, payMethod={}", id, method, ex);
             result.put("success", false);
-            result.put("message", "收费失败");
+            result.put("message", "Charge failed");
         }
         return result;
     }
@@ -424,7 +557,7 @@ public class DeskServiceImpl implements IDeskService {
         String petName = str(payload.get("petName"));
         if (isBlank(name) || isBlank(phone) || isBlank(petName)) {
             result.put("success", false);
-            result.put("message", "缺少必填项");
+            result.put("message", "Missing required fields");
             return result;
         }
         try {
@@ -440,15 +573,15 @@ public class DeskServiceImpl implements IDeskService {
             );
             if (ownerId == null) {
                 result.put("success", false);
-                result.put("message", "创建客户失败");
+                result.put("message", "Failed to create customer");
                 return result;
             }
             jdbcTemplate.update(
                     "insert into pet(owner_user_id,owner_id,owner_name,owner_phone,owner_is_temp,name,species,gender,age,allergy_history,is_deleted,created_time,updated_time,create_time,update_time) " +
                             "values(?,?,?,?,1,?,?,?,?,?,0,now(),now(),now(),now())",
                     ownerId, ownerId, name, phone, petName,
-                    strOrDefault(payload.get("petSpecies"), "未知"),
-                    strOrDefault(payload.get("petGender"), "未知"),
+                    strOrDefault(payload.get("petSpecies"), "Unknown"),
+                    strOrDefault(payload.get("petGender"), "Unknown"),
                     intOrDefault(payload.get("petAge"), 0),
                     str(payload.get("allergyHistory"))
             );
@@ -460,7 +593,7 @@ public class DeskServiceImpl implements IDeskService {
         } catch (Exception ex) {
             log.error("createTempCustomer failed", ex);
             result.put("success", false);
-            result.put("message", "创建失败");
+            result.put("message", "Creation failed");
             return result;
         }
     }
@@ -476,8 +609,10 @@ public class DeskServiceImpl implements IDeskService {
         StringBuilder where = new StringBuilder(" a.is_deleted = 0 ");
         List<Object> args = new ArrayList<>();
         if (!isBlank(status)) {
-            if ("BOOKED".equals(status)) {
-                where.append(" and a.status in (0,1) ");
+            if ("PENDING".equals(status)) {
+                where.append(" and a.status = 0 ");
+            } else if ("BOOKED".equals(status)) {
+                where.append(" and a.status = 1 ");
             } else if ("VERIFIED".equals(status)) {
                 where.append(" and a.status = 2 ");
             } else if ("CANCELED".equals(status)) {
@@ -501,8 +636,8 @@ public class DeskServiceImpl implements IDeskService {
         List<Map<String, Object>> list = jdbcTemplate.queryForList(
                 "select a.id as id, a.appointment_time as reserveTime, su.real_name as customerName, su.phone as phone, " +
                         "p.id as petId, p.name as petName, p.species as petSpecies, dp.id as doctorId, dp.name as doctorName, " +
-                        "ifnull(a.service_type,'普通门诊') as serviceType, " +
-                        "case when a.status in (0,1) then 'BOOKED' when a.status=2 then 'VERIFIED' else 'CANCELED' end as status " +
+                        "ifnull(a.service_type,'General Clinic') as serviceType, " +
+                        "case when a.status=0 then 'PENDING' when a.status=1 then 'BOOKED' when a.status=2 then 'VERIFIED' else 'CANCELED' end as status " +
                         baseSql + " order by a.id desc limit ?,?",
                 mergeArgs(args, offset, pageSize)
         );
@@ -511,11 +646,39 @@ public class DeskServiceImpl implements IDeskService {
     }
 
     @Override
+    public Map<String, Object> confirmReserve(Long reserveId) {
+        Map<String, Object> result = new HashMap<>();
+        if (reserveId == null) {
+            result.put("success", false);
+            result.put("message", "Invalid parameter");
+            return result;
+        }
+        try {
+            int updated = jdbcTemplate.update(
+                "update appointment set status=1, update_time=now(), updated_time=now() where id=? and is_deleted=0 and status=0",
+                reserveId
+            );
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "Reservation confirmed successfully");
+            } else {
+                result.put("success", false);
+                result.put("message", "Reservation does not exist or status not allowed");
+            }
+        } catch (Exception ex) {
+            log.error("confirmReserve failed, reserveId={}", reserveId, ex);
+            result.put("success", false);
+            result.put("message", "Confirmation failed");
+        }
+        return result;
+    }
+
+    @Override
     public Map<String, Object> verifyReserve(Long reserveId) {
         Map<String, Object> result = new HashMap<>();
         if (reserveId == null) {
             result.put("success", false);
-            result.put("message", "参数无效");
+            result.put("message", "Invalid parameter");
             return result;
         }
         try {
@@ -526,7 +689,7 @@ public class DeskServiceImpl implements IDeskService {
             );
             if (rows.isEmpty()) {
                 result.put("success", false);
-                result.put("message", "预约不存在");
+                result.put("message", "Reservation does not exist");
                 return result;
             }
             Map<String, Object> a = rows.get(0);
@@ -538,10 +701,16 @@ public class DeskServiceImpl implements IDeskService {
             Long doctorId = parseLongObj(a.get("doctor_id"));
             if (ownerId == null || petId == null || doctorId == null) {
                 result.put("success", false);
-                result.put("message", "预约数据不完整");
+                result.put("message", "Reservation data incomplete");
                 return result;
             }
             jdbcTemplate.update("update appointment set status=2, verified_time=now(), update_time=now(), updated_time=now() where id=?", reserveId);
+            // 更新宠物最近就诊时间
+            try {
+                jdbcTemplate.update("update pet set last_visit=now(), update_time=now(), updated_time=now() where id=?", petId);
+            } catch (Exception e) {
+                log.warn("更新宠物最近就诊时间失败, petId={}", petId, e);
+            }
             Long exist = jdbcTemplate.queryForObject("select count(1) from register_record where appointment_id=? and is_deleted=0", Long.class, reserveId);
             if (exist != null && exist == 0) {
                 String registerNo = "RG" + System.currentTimeMillis();
@@ -559,7 +728,7 @@ public class DeskServiceImpl implements IDeskService {
         } catch (Exception ex) {
             log.error("verifyReserve failed, reserveId={}", reserveId, ex);
             result.put("success", false);
-            result.put("message", "核销失败");
+            result.put("message", "Verification failed");
             return result;
         }
     }
@@ -575,7 +744,7 @@ public class DeskServiceImpl implements IDeskService {
         }
         if (ownerId == null || petId == null || doctorId == null) {
             result.put("success", false);
-            result.put("message", "参数无效");
+            result.put("message", "Invalid parameter");
             return result;
         }
         try {
@@ -599,12 +768,12 @@ public class DeskServiceImpl implements IDeskService {
             );
             result.put("success", true);
             result.put("reserveNo", appointmentNo);
-            result.put("message", "预约已创建，请先在预约核销中完成核销");
+            result.put("message", "Reservation created, please complete verification in reservation verification first");
             return result;
         } catch (Exception ex) {
             log.error("createRegister failed", ex);
             result.put("success", false);
-            result.put("message", "创建挂号失败：" + friendlyDbError(ex));
+            result.put("message", "Failed to create register: " + friendlyDbError(ex));
             return result;
         }
     }
@@ -614,7 +783,7 @@ public class DeskServiceImpl implements IDeskService {
         Map<String, Object> result = new HashMap<>();
         if (id == null) {
             result.put("success", false);
-            result.put("message", "参数无效");
+            result.put("message", "Invalid parameter");
             return result;
         }
         try {
@@ -640,12 +809,12 @@ public class DeskServiceImpl implements IDeskService {
                     subtotal, discount, reduction, adjustAmount, adjustReason, payable, id
             );
             result.put("success", updated > 0);
-            result.put("message", updated > 0 ? "更新成功" : "收费单不存在");
+            result.put("message", updated > 0 ? "Update successful" : "Charge record does not exist");
             return result;
         } catch (Exception ex) {
             log.error("updateChargePricing failed, id={}", id, ex);
             result.put("success", false);
-            result.put("message", "更新失败");
+            result.put("message", "Update failed");
             return result;
         }
     }
@@ -655,21 +824,21 @@ public class DeskServiceImpl implements IDeskService {
         Map<String, Object> result = new HashMap<>();
         if (id == null) {
             result.put("success", false);
-            result.put("message", "参数无效");
+            result.put("message", "Invalid parameter");
             return result;
         }
         try {
             int updated = jdbcTemplate.update(
-                    "update order_info set pay_status=2, pay_status_text='refunding', remark=concat(ifnull(remark,''),' 退款原因:',?), update_time=now(), updated_time=now() where id=? and pay_status=1",
+                    "update order_info set pay_status=2, pay_status_text='refunding', remark=concat(ifnull(remark,''),' Refund reason:',?), update_time=now(), updated_time=now() where id=? and pay_status=1",
                     strOrDefault(reason, ""), id
             );
             result.put("success", updated > 0);
-            result.put("message", updated > 0 ? "退款申请成功" : "订单不存在或状态不允许");
+            result.put("message", updated > 0 ? "Refund application successful" : "Order does not exist or status not allowed");
             return result;
         } catch (Exception ex) {
             log.error("applyRefund failed, id={}", id, ex);
             result.put("success", false);
-            result.put("message", "退款申请失败");
+            result.put("message", "Refund application failed");
             return result;
         }
     }
@@ -725,9 +894,17 @@ public class DeskServiceImpl implements IDeskService {
                 Long id = parseLongObj(d.get("id"));
                 Integer workStatus = parseInteger(d.get("work_status"));
                 String status;
-                if (workStatus != null && workStatus == 0) {
-                    status = "REST";
+                // 优先以 doctor_profile.work_status 为准，不再被历史挂号记录覆盖
+                if (workStatus != null) {
+                    if (workStatus == 0) {
+                        status = "REST";
+                    } else if (workStatus == 2) {
+                        status = "BUSY";
+                    } else {
+                        status = "FREE";
+                    }
                 } else if (id != null && busyMap.containsKey(id)) {
+                    // work_status 为空时的回退判断
                     status = "BUSY";
                 } else {
                     status = "FREE";
@@ -743,6 +920,33 @@ public class DeskServiceImpl implements IDeskService {
         }
         Map<String, Object> result = new HashMap<>();
         result.put("data", list);
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getTodayStats() {
+        Map<String, Object> data = new HashMap<>();
+        try {
+            Long registerCount = jdbcTemplate.queryForObject(
+                    "select count(1) from register_record where is_deleted=0 and date(create_time) = curdate()",
+                    Long.class);
+            Long doneCount = jdbcTemplate.queryForObject(
+                    "select count(1) from register_record where is_deleted=0 and status=2 and date(updated_time) = curdate()",
+                    Long.class);
+            Double chargeTotal = jdbcTemplate.queryForObject(
+                    "select coalesce(sum(paid_amount),0) from order_info where pay_status=1 and date(pay_time) = curdate()",
+                    Double.class);
+            data.put("registerCount", registerCount == null ? 0 : registerCount.intValue());
+            data.put("doneCount", doneCount == null ? 0 : doneCount.intValue());
+            data.put("chargeTotal", chargeTotal == null ? 0.0 : chargeTotal);
+        } catch (Exception ex) {
+            log.error("getTodayStats failed", ex);
+            data.put("registerCount", 0);
+            data.put("doneCount", 0);
+            data.put("chargeTotal", 0.0);
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("data", data);
         return result;
     }
 
@@ -838,12 +1042,25 @@ public class DeskServiceImpl implements IDeskService {
         if (isBlank(serviceType)) {
             return null;
         }
+        String type = serviceType.trim().toLowerCase();
+        // 英文代码映射到中文服务名（与 service_item 表匹配）
+        String serviceName = type;
+        if (type.equals("consultation") || type.equals("general clinic")) {
+            serviceName = "普通门诊";
+        } else if (type.equals("vaccine") || type.equals("vaccination")) {
+            serviceName = "疫苗接种";
+        } else if (type.equals("exam") || type.equals("health check") || type.equals("physical exam")) {
+            serviceName = "体检";
+        } else if (type.equals("grooming") || type.equals("bath grooming")) {
+            serviceName = "洗澡美容";
+        }
         try {
             List<Long> ids = jdbcTemplate.query(
-                    "select id from service_item where is_deleted=0 and (service_name=? or category=?) order by id asc limit 1",
+                    "select id from service_item where is_deleted=0 and (service_name=? or category=? or service_code=?) order by id asc limit 1",
                     (rs, rowNum) -> rs.getLong("id"),
-                    serviceType.trim(),
-                    serviceType.trim()
+                    serviceName,
+                    serviceName,
+                    type
             );
             return ids.isEmpty() ? null : ids.get(0);
         } catch (Exception ex) {
@@ -946,7 +1163,7 @@ public class DeskServiceImpl implements IDeskService {
                         petId,
                         doctorId,
                         serviceItemId,
-                        strOrDefault(serviceType, "普通门诊"),
+                        strOrDefault(serviceType, "General Clinic"),
                         appointmentTime,
                         strOrDefault(reason, "")
                 );
@@ -988,22 +1205,22 @@ public class DeskServiceImpl implements IDeskService {
 
     private String friendlyDbError(Exception ex) {
         if (ex == null || ex.getMessage() == null) {
-            return "数据库异常";
+            return "Database exception";
         }
         String msg = ex.getMessage();
         String lower = msg.toLowerCase();
         if (lower.contains("communications link failure")
                 || lower.contains("connection")
                 || lower.contains("jdbcconnection")) {
-            return "数据库连接异常";
+            return "Database connection exception";
         }
         if (lower.contains("constraint") || lower.contains("foreign key")) {
-            return "关联数据不存在";
+            return "Related data does not exist";
         }
         if (lower.contains("unknown column")) {
-            return "数据库字段不匹配";
+            return "Database field mismatch";
         }
-        return "数据库写入异常";
+        return "Database write exception";
     }
 
     private void ensurePendingOrderForRegister(Long registerId) {
@@ -1037,17 +1254,29 @@ public class DeskServiceImpl implements IDeskService {
         Long petId = parseLongObj(row.get("pet_id"));
         Long doctorId = parseLongObj(row.get("doctor_id"));
         Long appointmentId = parseLongObj(row.get("appointment_id"));
-        double servicePrice = parseDouble(row.get("service_price"));
-        double registerAmount = parseDouble(row.get("amount"));
-        double payable = servicePrice > 0 ? servicePrice : (registerAmount > 0 ? registerAmount : 30D);
-        String serviceName = strOrDefault(row.get("service_name"), "普通门诊");
+        Long serviceItemId = parseLongObj(row.get("service_item_id"));
+        String serviceName = strOrDefault(row.get("service_name"), "General Clinic");
+        double payable = resolveServicePrice(serviceItemId, serviceName);
 
         String orderNo = "OD" + System.currentTimeMillis() + ((int) (Math.random() * 90) + 10);
         jdbcTemplate.update(
                 "insert into order_info(order_no,register_id,appointment_id,owner_user_id,pet_id,doctor_id,total_amount,discount_amount,reduction_amount,adjust_amount,payable_amount,paid_amount,pay_status,pay_status_text,remark,create_time,update_time,created_time,updated_time) " +
                         "values(?,?,?,?,?,?,?,0,0,0,?,0,0,'pending',?,now(),now(),now(),now())",
-                orderNo, registerId, appointmentId, ownerId, petId, doctorId, payable, payable, "挂号完成待收费：" + serviceName
+                orderNo, registerId, appointmentId, ownerId, petId, doctorId, payable, payable, "Registration completed, pending charge: " + serviceName
         );
+        // 同步生成 order_item 明细
+        try {
+            Long orderId = jdbcTemplate.queryForObject(
+                    "select id from order_info where order_no=?",
+                    Long.class, orderNo);
+            if (orderId != null) {
+                jdbcTemplate.update(
+                        "insert into order_item(order_id,item_type,item_name,quantity,unit_price,amount,line_amount,create_time) values(?,?,?,1,?,?,?,now())",
+                        orderId, "service", serviceName, payable, payable, payable);
+            }
+        } catch (Exception e) {
+            log.warn("生成订单明细失败, orderNo={}", orderNo, e);
+        }
     }
 
     private void insertReserveRegisterWithCompatibility(String registerNo,
@@ -1056,35 +1285,36 @@ public class DeskServiceImpl implements IDeskService {
                                                         Long petId,
                                                         Long doctorId,
                                                         Long serviceItemId) {
+        double amount = resolveServicePrice(serviceItemId, null);
         List<String> sqlList = new ArrayList<>();
         sqlList.add(
                 "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,created_time,updated_time,create_time,update_time) " +
-                        "values(?,?,?,?,?,?,now(),0,0,0,now(),now(),now(),now())"
+                        "values(?,?,?,?,?,?,now(),0,?,0,now(),now(),now(),now())"
         );
         sqlList.add(
                 "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,create_time,update_time) " +
-                        "values(?,?,?,?,?,?,now(),0,0,0,now(),now())"
+                        "values(?,?,?,?,?,?,now(),0,?,0,now(),now())"
         );
         sqlList.add(
                 "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,service_item_id,register_time,status,amount,is_deleted,created_time,updated_time) " +
-                        "values(?,?,?,?,?,?,now(),0,0,0,now(),now())"
+                        "values(?,?,?,?,?,?,now(),0,?,0,now(),now())"
         );
         sqlList.add(
                 "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,register_time,status,amount,is_deleted,create_time,update_time) " +
-                        "values(?,?,?,?,?,now(),0,0,0,now(),now())"
+                        "values(?,?,?,?,?,now(),0,?,0,now(),now())"
         );
         sqlList.add(
                 "insert into register_record(register_no,appointment_id,owner_user_id,pet_id,doctor_id,register_time,status,amount,is_deleted,created_time,updated_time) " +
-                        "values(?,?,?,?,?,now(),0,0,0,now(),now())"
+                        "values(?,?,?,?,?,now(),0,?,0,now(),now())"
         );
 
         Exception last = null;
         for (String sql : sqlList) {
             try {
                 if (sql.contains("service_item_id")) {
-                    jdbcTemplate.update(sql, registerNo, reserveId, ownerId, petId, doctorId, serviceItemId);
+                    jdbcTemplate.update(sql, registerNo, reserveId, ownerId, petId, doctorId, serviceItemId, amount);
                 } else {
-                    jdbcTemplate.update(sql, registerNo, reserveId, ownerId, petId, doctorId);
+                    jdbcTemplate.update(sql, registerNo, reserveId, ownerId, petId, doctorId, amount);
                 }
                 return;
             } catch (Exception ex) {
@@ -1125,5 +1355,56 @@ public class DeskServiceImpl implements IDeskService {
             }
         }
         return null;
+    }
+
+    /**
+     * 根据 service_item_id 和 service_name 解析服务价格。
+     * 优先查数据库 price 字段；若为空则按名称映射前端定价。
+     */
+    private double resolveServicePrice(Long serviceItemId, String serviceName) {
+        if (serviceItemId != null) {
+            try {
+                Double price = jdbcTemplate.queryForObject(
+                        "select price from service_item where id=?", Double.class, serviceItemId);
+                if (price != null && price > 0) {
+                    return price;
+                }
+            } catch (Exception e) {
+                log.warn("查询服务项价格失败, serviceItemId={}", serviceItemId, e);
+            }
+            try {
+                String name = jdbcTemplate.queryForObject(
+                        "select service_name from service_item where id=?", String.class, serviceItemId);
+                if (name != null && !name.isEmpty()) {
+                    serviceName = name;
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        return resolveServicePriceByName(serviceName);
+    }
+
+    private double resolveServicePriceByName(String serviceName) {
+        if (serviceName == null) {
+            return 30D;
+        }
+        String n = serviceName.trim().toLowerCase();
+        if (n.contains("门诊") || n.contains("consultation") || n.contains("clinic")) {
+            return 100D;
+        }
+        if (n.contains("疫苗") || n.contains("vaccine") || n.contains("vaccination")) {
+            return 80D;
+        }
+        if (n.contains("体检") || n.contains("exam") || n.contains("physical")) {
+            return 150D;
+        }
+        if (n.contains("洗澡") || n.contains("美容") || n.contains("grooming") || n.contains("bath")) {
+            return 60D;
+        }
+        if (n.contains("挂号")) {
+            return 30D;
+        }
+        return 30D;
     }
 }

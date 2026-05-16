@@ -6,7 +6,7 @@
 defineProps({
   description: {
     type: String,
-    default: '暂无数据'
+    default: 'No Data'
   }
 })
-</script>index.vue
+</script>

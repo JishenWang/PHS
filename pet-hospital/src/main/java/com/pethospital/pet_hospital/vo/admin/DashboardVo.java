@@ -8,4 +8,8 @@ public class DashboardVo {
     private Long doctorCount;
     private Long petCount;
     private Long todayReserve;
+    private Double income;
+    private Long pendingReserve;
+    private Long medicineCount;
+    private Long newUserThisMonth;
 }

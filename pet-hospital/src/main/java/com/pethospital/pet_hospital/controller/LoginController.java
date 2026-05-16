@@ -59,24 +59,24 @@ public class LoginController {
         if ("password".equals(loginDto.getLoginType())) {
             // 密码登录
             if (loginDto.getPassword() == null || loginDto.getPassword().isEmpty()) {
-                return ResultVo.badRequest("密码不能为空");
+                return ResultVo.badRequest("Password cannot be empty");
             }
             return commonService.loginByPassword(loginDto);
         } else if ("code".equals(loginDto.getLoginType())) {
             // 验证码登录
             if (loginDto.getCode() == null || loginDto.getCode().isEmpty()) {
-                return ResultVo.badRequest("验证码不能为空");
+                return ResultVo.badRequest("Captcha cannot be empty");
             }
             // 校验验证码
             String cachedCode = redisUtil.get("sms:code:" + loginDto.getPhone(), String.class);
             if (cachedCode == null || !cachedCode.equals(loginDto.getCode())) {
-                return ResultVo.badRequest("验证码错误或已过期");
+                return ResultVo.badRequest("Captcha incorrect or expired");
             }
             // 登录成功，删除验证码
             redisUtil.delete("sms:code:" + loginDto.getPhone());
             return commonService.loginByCode(loginDto);
         } else {
-            return ResultVo.badRequest("不支持的登录方式");
+            return ResultVo.badRequest("Unsupported login method");
         }
     }
     
@@ -91,7 +91,7 @@ public class LoginController {
         }
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            return ResultVo.unauthorized("无效的令牌");
+            return ResultVo.unauthorized("Invalid token");
         }
         String newToken = commonService.refreshToken(userId);
         return ResultVo.success(newToken);
@@ -107,7 +107,7 @@ public class LoginController {
         }
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            return ResultVo.unauthorized("无效的令牌");
+            return ResultVo.unauthorized("Invalid token");
         }
         UserInfoVo userInfo = commonService.getUserInfo(userId);
         return ResultVo.success(userInfo);
@@ -127,7 +127,7 @@ public class LoginController {
         if (expiration > 0) {
             redisUtil.set("blacklist:token:" + token, "1", expiration, TimeUnit.MILLISECONDS);
         }
-        return ResultVo.success("退出成功");
+        return ResultVo.success("Logout successful");
     }
     
     /**
@@ -142,15 +142,15 @@ public class LoginController {
         // 校验验证码
         String cachedCode = redisUtil.get("sms:code:" + phone, String.class);
         if (cachedCode == null || !cachedCode.equals(code)) {
-            return ResultVo.badRequest("验证码错误或已过期");
+            return ResultVo.badRequest("Captcha incorrect or expired");
         }
         
         boolean success = commonService.resetPassword(phone, newPassword);
         if (success) {
             redisUtil.delete("sms:code:" + phone);
-            return ResultVo.success("密码重置成功");
+            return ResultVo.success("Password reset successful");
         } else {
-            return ResultVo.error("密码重置失败，用户不存在");
+            return ResultVo.error("Password reset failed, user does not exist");
         }
     }
 }

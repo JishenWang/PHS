@@ -89,7 +89,9 @@ export const doctorModule = {
     const doctorId = getDoctorId()
     return request.get('/doctor/statistics', { params: { ...params, doctorId } })
   },
-  getAcceptStatistics: (params) => request.get('/doctor/statistics/accept', { params })
+  getAcceptStatistics: (params) => request.get('/doctor/statistics/accept', { params }),
+  submitFeedback: (data) => request.post('/doctor/feedback', data),
+  checkVersion: () => request.get('/doctor/version')
 }
 
 export default {

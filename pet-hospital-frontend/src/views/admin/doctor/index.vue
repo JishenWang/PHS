@@ -3,53 +3,53 @@
     <!-- 搜索区域 -->
     <el-card class="search-card" shadow="never">
       <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="医生姓名">
+        <el-form-item :label="$t('doctor.doctorName')">
           <el-input 
             v-model="searchForm.name" 
-            placeholder="请输入医生姓名" 
+            :placeholder="$t('doctor.doctorNamePlaceholder')" 
             clearable
             prefix-icon="User"
           />
         </el-form-item>
         
         <!-- 修复：科室选项值改为中文，与数据库匹配 -->
-        <el-form-item label="科室">
+        <el-form-item :label="$t('doctor.department')">
           <el-select 
             v-model="searchForm.department" 
-            placeholder="请选择科室" 
+            :placeholder="$t('doctor.selectDepartment')" 
             clearable
             style="width: 140px"
           >
-            <el-option label="内科" value="内科" />
-            <el-option label="外科" value="外科" />
-            <el-option label="皮肤科" value="皮肤科" />
-            <el-option label="眼科" value="眼科" />
-            <el-option label="牙科" value="牙科" />
-            <el-option label="影像科" value="影像科" />
-            <el-option label="口腔科" value="口腔科" />
-            <el-option label="检验科" value="检验科" />
+            <el-option :label="$t('doctor.deptInternalMedicine')" value="内科" />
+            <el-option :label="$t('doctor.deptSurgery')" value="外科" />
+            <el-option :label="$t('doctor.deptDermatology')" value="皮肤科" />
+            <el-option :label="$t('doctor.deptOphthalmology')" value="眼科" />
+            <el-option :label="$t('doctor.deptDentistry')" value="牙科" />
+            <el-option :label="$t('doctor.deptImaging')" value="影像科" />
+            <el-option :label="$t('doctor.deptStomatology')" value="口腔科" />
+            <el-option :label="$t('doctor.deptLaboratory')" value="检验科" />
           </el-select>
         </el-form-item>
         
-        <el-form-item label="职称">
+        <el-form-item :label="$t('doctor.titleLabel')">
           <el-select 
             v-model="searchForm.title" 
-            placeholder="请选择职称" 
+            :placeholder="$t('doctor.selectTitle')" 
             clearable
             style="width: 140px"
           >
-            <el-option label="主任医师" value="主任医师" />
-            <el-option label="副主任医师" value="副主任医师" />
-            <el-option label="主治医师" value="主治医师" />
-            <el-option label="执业医师" value="执业医师" />
-            <el-option label="检验医师" value="检验医师" />
-            <el-option label="医师" value="医师" />
+            <el-option :label="$t('doctor.titleChiefPhysician')" value="主任医师" />
+            <el-option :label="$t('doctor.titleAssociateChiefPhysician')" value="副主任医师" />
+            <el-option :label="$t('doctor.titleAttendingPhysician')" value="主治医师" />
+            <el-option :label="$t('doctor.titleLicensedPhysician')" value="执业医师" />
+            <el-option :label="$t('doctor.titleLabPhysician')" value="检验医师" />
+            <el-option :label="$t('doctor.titlePhysician')" value="医师" />
           </el-select>
         </el-form-item>
         
         <el-form-item>
-          <el-button type="primary" @click="handleSearch" :icon="Search">搜索</el-button>
-          <el-button @click="handleReset" :icon="RefreshRight">重置</el-button>
+          <el-button type="primary" @click="handleSearch" :icon="Search">{{ $t('common.search') }}</el-button>
+          <el-button @click="handleReset" :icon="RefreshRight">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -59,12 +59,11 @@
       <template #header>
         <div class="card-header">
           <div class="header-left">
-            <span class="title">医生列表</span>
-            <el-tag type="info" effect="plain">共 {{ tableData.length }} 位医生</el-tag>
+            <span class="title">{{ $t('doctor.doctorList') }}</span>
+            <el-tag type="info" effect="plain">{{ $t('doctor.totalDoctors', { count: tableData.length }) }}</el-tag>
           </div>
           <div class="header-right">
-            <el-button type="primary" @click="handleAdd" :icon="Plus">新增医生</el-button>
-            <el-button type="success" :icon="Download" @click="handleExport">导出</el-button>
+            <el-button type="primary" @click="handleAdd" :icon="Plus">{{ $t('doctor.addDoctor') }}</el-button>
           </div>
         </div>
       </template>
@@ -102,20 +101,20 @@
               </div>
               <div class="info-item">
                 <el-icon><User /></el-icon>
-                <span>接诊 {{ doctor.patientCount || 0 }} 位患者</span>
+                <span>{{ $t('doctor.patientsServed', { count: doctor.patientCount || 0 }) }}</span>
               </div>
             </div>
             
             <div class="doctor-actions">
-              <el-button type="primary" link :icon="Edit" @click="handleEdit(doctor)">编辑</el-button>
-              <el-button type="primary" link :icon="Calendar" @click="handleSchedule(doctor)">排班</el-button>
-              <el-button type="danger" link :icon="Delete" @click="handleDelete(doctor)">删除</el-button>
+              <el-button type="primary" link :icon="Edit" @click="handleEdit(doctor)">{{ $t('common.edit') }}</el-button>
+              <el-button type="primary" link :icon="Calendar" @click="handleSchedule(doctor)">{{ $t('doctor.schedule') }}</el-button>
+              <el-button type="danger" link :icon="Delete" @click="handleDelete(doctor)">{{ $t('common.delete') }}</el-button>
             </div>
           </el-card>
         </el-col>
       </el-row>
 
-      <el-empty v-if="tableData.length === 0 && !loading" description="暂无医生数据" />
+      <el-empty v-if="tableData.length === 0 && !loading" :description="$t('doctor.noDoctorData')" />
     </el-card>
 
     <!-- 新增/编辑对话框 - 同样修复科室选项 -->
@@ -134,21 +133,21 @@
       >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="医生姓名" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入医生姓名" prefix-icon="User" />
+            <el-form-item :label="$t('doctor.doctorName')" prop="name">
+              <el-input v-model="formData.name" :placeholder="$t('doctor.doctorNamePlaceholder')" prefix-icon="User" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="科室" prop="department">
-              <el-select v-model="formData.department" placeholder="请选择科室" style="width: 100%">
-                <el-option label="内科" value="内科" />
-                <el-option label="外科" value="外科" />
-                <el-option label="皮肤科" value="皮肤科" />
-                <el-option label="眼科" value="眼科" />
-                <el-option label="牙科" value="牙科" />
-                <el-option label="影像科" value="影像科" />
-                <el-option label="口腔科" value="口腔科" />
-                <el-option label="检验科" value="检验科" />
+            <el-form-item :label="$t('doctor.department')" prop="department">
+              <el-select v-model="formData.department" :placeholder="$t('doctor.selectDepartment')" style="width: 100%">
+                <el-option :label="$t('doctor.deptInternalMedicine')" value="内科" />
+                <el-option :label="$t('doctor.deptSurgery')" value="外科" />
+                <el-option :label="$t('doctor.deptDermatology')" value="皮肤科" />
+                <el-option :label="$t('doctor.deptOphthalmology')" value="眼科" />
+                <el-option :label="$t('doctor.deptDentistry')" value="牙科" />
+                <el-option :label="$t('doctor.deptImaging')" value="影像科" />
+                <el-option :label="$t('doctor.deptStomatology')" value="口腔科" />
+                <el-option :label="$t('doctor.deptLaboratory')" value="检验科" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -156,43 +155,43 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="职称" prop="title">
-              <el-select v-model="formData.title" placeholder="请选择职称" style="width: 100%">
-                <el-option label="主任医师" value="主任医师" />
-                <el-option label="副主任医师" value="副主任医师" />
-                <el-option label="主治医师" value="主治医师" />
-                <el-option label="执业医师" value="执业医师" />
-                <el-option label="检验医师" value="检验医师" />
-                <el-option label="医师" value="医师" />
+            <el-form-item :label="$t('doctor.titleLabel')" prop="title">
+              <el-select v-model="formData.title" :placeholder="$t('doctor.selectTitle')" style="width: 100%">
+                <el-option :label="$t('doctor.titleChiefPhysician')" value="主任医师" />
+                <el-option :label="$t('doctor.titleAssociateChiefPhysician')" value="副主任医师" />
+                <el-option :label="$t('doctor.titleAttendingPhysician')" value="主治医师" />
+                <el-option :label="$t('doctor.titleLicensedPhysician')" value="执业医师" />
+                <el-option :label="$t('doctor.titleLabPhysician')" value="检验医师" />
+                <el-option :label="$t('doctor.titlePhysician')" value="医师" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="联系电话" prop="phone">
-              <el-input v-model="formData.phone" placeholder="请输入联系电话" prefix-icon="Phone" />
+            <el-form-item :label="$t('doctor.contactPhone')" prop="phone">
+              <el-input v-model="formData.phone" :placeholder="$t('doctor.pleaseEnterContactPhone')" prefix-icon="Phone" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="专业特长" prop="specialty">
+        <el-form-item :label="$t('doctor.specialty')" prop="specialty">
           <el-input 
             v-model="formData.specialty" 
             type="textarea" 
             :rows="2" 
-            placeholder="请输入专业特长，如：小动物内科疾病诊治、软组织手术等"
+            :placeholder="$t('doctor.specialtyPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="医生简介">
+        <el-form-item :label="$t('doctor.introduction')">
           <el-input 
             v-model="formData.introduction" 
             type="textarea" 
             :rows="4" 
-            placeholder="请输入医生简介"
+            :placeholder="$t('doctor.introductionPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="医生头像">
+        <el-form-item :label="$t('doctor.doctorAvatar')">
           <el-upload
             class="avatar-uploader"
             :http-request="handleUpload"
@@ -206,8 +205,8 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -215,22 +214,24 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, RefreshRight, Download, Edit, Delete, Phone, Star, User, Calendar } from '@element-plus/icons-vue'
+import { Plus, Search, RefreshRight, Edit, Delete, Phone, Star, User, Calendar } from '@element-plus/icons-vue'
 import { 
   getDoctorList, 
   addDoctor, 
   updateDoctor, 
   deleteDoctor, 
   updateDoctorStatus,
-  exportDoctors 
 } from '@/api/admin/admin'
 import request from '@/utils/request'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const submitLoading = ref(false)
 const dialogVisible = ref(false)
-const dialogTitle = ref('新增医生')
+const dialogTitle = ref(t('doctor.addDoctor'))
 const formRef = ref(null)
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
@@ -252,11 +253,11 @@ const formData = reactive({
 })
 
 const formRules = {
-  name: [{ required: true, message: '请输入医生姓名', trigger: 'blur' }],
-  department: [{ required: true, message: '请选择科室', trigger: 'change' }],
-  title: [{ required: true, message: '请选择职称', trigger: 'change' }],
-  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
-  specialty: [{ required: true, message: '请输入专业特长', trigger: 'blur' }]
+  name: [{ required: true, message: t('doctor.pleaseEnterDoctorName'), trigger: 'blur' }],
+  department: [{ required: true, message: t('doctor.pleaseSelectDepartment'), trigger: 'change' }],
+  title: [{ required: true, message: t('doctor.pleaseSelectTitle'), trigger: 'change' }],
+  phone: [{ required: true, message: t('doctor.pleaseEnterContactPhone'), trigger: 'blur' }],
+  specialty: [{ required: true, message: t('doctor.pleaseEnterSpecialty'), trigger: 'blur' }]
 }
 
 const tableData = ref([])
@@ -271,18 +272,18 @@ const fetchDoctorList = async () => {
     if (searchForm.department) params.department = searchForm.department
     if (searchForm.title) params.title = searchForm.title
     
-    console.log('搜索参数:', params)
+    console.log('Search params:', params)
     
     const res = await getDoctorList(params)
     if (res.code === 200) {
       tableData.value = res.data || []
-      console.log('获取到医生数据:', tableData.value.length, '条')
+      console.log('Fetched doctor data:', tableData.value.length, 'records')
     } else {
-      ElMessage.error(res.message || '获取医生列表失败')
+      ElMessage.error(res.message || t('doctor.fetchFailed'))
     }
   } catch (error) {
-    console.error('获取医生列表失败:', error)
-    ElMessage.error('获取医生列表失败')
+    console.error('Failed to fetch doctor list:', error)
+    ElMessage.error(t('doctor.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -311,27 +312,8 @@ const handleReset = () => {
   fetchDoctorList()
 }
 
-const handleExport = async () => {
-  try {
-    const params = {}
-    if (searchForm.name?.trim()) params.name = searchForm.name.trim()
-    if (searchForm.department) params.department = searchForm.department
-    if (searchForm.title) params.title = searchForm.title
-    
-    const res = await exportDoctors(params)
-    const blob = new Blob([res], { type: 'application/vnd.ms-excel' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `医生列表_${new Date().toLocaleDateString()}.xlsx`
-    link.click()
-    ElMessage.success('导出成功')
-  } catch (error) {
-    ElMessage.error('导出失败')
-  }
-}
-
 const handleAdd = () => {
-  dialogTitle.value = '新增医生'
+  dialogTitle.value = t('doctor.addDoctor')
   Object.assign(formData, {
     id: null,
     name: '',
@@ -346,29 +328,29 @@ const handleAdd = () => {
 }
 
 const handleEdit = (doctor) => {
-  dialogTitle.value = '编辑医生'
+  dialogTitle.value = t('doctor.editDoctor')
   Object.assign(formData, { ...doctor })
   dialogVisible.value = true
 }
 
 const handleSchedule = (doctor) => {
-  ElMessage.info(`查看 ${doctor.name} 的排班`)
+  ElMessage.info(t('doctor.viewSchedule', { name: doctor.name }))
 }
 
 const handleDelete = (doctor) => {
-  ElMessageBox.confirm(`确定删除医生 "${doctor.name}" 吗？`, '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('doctor.deleteConfirm', { name: doctor.name }), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await deleteDoctor(doctor.id)
       if (res.code === 200) {
-        ElMessage.success('删除成功')
+        ElMessage.success(t('common.deleteSuccess'))
         fetchDoctorList()
       }
     } catch (error) {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('common.deleteFailed'))
     }
   })
 }
@@ -377,11 +359,11 @@ const handleStatusChange = async (doctor) => {
   try {
     const res = await updateDoctorStatus(doctor.id, doctor.status)
     if (res.code === 200) {
-      ElMessage.success(`${doctor.name} 已${doctor.status === 1 ? '启用' : '禁用'}`)
+      ElMessage.success(t('doctor.statusChangeSuccess', { name: doctor.name, status: doctor.status === 1 ? t('common.on') : t('common.off') }))
     }
   } catch (error) {
     doctor.status = doctor.status === 1 ? 0 : 1
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('common.statusUpdateFailed'))
   }
 }
 
@@ -390,10 +372,10 @@ const beforeAvatarUpload = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isJPG) {
-    ElMessage.error('上传头像图片只能是 JPG/PNG 格式!')
+    ElMessage.error(t('doctor.avatarFormatError'))
   }
   if (!isLt2M) {
-    ElMessage.error('上传头像图片大小不能超过 2MB!')
+    ElMessage.error(t('doctor.avatarSizeError'))
   }
   return isJPG && isLt2M
 }
@@ -409,12 +391,12 @@ const handleUpload = async (options) => {
     
     if (res.code === 200) {
       formData.avatar = res.data.url
-      ElMessage.success('上传成功')
+      ElMessage.success(t('common.uploadSuccess'))
     } else {
-      ElMessage.error(res.message || '上传失败')
+      ElMessage.error(res.message || t('common.uploadFailed'))
     }
   } catch (error) {
-    ElMessage.error('上传失败')
+    ElMessage.error(t('common.uploadFailed'))
     console.error(error)
   }
 }
@@ -428,13 +410,13 @@ const handleSubmit = async () => {
     const res = await api(formData)
     
     if (res.code === 200) {
-      ElMessage.success(formData.id ? '编辑成功' : '新增成功')
+      ElMessage.success(formData.id ? t('common.updateSuccess') : t('common.addSuccess'))
       dialogVisible.value = false
       fetchDoctorList()
     }
   } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error(error.response?.data?.message || '操作失败')
+    console.error('Submit failed:', error)
+    ElMessage.error(error.response?.data?.message || t('common.operationFailed'))
   } finally {
     submitLoading.value = false
   }

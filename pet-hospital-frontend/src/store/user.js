@@ -42,9 +42,9 @@ export const useUserStore = defineStore('user', {
           return { success: true, role }
         }
         
-        return { success: false, message: response.message || '账号或密码错误' }
+        return { success: false, message: response.message || 'Incorrect username or password' }
       } catch (error) {
-        return { success: false, message: error.message || '登录失败' }
+        return { success: false, message: error.message || 'Login failed' }
       }
     },
     
@@ -53,7 +53,7 @@ export const useUserStore = defineStore('user', {
       try {
         await request.post('/auth/logout')
       } catch (error) {
-        console.error('登出请求失败:', error)
+        console.error('Logout request failed:', error)
       } finally {
         const permissionStore = usePermissionStore()
         permissionStore.resetRoutes()

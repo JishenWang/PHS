@@ -28,13 +28,16 @@ export const useSettingsStore = defineStore('settings', () => {
   const showRealName = ref(true)
   const showContact = ref(false)
   const consultVisible = ref(true)
+  
+  // 数据设置（管理端）
+  const pageSize = ref(20)
 
   // ========== 计算属性 ==========
   
   // 获取状态文本
   const defaultStatusText = computed(() => {
-    const map = { 0: '休息中', 1: '空闲', 2: '接诊中' }
-    return map[defaultStatus.value] || '空闲'
+    const map = { 0: 'Resting', 1: 'Free', 2: 'In Progress' }
+    return map[defaultStatus.value] || 'Free'
   })
   
   // 获取模板默认内容
@@ -52,37 +55,37 @@ export const useSettingsStore = defineStore('settings', () => {
         doctorAdvice: ''
       },
       internal: {
-        chiefComplaint: '食欲不振、精神萎靡',
-        symptoms: '宠物出现食欲减退、精神不振、活动减少等症状',
-        presentIllness: '近2-3天出现食欲下降，精神状态不佳',
-        pastHistory: '无特殊病史',
-        physicalExam: '体温：38.5℃，心率：正常，呼吸：正常',
-        auxiliaryExam: '建议进行血常规检查',
-        diagnosis: '初步诊断：消化系统功能紊乱',
-        treatmentPlan: '1. 口服益生菌调节肠道菌群\n2. 清淡饮食\n3. 观察3-5天',
-        doctorAdvice: '注意观察食欲恢复情况，如无改善请及时复诊'
+        chiefComplaint: 'Loss of appetite, lethargy',
+        symptoms: 'Pet shows decreased appetite, low spirits, reduced activity',
+        presentIllness: 'Appetite decline in the last 2-3 days, poor mental state',
+        pastHistory: 'No special medical history',
+        physicalExam: 'Temperature: 38.5°C, heart rate: normal, respiration: normal',
+        auxiliaryExam: 'Recommend blood routine examination',
+        diagnosis: 'Preliminary diagnosis: digestive system dysfunction',
+        treatmentPlan: '1. Oral probiotics to regulate intestinal flora\n2. Light diet\n3. Observe for 3-5 days',
+        doctorAdvice: 'Monitor appetite recovery; if no improvement, please revisit promptly'
       },
       surgery: {
-        chiefComplaint: '外伤、跛行',
-        symptoms: '局部肿胀、疼痛、活动受限',
-        presentIllness: '今日发现跛行，检查发现局部外伤',
-        pastHistory: '无手术史',
-        physicalExam: '患处局部肿胀，触痛明显',
-        auxiliaryExam: '建议进行X光检查排除骨折',
-        diagnosis: '初步诊断：软组织挫伤',
-        treatmentPlan: '1. 局部冷敷\n2. 限制活动\n3. 口服消炎止痛药',
-        doctorAdvice: '限制活动3-5天，如症状加重请及时复诊'
+        chiefComplaint: 'Trauma, lameness',
+        symptoms: 'Local swelling, pain, limited mobility',
+        presentIllness: 'Lameness found today, local trauma detected upon examination',
+        pastHistory: 'No surgical history',
+        physicalExam: 'Local swelling at the affected area, obvious tenderness',
+        auxiliaryExam: 'Recommend X-ray to rule out fracture',
+        diagnosis: 'Preliminary diagnosis: soft tissue contusion',
+        treatmentPlan: '1. Local cold compress\n2. Restrict activity\n3. Oral anti-inflammatory painkillers',
+        doctorAdvice: 'Restrict activity for 3-5 days; if symptoms worsen, please revisit promptly'
       },
       vaccine: {
-        chiefComplaint: '常规疫苗接种',
-        symptoms: '无异常症状，精神状态良好',
-        presentIllness: '健康，无不适表现',
-        pastHistory: '疫苗接种史完整',
-        physicalExam: '体温：38.2℃，心率：正常，呼吸：正常，体表检查无异常',
-        auxiliaryExam: '无需辅助检查',
-        diagnosis: '健康状况良好，适合接种疫苗',
-        treatmentPlan: '接种狂犬疫苗/四联疫苗',
-        doctorAdvice: '接种后观察30分钟，注意是否有过敏反应'
+        chiefComplaint: 'Routine vaccination',
+        symptoms: 'No abnormal symptoms, good mental state',
+        presentIllness: 'Healthy, no discomfort',
+        pastHistory: 'Complete vaccination history',
+        physicalExam: 'Temperature: 38.2°C, heart rate: normal, respiration: normal, no abnormalities on body surface examination',
+        auxiliaryExam: 'No auxiliary examination needed',
+        diagnosis: 'Good health condition, suitable for vaccination',
+        treatmentPlan: 'Administer rabies vaccine / quadruple vaccine',
+        doctorAdvice: 'Observe for 30 minutes after vaccination; watch for allergic reactions'
       }
     }
     return templates[templateType] || templates.general
@@ -90,9 +93,19 @@ export const useSettingsStore = defineStore('settings', () => {
 
   // ========== 方法 ==========
   
+  // 根据当前路径获取存储 key
+  const getStorageKey = () => {
+    const path = window.location.pathname
+    if (path.startsWith('/admin')) return 'admin_settings'
+    if (path.startsWith('/doctor')) return 'doctor_settings'
+    if (path.startsWith('/desk')) return 'desk_settings'
+    if (path.startsWith('/owner')) return 'owner_settings'
+    return 'doctor_settings'
+  }
+  
   // 初始化：从 localStorage 加载
   const initSettings = () => {
-    const saved = localStorage.getItem('doctor_settings')
+    const saved = localStorage.getItem(getStorageKey())
     if (saved) {
       try {
         const data = JSON.parse(saved)
@@ -117,10 +130,12 @@ export const useSettingsStore = defineStore('settings', () => {
         showContact.value = data.showContact || false
         consultVisible.value = data.consultVisible !== false
         
+        pageSize.value = data.pageSize || 20
+        
         // 应用主题色
         applyThemeColor(themeColor.value)
       } catch (e) {
-        console.error('加载设置失败', e)
+        console.error('Load settings failed', e)
       }
     }
   }
@@ -144,9 +159,10 @@ export const useSettingsStore = defineStore('settings', () => {
       autoSavePrescription: autoSavePrescription.value,
       showRealName: showRealName.value,
       showContact: showContact.value,
-      consultVisible: consultVisible.value
+      consultVisible: consultVisible.value,
+      pageSize: pageSize.value
     }
-    localStorage.setItem('doctor_settings', JSON.stringify(data))
+    localStorage.setItem(getStorageKey(), JSON.stringify(data))
   }
   
   // 恢复默认
@@ -172,22 +188,34 @@ export const useSettingsStore = defineStore('settings', () => {
     showContact.value = false
     consultVisible.value = true
     
+    pageSize.value = 20
+    
     applyThemeColor(themeColor.value)
     saveSettings()
   }
   
+  // HEX 转 RGBA
+  const hexToRgba = (hex, alpha) => {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+
   // 应用主题色（修改 CSS 变量）
   const applyThemeColor = (color) => {
     document.documentElement.style.setProperty('--el-color-primary', color)
-    // 生成不同透明度的变体
-    document.documentElement.style.setProperty('--el-color-primary-light-3', color + '80')
-    document.documentElement.style.setProperty('--el-color-primary-light-5', color + '40')
-    document.documentElement.style.setProperty('--el-color-primary-light-7', color + '20')
-    document.documentElement.style.setProperty('--el-color-primary-light-8', color + '10')
-    document.documentElement.style.setProperty('--el-color-primary-light-9', color + '08')
+    // 生成不同透明度的变体（使用 RGBA 格式兼容性更好）
+    document.documentElement.style.setProperty('--el-color-primary-light-3', hexToRgba(color, 0.5))
+    document.documentElement.style.setProperty('--el-color-primary-light-5', hexToRgba(color, 0.25))
+    document.documentElement.style.setProperty('--el-color-primary-light-7', hexToRgba(color, 0.125))
+    document.documentElement.style.setProperty('--el-color-primary-light-8', hexToRgba(color, 0.0625))
+    document.documentElement.style.setProperty('--el-color-primary-light-9', hexToRgba(color, 0.05))
     
     // 同时设置一些自定义变量供布局使用
     document.documentElement.style.setProperty('--primary-color', color)
+    document.documentElement.style.setProperty('--primary-color-light-bg', hexToRgba(color, 0.06))
+    document.documentElement.style.setProperty('--primary-color-hover-text', color)
   }
   
   // 播放提示音
@@ -253,7 +281,7 @@ export const useSettingsStore = defineStore('settings', () => {
     themeColor, sidebarStyle, collapseMenu, showBreadcrumb,
     notifyNewRegister, notifyNewConsult, notifyPrescriptionPaid, notifyTimeout,
     soundEnabled, desktopNotify, refreshInterval, defaultStatus, recordTemplate,
-    autoSavePrescription, showRealName, showContact, consultVisible
+    autoSavePrescription, showRealName, showContact, consultVisible, pageSize
   ], () => {
     saveSettings()
   }, { deep: true })
@@ -277,6 +305,7 @@ export const useSettingsStore = defineStore('settings', () => {
     showRealName,
     showContact,
     consultVisible,
+    pageSize,
     
     // 计算属性
     defaultStatusText,

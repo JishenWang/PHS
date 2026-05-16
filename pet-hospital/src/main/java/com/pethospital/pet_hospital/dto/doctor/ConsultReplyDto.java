@@ -14,11 +14,11 @@ public class ConsultReplyDto {
     private Long consultId;
     private Long doctorId;
     private String replyContent;
-    private String images;
+    private String replyImages;
     
     public ConsultReplyDto() {}
     
-    @NotNull(message = "咨询ID不能为空")
+    @NotNull(message = "Consultation ID cannot be empty")
     public Long getConsultId() {
         return consultId;
     }
@@ -27,7 +27,7 @@ public class ConsultReplyDto {
         this.consultId = consultId;
     }
     
-    @NotNull(message = "医生ID不能为空")
+    @NotNull(message = "Doctor ID cannot be empty")
     public Long getDoctorId() {
         return doctorId;
     }
@@ -36,7 +36,7 @@ public class ConsultReplyDto {
         this.doctorId = doctorId;
     }
     
-    @NotBlank(message = "回复内容不能为空")
+    @NotBlank(message = "Reply content cannot be empty")
     public String getReplyContent() {
         return replyContent;
     }
@@ -45,11 +45,11 @@ public class ConsultReplyDto {
         this.replyContent = replyContent;
     }
     
-    public String getImages() {
-        return images;
+    public String getReplyImages() {
+        return replyImages;
     }
     
-    public void setImages(String images) {
-        this.images = images;
+    public void setReplyImages(String replyImages) {
+        this.replyImages = replyImages;
     }
 }

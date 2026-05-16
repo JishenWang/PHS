@@ -35,6 +35,7 @@ public class DoctorInfoVo {
     private Integer consultCount; // 咨询数
     private Integer acceptCount;  // 接诊数
     private Double rating;        // 评分
+    private Integer consultVisible; // 在线咨询可见性：1-可见，0-不可见
     
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

@@ -84,8 +84,8 @@
             r.owner_user_id AS owner_id,
             r.doctor_id AS doctorId,
             r.doctor_id AS doctor_id,
-            COALESCE(si.service_name, '普通门诊') AS serviceType,
-            COALESCE(si.service_name, '普通门诊') AS service_type,
+            COALESCE(si.service_name, a.service_type, '普通门诊') AS serviceType,
+            COALESCE(si.service_name, a.service_type, '普通门诊') AS service_type,
             COALESCE(r.symptom, r.triage_note, '') AS symptom,
             COALESCE(r.symptom, r.triage_note, '') AS reason,
             r.status AS status,
@@ -105,8 +105,8 @@
             p.breed AS breed,
             p.age AS age,
             p.gender AS gender,
-            d.name AS doctorName,
-            d.name AS doctor_name,
+            coalesce(d.name, doc_user.real_name, '') AS doctorName,
+            coalesce(d.name, doc_user.real_name, '') AS doctor_name,
             COALESCE(u.real_name, '') AS ownerName,
             COALESCE(u.real_name, '') AS customerName,
             COALESCE(u.real_name, '') AS owner_name,
@@ -117,7 +117,9 @@
         LEFT JOIN pet p ON r.pet_id = p.id
         LEFT JOIN sys_user u ON r.owner_user_id = u.id
         LEFT JOIN doctor_profile d ON r.doctor_id = d.id
+        LEFT JOIN sys_user doc_user ON doc_user.id = r.doctor_id
         LEFT JOIN service_item si ON r.service_item_id = si.id
+        LEFT JOIN appointment a ON r.appointment_id = a.id
         WHERE 1=1
         <if test="status != null">
             AND r.status = #{status}

@@ -4,7 +4,7 @@
       <div class="page-header">
         <h2 class="page-title">
           <el-icon><Setting /></el-icon>
-          系统设置
+          {{ $t('settings.systemSettings') }}
         </h2>
       </div>
 
@@ -28,20 +28,20 @@
 
         <!-- 右侧内容 -->
         <div class="settings-content">
-          <!-- 界面设置 -->
+          <!-- Interface Settings -->
           <template v-if="activeMenu === 'interface'">
             <el-card shadow="hover" class="setting-card">
               <template #header>
                 <div class="card-header">
-                  <span>界面设置</span>
+                  <span>{{ $t('settings.interfaceSettings') }}</span>
                 </div>
               </template>
               
               <div class="setting-list">
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">主题颜色</div>
-                    <div class="item-desc">选择系统主题色，将应用于按钮、链接等元素</div>
+                    <div class="item-title">{{ $t('settings.themeColor') }}</div>
+                    <div class="item-desc">{{ $t('settings.themeColorDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-color-picker 
@@ -54,21 +54,21 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">侧边栏样式</div>
-                    <div class="item-desc">选择侧边栏显示模式</div>
+                    <div class="item-title">{{ $t('settings.sidebarStyle') }}</div>
+                    <div class="item-desc">{{ $t('settings.sidebarStyleDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-radio-group v-model="settings.sidebarStyle" @change="handleSidebarStyleChange">
-                      <el-radio-button label="dark">深色</el-radio-button>
-                      <el-radio-button label="light">浅色</el-radio-button>
+                      <el-radio-button label="dark">{{ $t('settings.dark') }}</el-radio-button>
+                      <el-radio-button label="light">{{ $t('settings.light') }}</el-radio-button>
                     </el-radio-group>
                   </div>
                 </div>
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">菜单折叠</div>
-                    <div class="item-desc">是否默认折叠侧边栏菜单</div>
+                    <div class="item-title">{{ $t('settings.collapseMenu') }}</div>
+                    <div class="item-desc">{{ $t('settings.collapseMenuDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.collapseMenu" />
@@ -77,8 +77,8 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">显示面包屑</div>
-                    <div class="item-desc">在页面顶部显示导航路径</div>
+                    <div class="item-title">{{ $t('settings.showBreadcrumb') }}</div>
+                    <div class="item-desc">{{ $t('settings.showBreadcrumbDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.showBreadcrumb" />
@@ -88,20 +88,20 @@
             </el-card>
           </template>
 
-          <!-- 通知设置 -->
+          <!-- Notification Settings -->
           <template v-if="activeMenu === 'notification'">
             <el-card shadow="hover" class="setting-card">
               <template #header>
                 <div class="card-header">
-                  <span>通知设置</span>
+                  <span>{{ $t('settings.notificationSettings') }}</span>
                 </div>
               </template>
               
               <div class="setting-list">
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">新挂号提醒</div>
-                    <div class="item-desc">有新患者挂号时接收通知</div>
+                    <div class="item-title">{{ $t('settings.newRegistrationReminder') }}</div>
+                    <div class="item-desc">{{ $t('settings.newRegistrationDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.notifyNewRegister" />
@@ -110,8 +110,8 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">新咨询提醒</div>
-                    <div class="item-desc">患者提交在线咨询时接收通知</div>
+                    <div class="item-title">{{ $t('settings.newConsultationReminder') }}</div>
+                    <div class="item-desc">{{ $t('settings.newConsultationDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.notifyNewConsult" />
@@ -120,8 +120,8 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">处方支付提醒</div>
-                    <div class="item-desc">患者完成处方支付后通知</div>
+                    <div class="item-title">{{ $t('settings.prescriptionPaymentReminder') }}</div>
+                    <div class="item-desc">{{ $t('settings.prescriptionPaymentDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.notifyPrescriptionPaid" />
@@ -130,8 +130,8 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">接诊超时提醒</div>
-                    <div class="item-desc">待接诊超过30分钟提醒</div>
+                    <div class="item-title">{{ $t('settings.receptionTimeoutReminder') }}</div>
+                    <div class="item-desc">{{ $t('settings.receptionTimeoutDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.notifyTimeout" />
@@ -142,8 +142,8 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">声音提醒</div>
-                    <div class="item-desc">新通知时播放提示音</div>
+                    <div class="item-title">{{ $t('settings.soundReminder') }}</div>
+                    <div class="item-desc">{{ $t('settings.soundReminderDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.soundEnabled" @change="handleSoundTest" />
@@ -152,8 +152,8 @@
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">桌面通知</div>
-                    <div class="item-desc">允许浏览器桌面通知</div>
+                    <div class="item-title">{{ $t('settings.desktopNotification') }}</div>
+                    <div class="item-desc">{{ $t('settings.desktopNotificationDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.desktopNotify" @change="handleDesktopNotify" />
@@ -163,20 +163,20 @@
             </el-card>
           </template>
 
-          <!-- 工作设置 -->
+          <!-- Work Settings -->
           <template v-if="activeMenu === 'work'">
             <el-card shadow="hover" class="setting-card">
               <template #header>
                 <div class="card-header">
-                  <span>工作设置</span>
+                  <span>{{ $t('settings.workSettings') }}</span>
                 </div>
               </template>
               
               <div class="setting-list">
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">自动刷新间隔</div>
-                    <div class="item-desc">列表数据自动刷新时间（秒）</div>
+                    <div class="item-title">{{ $t('settings.autoRefreshInterval') }}</div>
+                    <div class="item-desc">{{ $t('settings.autoRefreshDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-slider 
@@ -187,43 +187,43 @@
                       show-stops 
                       style="width: 200px;" 
                     />
-                    <span class="value-text">{{ settings.refreshInterval }}秒</span>
+                    <span class="value-text">{{ settings.refreshInterval }}s</span>
                   </div>
                 </div>
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">默认接诊状态</div>
-                    <div class="item-desc">登录后自动设置的工作状态</div>
+                    <div class="item-title">{{ $t('settings.defaultReceptionStatus') }}</div>
+                    <div class="item-desc">{{ $t('settings.defaultReceptionDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-select v-model="settings.defaultStatus" style="width: 150px;">
-                      <el-option label="空闲" :value="1" />
-                      <el-option label="接诊中" :value="2" />
-                      <el-option label="休息" :value="0" />
+                      <el-option :label="$t('settings.idle')" :value="1" />
+                      <el-option :label="$t('settings.inReception')" :value="2" />
+                      <el-option :label="$t('settings.rest')" :value="0" />
                     </el-select>
                   </div>
                 </div>
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">病历模板</div>
-                    <div class="item-desc">创建病历时使用的默认模板</div>
+                    <div class="item-title">{{ $t('settings.medicalRecordTemplate') }}</div>
+                    <div class="item-desc">{{ $t('settings.medicalRecordDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-select v-model="settings.recordTemplate" style="width: 200px;">
-                      <el-option label="通用模板" value="general" />
-                      <el-option label="内科模板" value="internal" />
-                      <el-option label="外科模板" value="surgery" />
-                      <el-option label="疫苗模板" value="vaccine" />
+                      <el-option :label="$t('settings.general')" value="general" />
+                      <el-option :label="$t('settings.internalMedicine')" value="internal" />
+                      <el-option :label="$t('settings.surgery')" value="surgery" />
+                      <el-option :label="$t('settings.vaccine')" value="vaccine" />
                     </el-select>
                   </div>
                 </div>
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">处方自动保存</div>
-                    <div class="item-desc">编辑处方时自动保存草稿</div>
+                    <div class="item-title">{{ $t('settings.autoSavePrescription') }}</div>
+                    <div class="item-desc">{{ $t('settings.autoSaveDesc') }}</div>
                   </div>
                   <div class="item-control">
                     <el-switch v-model="settings.autoSavePrescription" />
@@ -233,43 +233,43 @@
             </el-card>
           </template>
 
-          <!-- 隐私设置 -->
+          <!-- Privacy Settings -->
           <template v-if="activeMenu === 'privacy'">
             <el-card shadow="hover" class="setting-card">
               <template #header>
                 <div class="card-header">
-                  <span>隐私设置</span>
+                  <span>{{ $t('settings.privacySettings') }}</span>
                 </div>
               </template>
               
               <div class="setting-list">
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">显示真实姓名</div>
-                    <div class="item-desc">向患者展示真实姓名而非用户名</div>
+                    <div class="item-title">{{ $t('settings.showRealName') }}</div>
+                    <div class="item-desc">{{ $t('settings.showRealNameDesc') }}</div>
                   </div>
                   <div class="item-control">
-                    <el-switch v-model="settings.showRealName" />
+                    <el-switch v-model="settings.showRealName" @change="val => settingsStore.showRealName = val" />
                   </div>
                 </div>
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">显示联系方式</div>
-                    <div class="item-desc">允许患者查看您的联系电话</div>
+                    <div class="item-title">{{ $t('settings.showContactInfo') }}</div>
+                    <div class="item-desc">{{ $t('settings.showContactDesc') }}</div>
                   </div>
                   <div class="item-control">
-                    <el-switch v-model="settings.showContact" />
+                    <el-switch v-model="settings.showContact" @change="val => settingsStore.showContact = val" />
                   </div>
                 </div>
 
                 <div class="setting-item">
                   <div class="item-info">
-                    <div class="item-title">在线咨询可见</div>
-                    <div class="item-desc">允许患者向您发起在线咨询</div>
+                    <div class="item-title">{{ $t('settings.onlineConsultationVisible') }}</div>
+                    <div class="item-desc">{{ $t('settings.onlineConsultationDesc') }}</div>
                   </div>
                   <div class="item-control">
-                    <el-switch v-model="settings.consultVisible" />
+                    <el-switch v-model="settings.consultVisible" @change="handleConsultVisibleChange" />
                   </div>
                 </div>
 
@@ -277,21 +277,21 @@
 
                 <div class="setting-item danger">
                   <div class="item-info">
-                    <div class="item-title">清除缓存</div>
-                    <div class="item-desc">清除本地存储的临时数据</div>
+                    <div class="item-title">{{ $t('settings.clearCache') }}</div>
+                    <div class="item-desc">{{ $t('settings.clearCacheDesc') }}</div>
                   </div>
                   <div class="item-control">
-                    <el-button type="danger" plain @click="handleClearCache">清除缓存</el-button>
+                    <el-button type="danger" plain @click="handleClearCache">{{ $t('settings.clearCache') }}</el-button>
                   </div>
                 </div>
 
                 <div class="setting-item danger">
                   <div class="item-info">
-                    <div class="item-title">导出个人数据</div>
-                    <div class="item-desc">导出您的工作记录和统计数据</div>
+                    <div class="item-title">{{ $t('settings.exportPersonalData') }}</div>
+                    <div class="item-desc">{{ $t('settings.exportDataDesc') }}</div>
                   </div>
                   <div class="item-control">
-                    <el-button type="primary" plain @click="handleExportData">导出数据</el-button>
+                    <el-button type="primary" plain @click="handleExportData">{{ $t('settings.exportPersonalData') }}</el-button>
                   </div>
                 </div>
               </div>
@@ -306,71 +306,69 @@
                   <div class="app-logo">
                     <el-icon :size="64" color="#3b82f6"><FirstAidKit /></el-icon>
                   </div>
-                  <h2 class="app-name">宠物医院管理系统</h2>
-                  <p class="app-version">版本号：v1.0.0</p>
+                  <h2 class="app-name">{{ $t('settings.appName') }}</h2>
+                  <p class="app-version">{{ $t('settings.appVersion', { version: 'v1.0.0' }) }}</p>
                 </div>
 
                 <el-descriptions :column="1" border class="about-info">
-                  <el-descriptions-item label="系统名称">宠物医院医生工作站</el-descriptions-item>
-                  <el-descriptions-item label="开发团队">毕业设计小组</el-descriptions-item>
-                  <el-descriptions-item label="技术支持">XXX大学计算机学院</el-descriptions-item>
-                  <el-descriptions-item label="更新时间">2026-04-12</el-descriptions-item>
+                  <el-descriptions-item :label="$t('settings.systemName')">{{ $t('settings.systemNameDoctor') }}</el-descriptions-item>
+                  <el-descriptions-item :label="$t('settings.updateTime')">2026-04-12</el-descriptions-item>
                 </el-descriptions>
 
                 <div class="about-actions">
                   <el-button type="primary" @click="handleCheckUpdate">
                     <el-icon><Refresh /></el-icon>
-                    检查更新
+                    {{ $t('settings.checkUpdate') }}
                   </el-button>
                   <el-button @click="showFeedback = true">
                     <el-icon><ChatDotRound /></el-icon>
-                    反馈问题
+                    {{ $t('settings.feedback') }}
                   </el-button>
                 </div>
 
                 <div class="copyright">
-                  <p>© 2026 宠物医院管理系统 版权所有</p>
+                  <p>{{ $t('settings.copyright') }}</p>
                 </div>
               </div>
             </el-card>
           </template>
 
           <!-- 保存按钮 -->
-          <div class="settings-footer">
+          <div class="settings-footer" v-if="activeMenu !== 'about'">
             <el-button type="primary" size="large" @click="handleSaveSettings">
               <el-icon><Check /></el-icon>
-              保存设置
+              {{ $t('settings.saveSettings') }}
             </el-button>
-            <el-button size="large" @click="handleResetSettings">恢复默认</el-button>
+            <el-button size="large" @click="handleResetSettings">{{ $t('settings.restoreDefault') }}</el-button>
           </div>
         </div>
       </div>
 
       <!-- 反馈对话框 -->
-      <el-dialog v-model="showFeedback" title="问题反馈" width="500px">
+      <el-dialog v-model="showFeedback" :title="$t('settings.feedback')" width="500px">
         <el-form :model="feedbackForm" label-width="80px">
-          <el-form-item label="反馈类型">
+          <el-form-item :label="$t('settings.feedbackType')">
             <el-radio-group v-model="feedbackForm.type">
-              <el-radio label="bug">功能异常</el-radio>
-              <el-radio label="feature">功能建议</el-radio>
-              <el-radio label="other">其他</el-radio>
+              <el-radio label="bug">{{ $t('settings.bug') }}</el-radio>
+              <el-radio label="feature">{{ $t('settings.featureRequest') }}</el-radio>
+              <el-radio label="other">{{ $t('settings.other') }}</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="详细描述">
+          <el-form-item :label="$t('settings.detailedDescription')">
             <el-input 
               v-model="feedbackForm.content" 
               type="textarea" 
               :rows="4"
-              placeholder="请详细描述您遇到的问题或建议..." 
+              :placeholder="$t('settings.feedbackPlaceholder')" 
             />
           </el-form-item>
-          <el-form-item label="联系方式">
-            <el-input v-model="feedbackForm.contact" placeholder="手机号或邮箱（选填）" />
+          <el-form-item :label="$t('settings.contact')">
+            <el-input v-model="feedbackForm.contact" :placeholder="$t('settings.contactPlaceholder')" />
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="showFeedback = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmitFeedback">提交反馈</el-button>
+          <el-button @click="showFeedback = false">{{ $t('settings.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmitFeedback">{{ $t('settings.submitFeedback') }}</el-button>
         </template>
       </el-dialog>
     </div>
@@ -384,16 +382,25 @@ import {
   ArrowRight, Check, Refresh, ChatDotRound, FirstAidKit
 } from '@element-plus/icons-vue'
 import { useSettingsStore } from '@/store/settings'
+import { useUserStore } from '@/store/user'
+import { doctorModule } from '@/api/doctor/doctor'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const settingsStore = useSettingsStore()
+const userStore = useUserStore()
+
+const getDoctorId = () => {
+  return userStore.userInfo?.doctorId || userStore.userInfo?.id || ''
+}
 
 // 菜单配置
 const menuList = [
-  { key: 'interface', label: '界面设置', icon: 'Monitor' },
-  { key: 'notification', label: '通知设置', icon: 'Bell' },
-  { key: 'work', label: '工作设置', icon: 'Briefcase' },
-  { key: 'privacy', label: '隐私设置', icon: 'Lock' },
-  { key: 'about', label: '关于系统', icon: 'InfoFilled' }
+  { key: 'interface', label: t('settings.interfaceSettings'), icon: 'Monitor' },
+  { key: 'notification', label: t('settings.notificationSettings'), icon: 'Bell' },
+  { key: 'work', label: t('settings.workSettings'), icon: 'Briefcase' },
+  { key: 'privacy', label: t('settings.privacySettings'), icon: 'Lock' },
+  { key: 'about', label: t('settings.aboutSystem'), icon: 'InfoFilled' }
 ]
 
 const activeMenu = ref('interface')
@@ -430,6 +437,11 @@ watch(() => settingsStore.$state, (newState) => {
   Object.assign(settings, newState)
 }, { deep: true })
 
+// 单独监听 defaultStatus，确保左侧工作状态与右侧设置实时同步
+watch(() => settingsStore.defaultStatus, (newVal) => {
+  settings.defaultStatus = newVal
+})
+
 // 反馈
 const showFeedback = ref(false)
 const feedbackForm = reactive({
@@ -442,25 +454,24 @@ const feedbackForm = reactive({
 const handleThemeChange = (color) => {
   settingsStore.themeColor = color
   settingsStore.applyThemeColor(color)
-  ElMessage.success('主题色已应用')
+  ElMessage.success(t('settings.themeApplied'))
 }
 
 const handleSidebarStyleChange = (style) => {
   settingsStore.sidebarStyle = style
-  ElMessage.success('侧边栏样式已切换')
-  // 不需要刷新页面，DoctorLayout 会通过 sidebarClass 计算属性实时响应
+  ElMessage.success(t('settings.sidebarSwitched'))
 }
 
 const handleDesktopNotify = async (val) => {
   if (val) {
     const granted = await settingsStore.requestNotificationPermission()
     if (!granted) {
-      ElMessage.warning('请允许通知权限')
+      ElMessage.warning(t('settings.allowNotification'))
       settings.desktopNotify = false
       settingsStore.desktopNotify = false
     } else {
       settingsStore.desktopNotify = true
-      ElMessage.success('桌面通知已开启')
+      ElMessage.success(t('settings.desktopEnabled'))
     }
   } else {
     settingsStore.desktopNotify = false
@@ -470,17 +481,17 @@ const handleDesktopNotify = async (val) => {
 const handleSoundTest = (val) => {
   if (val) {
     settingsStore.playNotificationSound()
-    ElMessage.success('声音提醒已开启')
+    ElMessage.success(t('settings.soundEnabled'))
   }
 }
 
 const handleClearCache = async () => {
   try {
-    await ElMessageBox.confirm('确定要清除所有缓存数据吗？', '确认清除', {
+    await ElMessageBox.confirm(t('settings.clearCacheConfirm'), t('settings.confirmClear'), {
       type: 'warning'
     })
     localStorage.clear()
-    ElMessage.success('缓存已清除，页面将重新加载')
+    ElMessage.success(t('settings.cacheCleared'))
     setTimeout(() => {
       window.location.reload()
     }, 1000)
@@ -490,7 +501,6 @@ const handleClearCache = async () => {
 }
 
 const handleExportData = () => {
-  // 导出当前设置
   const data = JSON.stringify(settingsStore.$state, null, 2)
   const blob = new Blob([data], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -499,25 +509,67 @@ const handleExportData = () => {
   a.download = `doctor_settings_${new Date().getTime()}.json`
   a.click()
   URL.revokeObjectURL(url)
-  ElMessage.success('数据导出成功')
+  ElMessage.success(t('settings.dataExported'))
 }
 
-const handleCheckUpdate = () => {
-  ElMessage.success('已是最新版本')
+const handleCheckUpdate = async () => {
+  try {
+    const res = await doctorModule.checkVersion()
+    if (res.code === 200 && res.data) {
+      const data = res.data
+      if (data.forceUpdate) {
+        ElMessageBox.confirm(
+          t('settings.versionUpdate'),
+          t('settings.versionUpdate'),
+          { confirmButtonText: t('settings.updateNow'), cancelButtonText: t('settings.later'), type: 'warning' }
+        ).then(() => {
+          if (data.updateUrl) window.open(data.updateUrl, '_blank')
+        })
+      } else {
+        ElMessage.success(t('settings.alreadyLatest'))
+      }
+    }
+  } catch (error) {
+    ElMessage.error(t('settings.checkUpdate'))
+  }
 }
 
-const handleSubmitFeedback = () => {
+const handleSubmitFeedback = async () => {
   if (!feedbackForm.content.trim()) {
-    ElMessage.warning('请输入反馈内容')
+    ElMessage.warning(t('settings.pleaseEnterFeedback'))
     return
   }
-  ElMessage.success('反馈提交成功，感谢您的建议！')
-  showFeedback.value = false
-  feedbackForm.content = ''
-  feedbackForm.contact = ''
+  try {
+    await doctorModule.submitFeedback({
+      type: feedbackForm.type,
+      content: feedbackForm.content,
+      contact: feedbackForm.contact
+    })
+    ElMessage.success(t('settings.feedbackSubmitted'))
+    showFeedback.value = false
+    feedbackForm.content = ''
+    feedbackForm.contact = ''
+  } catch (error) {
+    ElMessage.error(t('settings.feedbackFailed'))
+  }
 }
 
-const handleSaveSettings = () => {
+const handleConsultVisibleChange = async (val) => {
+  settingsStore.consultVisible = val
+  try {
+    const doctorId = getDoctorId()
+    if (doctorId) {
+      await doctorModule.updateDoctorInfo({ doctorId, consultVisible: val ? 1 : 0 })
+    }
+  } catch (error) {
+    console.error('同步咨询可见性失败', error)
+    ElMessage.error(t('settings.syncFailed'))
+  }
+}
+
+const handleSaveSettings = async () => {
+  const oldDefaultStatus = settingsStore.defaultStatus
+  
   // 同步到 store
   Object.keys(settings).forEach(key => {
     if (key in settingsStore) {
@@ -525,25 +577,60 @@ const handleSaveSettings = () => {
     }
   })
   settingsStore.saveSettings()
-  ElMessage.success('设置已保存')
+  
+  // 同步 consultVisible 到后端
+  try {
+    const doctorId = getDoctorId()
+    if (doctorId) {
+      await doctorModule.updateDoctorInfo({ doctorId, consultVisible: settings.consultVisible ? 1 : 0 })
+    }
+  } catch (error) {
+    console.error('同步咨询可见性失败', error)
+  }
+  
+  // 如果Default Reception Status改变了
+  if (settings.defaultStatus !== oldDefaultStatus) {
+    try {
+      await doctorModule.updateDoctorStatus({ status: settings.defaultStatus })
+      ElMessage.success(t('settings.workStatusSynchronized'))
+      return
+    } catch (error) {
+      console.error('同步工作状态失败', error)
+    }
+  }
+  
+  ElMessage.success(t('settings.settingsSaved'))
 }
 
 const handleResetSettings = async () => {
   try {
-    await ElMessageBox.confirm('确定要恢复默认设置吗？', '确认恢复', {
+    await ElMessageBox.confirm(t('settings.restoreConfirm'), t('settings.confirmRestore'), {
       type: 'warning'
     })
     settingsStore.resetSettings()
     Object.assign(settings, settingsStore.$state)
-    ElMessage.success('已恢复默认设置')
+    ElMessage.success(t('settings.defaultRestored'))
   } catch (e) {
     // 用户取消
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   settingsStore.initSettings()
   Object.assign(settings, settingsStore.$state)
+  
+  // 从后端加载 consultVisible
+  try {
+    const res = await doctorModule.getDoctorInfo()
+    if (res.code === 200 && res.data && res.data.consultVisible !== undefined && res.data.consultVisible !== null) {
+      const backendVisible = res.data.consultVisible !== 0
+      settings.consultVisible = backendVisible
+      settingsStore.consultVisible = backendVisible
+      settingsStore.saveSettings()
+    }
+  } catch (e) {
+    console.error('加载医生咨询可见设置失败', e)
+  }
 })
 </script>
 

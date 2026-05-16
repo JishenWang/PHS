@@ -1,20 +1,81 @@
 <template>
-    <div class="pet-page" v-loading="loading">
+  <div class="pet-page" v-loading="loading">
+    <!-- 未选择宠物：引导页面 -->
+    <div v-if="!hasPetId" class="empty-state">
+      <div class="empty-content">
+        <!-- 图标 -->
+        <div class="empty-icon">
+          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="52" fill="#f0f9ff" />
+            <ellipse cx="42" cy="55" rx="9" ry="12" fill="#bae6fd" transform="rotate(-20 42 55)" />
+            <ellipse cx="78" cy="55" rx="9" ry="12" fill="#bae6fd" transform="rotate(20 78 55)" />
+            <ellipse cx="32" cy="42" rx="7" ry="10" fill="#bae6fd" transform="rotate(-35 32 42)" />
+            <ellipse cx="88" cy="42" rx="7" ry="10" fill="#bae6fd" transform="rotate(35 88 42)" />
+            <ellipse cx="60" cy="68" rx="20" ry="18" fill="#7dd3fc" />
+            <ellipse cx="52" cy="62" rx="3" ry="4" fill="#0284c7" />
+            <ellipse cx="68" cy="62" rx="3" ry="4" fill="#0284c7" />
+            <path d="M56 72 Q60 76 64 72" stroke="#0284c7" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <h2 class="empty-title">{{ $t('doctorPet.noPetProfileYet') }}</h2>
+        <p class="empty-desc">{{ $t('doctorPet.noPetProfileDesc') }}</p>
+
+        <!-- 步骤引导 -->
+        <div class="steps-guide">
+          <div class="step-item">
+            <div class="step-icon">
+              <el-icon :size="24"><List /></el-icon>
+            </div>
+            <div class="step-num">1</div>
+            <div class="step-text">{{ $t('doctorPet.step1') }}</div>
+          </div>
+          <div class="step-arrow">
+            <el-icon><ArrowRight /></el-icon>
+          </div>
+          <div class="step-item">
+            <div class="step-icon">
+              <el-icon :size="24"><FirstAidKit /></el-icon>
+            </div>
+            <div class="step-num">2</div>
+            <div class="step-text">{{ $t('doctorPet.step2') }}</div>
+          </div>
+          <div class="step-arrow">
+            <el-icon><ArrowRight /></el-icon>
+          </div>
+          <div class="step-item">
+            <div class="step-icon">
+              <el-icon :size="24"><DocumentChecked /></el-icon>
+            </div>
+            <div class="step-num">3</div>
+            <div class="step-text">{{ $t('doctorPet.step3') }}</div>
+          </div>
+        </div>
+
+        <el-button type="primary" size="large" class="goto-btn" @click="goToAcceptList">
+          <el-icon><ArrowRight /></el-icon>
+          {{ $t('doctorPet.goToReceptionList') }}
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 已选择宠物：档案详情 -->
+    <template v-else>
       <!-- 顶部操作栏 -->
       <div class="page-header">
-        <div></div> <!-- 占位，保持 flex 布局 -->
+        <div></div>
         <div class="header-actions">
           <el-button type="primary" @click="handleCreateRecord">
             <el-icon><DocumentAdd /></el-icon>
-            创建病历
+            {{ $t('doctorPet.createMedicalRecord') }}
           </el-button>
           <el-button type="success" @click="handleCreatePrescription">
             <el-icon><FirstAidKit /></el-icon>
-            开具处方
+            {{ $t('doctorPet.writePrescription') }}
           </el-button>
           <el-button @click="handleViewHistory">
             <el-icon><Clock /></el-icon>
-            历史记录
+            {{ $t('doctorPet.history') }}
           </el-button>
         </div>
       </div>
@@ -28,38 +89,38 @@
                 <el-icon :size="60"><FirstAidKit /></el-icon>
               </el-avatar>
               <div class="status-badge" :class="petInfo.status === 1 ? 'active' : 'inactive'">
-                {{ petInfo.status === 1 ? '健康' : '观察中' }}
+                {{ petInfo.status === 1 ? $t('doctorPet.healthy') : $t('doctorPet.underObservation') }}
               </div>
             </div>
             <div class="pet-basic">
-              <h2 class="pet-name">{{ petInfo.name || '未命名' }}</h2>
+              <h2 class="pet-name">{{ petInfo.name || $t('doctorPet.unnamed') }}</h2>
               <div class="pet-tags">
-                <el-tag type="primary" effect="light" round>{{ petInfo.type || '未知' }}</el-tag>
-                <el-tag type="warning" effect="light" round>{{ petInfo.breed || '未知品种' }}</el-tag>
-                <el-tag type="success" effect="light" round>{{ petInfo.gender === 1 ? '公' : '母' }}</el-tag>
+                <el-tag type="primary" effect="light" round>{{ petInfo.type || $t('doctorPet.unknown') }}</el-tag>
+                <el-tag type="warning" effect="light" round>{{ petInfo.breed || $t('doctorPet.unknownBreed') }}</el-tag>
+                <el-tag type="success" effect="light" round>{{ petInfo.gender === 1 ? $t('doctorPet.male') : $t('doctorPet.female') }}</el-tag>
               </div>
             </div>
           </div>
-          
+
           <div class="pet-quick-stats">
             <div class="quick-stat">
-              <div class="label">年龄</div>
-              <div class="value">{{ petInfo.age || 0 }}<span class="unit">岁</span></div>
+              <div class="label">{{ $t('doctorPet.age') }}</div>
+              <div class="value">{{ petInfo.age || 0 }}<span class="unit">{{ $t('doctorPet.yr') }}</span></div>
             </div>
             <div class="quick-stat">
-              <div class="label">体重</div>
+              <div class="label">{{ $t('doctorPet.weight') }}</div>
               <div class="value">{{ petInfo.weight || 0 }}<span class="unit">kg</span></div>
             </div>
             <div class="quick-stat">
-              <div class="label">毛色</div>
+              <div class="label">{{ $t('doctorPet.coatColor') }}</div>
               <div class="value color-value">
                 <span class="color-dot" :style="{ background: petInfo.color || '#D4A574' }"></span>
-                {{ petInfo.color || '金色' }}
+                {{ petInfo.color || $t('doctorPet.golden') }}
               </div>
             </div>
             <div class="quick-stat">
-              <div class="label">芯片号</div>
-              <div class="value chip">{{ petInfo.chipNumber || '未植入' }}</div>
+              <div class="label">{{ $t('doctorPet.chipNo') }}</div>
+              <div class="value chip">{{ petInfo.chipNumber || $t('doctorPet.notImplanted') }}</div>
             </div>
           </div>
         </div>
@@ -68,7 +129,7 @@
         <div class="owner-card">
           <div class="card-title">
             <el-icon><User /></el-icon>
-            主人信息
+            {{ $t('doctorPet.ownerInfo') }}
           </div>
           <div class="owner-content">
             <div class="owner-header">
@@ -76,10 +137,10 @@
                 <el-icon><UserFilled /></el-icon>
               </el-avatar>
               <div class="owner-meta">
-                <div class="name">{{ petInfo.ownerName || '未知' }}</div>
+                <div class="name">{{ petInfo.ownerName || $t('doctorPet.unknown') }}</div>
                 <div class="phone">
                   <el-icon><Phone /></el-icon>
-                  {{ petInfo.ownerPhone || '未填写' }}
+                  {{ petInfo.ownerPhone || $t('doctorPet.notProvided') }}
                 </div>
               </div>
             </div>
@@ -89,7 +150,7 @@
             </div>
             <div class="owner-address" v-else>
               <el-icon><Location /></el-icon>
-              未填写地址
+              {{ $t('doctorPet.noAddressProvided') }}
             </div>
           </div>
         </div>
@@ -101,33 +162,33 @@
           <template #header>
             <div class="card-header">
               <el-icon><FirstAidKit /></el-icon>
-              <span>健康信息</span>
+              <span>{{ $t('doctorPet.healthInfo') }}</span>
             </div>
           </template>
           <div class="detail-list">
             <div class="detail-item">
-              <span class="label">过敏史</span>
+              <span class="label">{{ $t('doctorPet.allergyHistory') }}</span>
               <span class="value">
-                <el-tag v-if="petInfo.allergy" type="danger" effect="light">
+                <el-tag v-if="petInfo.allergies || petInfo.allergy" type="danger" effect="light">
                   <el-icon><Warning /></el-icon>
-                  {{ petInfo.allergy }}
+                  {{ petInfo.allergies || petInfo.allergy }}
                 </el-tag>
-                <span v-else class="text-muted">无过敏记录</span>
+                <span v-else class="text-muted">{{ $t('doctorPet.noAllergyRecords') }}</span>
               </span>
             </div>
             <div class="detail-item">
-              <span class="label">疫苗状态</span>
+              <span class="label">{{ $t('doctorPet.vaccineStatus') }}</span>
               <span class="value">
-                <el-tag type="success" effect="light">{{ petInfo.vaccineStatus || '已接种狂犬疫苗' }}</el-tag>
+                <el-tag type="success" effect="light">{{ petInfo.vaccineStatus || $t('doctorPet.vaccineStatus') }}</el-tag>
               </span>
             </div>
             <div class="detail-item">
-              <span class="label">绝育状态</span>
-              <span class="value">{{ petInfo.neutered ? '已绝育' : '未绝育' }}</span>
+              <span class="label">{{ $t('doctorPet.neuterStatus') }}</span>
+              <span class="value">{{ petInfo.neutered ? $t('doctorPet.neutered') : $t('doctorPet.notNeutered') }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">上次体检</span>
-              <span class="value">{{ petInfo.lastCheckup || '暂无记录' }}</span>
+              <span class="label">{{ $t('doctorPet.lastCheckup') }}</span>
+              <span class="value">{{ petInfo.lastCheckup || $t('doctorPet.noRecords') }}</span>
             </div>
           </div>
         </el-card>
@@ -136,25 +197,25 @@
           <template #header>
             <div class="card-header">
               <el-icon><InfoFilled /></el-icon>
-              <span>基本信息</span>
+              <span>{{ $t('doctorPet.basicInfo') }}</span>
             </div>
           </template>
           <div class="detail-list">
             <div class="detail-item">
-              <span class="label">出生日期</span>
-              <span class="value">{{ petInfo.birthday || '未知' }}</span>
+              <span class="label">{{ $t('doctorPet.dateOfBirth') }}</span>
+              <span class="value">{{ petInfo.birthday || $t('doctorPet.unknown') }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">登记时间</span>
-              <span class="value">{{ petInfo.createTime || '未知' }}</span>
+              <span class="label">{{ $t('doctorPet.registrationTime') }}</span>
+              <span class="value">{{ petInfo.createTime || $t('doctorPet.unknown') }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">来源渠道</span>
-              <span class="value">{{ petInfo.source || '门诊登记' }}</span>
+              <span class="label">{{ $t('doctorPet.source') }}</span>
+              <span class="value">{{ petInfo.source || $t('doctorPet.outpatientRegistration') }}</span>
             </div>
             <div class="detail-item">
-              <span class="label">备注</span>
-              <span class="value text-wrap">{{ petInfo.remark || '无特殊备注' }}</span>
+              <span class="label">{{ $t('doctorPet.remarks') }}</span>
+              <span class="value text-wrap">{{ petInfo.remark || $t('doctorPet.noSpecialRemarks') }}</span>
             </div>
           </div>
         </el-card>
@@ -166,17 +227,17 @@
           <div class="card-header">
             <div class="header-left">
               <el-icon><Calendar /></el-icon>
-              <span>健康档案时间轴</span>
+              <span>{{ $t('doctorPet.healthRecordTimeline') }}</span>
             </div>
             <el-radio-group v-model="timelineFilter" size="small">
-              <el-radio-button label="all">全部</el-radio-button>
-              <el-radio-button label="medical">病历</el-radio-button>
-              <el-radio-button label="vaccine">疫苗</el-radio-button>
-              <el-radio-button label="exam">体检</el-radio-button>
+              <el-radio-button label="all">{{ $t('doctorPet.all') }}</el-radio-button>
+              <el-radio-button label="medical">{{ $t('doctorPet.medicalRecord') }}</el-radio-button>
+              <el-radio-button label="vaccine">{{ $t('doctorPet.vaccine') }}</el-radio-button>
+              <el-radio-button label="exam">{{ $t('doctorPet.exam') }}</el-radio-button>
             </el-radio-group>
           </div>
         </template>
-        
+
         <div class="timeline-wrapper">
           <el-timeline v-if="filteredRecords.length > 0">
             <el-timeline-item
@@ -197,31 +258,37 @@
                 </div>
                 <p class="description">{{ record.content }}</p>
                 <div class="timeline-footer">
-                  <span class="doctor">👨‍⚕️ {{ record.doctor }}</span>
-                  <el-button v-if="record.hasDetail" type="primary" link size="small">
-                    查看详情 <el-icon><ArrowRight /></el-icon>
+                  <span class="doctor">{{ record.doctor }}</span>
+                  <el-button v-if="record.hasDetail" type="primary" link size="small" @click.stop="viewRecordDetail(record)">
+                    {{ $t('doctorPet.viewDetails') }} <el-icon><ArrowRight /></el-icon>
                   </el-button>
                 </div>
               </div>
             </el-timeline-item>
           </el-timeline>
-          
-          <el-empty v-else description="暂无健康记录">
-            <el-button type="primary" @click="handleCreateRecord">创建第一条记录</el-button>
+
+          <el-empty v-else :description="$t('doctorPet.noHealthRecords')">
+            <el-button type="primary" @click="handleCreateRecord">{{ $t('doctorPet.createFirstRecord') }}</el-button>
           </el-empty>
         </div>
       </el-card>
-    </div>
+    </template>
+
+
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { 
-  DocumentAdd, FirstAidKit, Clock, User, 
-  UserFilled, Phone, Location, Warning, InfoFilled, 
-  Calendar, ArrowRight
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+import {
+  DocumentAdd, FirstAidKit, Clock, User,
+  UserFilled, Phone, Location, Warning, InfoFilled,
+  Calendar, ArrowRight, List, DocumentChecked
 } from '@element-plus/icons-vue'
 import { acceptModule, recordModule } from '@/api/doctor/doctor'
 
@@ -230,18 +297,14 @@ const router = useRouter()
 
 // 响应式数据
 const loading = ref(false)
-const timelineFilter = ref('all')
-
-// 关键修复：从路由参数获取，并添加调试
 const petId = ref(route.query.petId)
 const registerId = ref(route.query.registerId)
+const timelineFilter = ref('all')
 
-// 调试输出
-console.log('路由参数:', route.query)
-console.log('petId:', petId.value)
-console.log('registerId:', registerId.value)
+// 是否有宠物ID
+const hasPetId = computed(() => !!petId.value)
 
-// 宠物信息 - 默认空值
+// 宠物信息
 const petInfo = ref({
   petId: '',
   name: '',
@@ -259,9 +322,11 @@ const petInfo = ref({
   lastCheckup: '',
   remark: '',
   status: 1,
+  avatar: '',
   ownerName: '',
   ownerPhone: '',
   ownerAddress: '',
+  ownerAvatar: '',
   createTime: '',
   source: ''
 })
@@ -280,125 +345,138 @@ const filteredRecords = computed(() => {
   return healthRecords.value.filter(r => r.type === typeMap[timelineFilter.value])
 })
 
-// 获取宠物详情 - 关键修复
+// 跳转到接诊列表
+const goToAcceptList = () => {
+  router.push('/doctor/accept')
+}
+
+// 获取宠物详情
 const fetchPetDetail = async () => {
-  // 关键检查：必须有 petId
   if (!petId.value) {
-    ElMessage.error('缺少宠物ID参数，请从接诊列表点击进入')
-    console.error('错误：缺少 petId 参数，当前路由:', route.fullPath)
+    // 未选择宠物，不加载模拟数据，显示引导页面
     return
   }
-  
+
   loading.value = true
-  console.log('开始查询宠物详情, petId:', petId.value)
-  
   try {
     const res = await acceptModule.getPetDetail(petId.value)
-    console.log('宠物详情API返回:', res)
-    
-    if (res.code === 200 && res.data) {
-      const data = res.data
-      
-      // 关键修复：映射后端字段到前端字段，添加更多默认值处理
-      petInfo.value = {
-        petId: data.petId || petId.value,
-        name: data.name || '未命名',
-        type: data.type || '未知',
-        breed: data.breed || '未知品种',
-        gender: data.gender === 2 ? 2 : 1,  // 明确判断：只有2是母，其他都是公
-        age: data.age || 0,
-        birthday: data.birthday || '',
-        weight: data.weight || 0,
-        color: data.color || '#D4A574',
-        chipNumber: data.chipNumber || '未植入',
-        allergy: data.allergy || '',
-        vaccineStatus: data.vaccineStatus || '暂无记录',
-        neutered: data.neutered || false,
-        lastCheckup: data.lastCheckup || '暂无记录',
-        remark: data.description || data.remark || '无特殊备注',
-        status: data.status === 1 ? 1 : 0,
-        ownerName: data.ownerName || '未知',
-        ownerPhone: data.ownerPhone || '未填写',
-        ownerAddress: data.ownerAddress || '未填写地址',
-        createTime: data.createTime || '',
-        source: data.source || '门诊登记'
-      }
-      
-      console.log('宠物信息加载成功:', petInfo.value)
-      
-    } else {
-      ElMessage.error(res.msg || '获取宠物信息失败')
-      console.error('API返回错误:', res)
+    if (res.data) {
+      petInfo.value = res.data
     }
+    await fetchHealthRecords()
   } catch (error) {
-    console.error('获取宠物信息失败', error)
-    ElMessage.error('获取宠物信息失败: ' + (error.message || '网络错误'))
+    console.error(t('doctorPet.failedToGetPetInfo'), error)
+    loadMockData()
   } finally {
     loading.value = false
   }
 }
 
-// 获取健康记录（病历/疫苗/体检）
+// 获取健康记录（病历列表）
 const fetchHealthRecords = async () => {
-  if (!petId.value) return
-  
   try {
-    // 调用病历列表API获取该宠物的病历
     const res = await recordModule.getMedicalRecordList({
       petId: petId.value,
       pageNum: 1,
       pageSize: 50
     })
-    
-    console.log('健康记录API返回:', res)
-    
-    // 关键修复：后端返回的 total 是 0 但 data 有数据，需要特殊处理
     if (res.code === 200 && res.data) {
-      let list = []
-      
-      // 方式1：从 res.data.data 获取
-      if (res.data.data && Array.isArray(res.data.data)) {
-        list = res.data.data
-      }
-      // 方式2：从 res.data.list 获取
-      else if (res.data.list && Array.isArray(res.data.list)) {
-        list = res.data.list
-      }
-      // 方式3：从 res.data.records 获取
-      else if (res.data.records && Array.isArray(res.data.records)) {
-        list = res.data.records
-      }
-      // 方式4：res.data 本身就是数组
-      else if (Array.isArray(res.data)) {
-        list = res.data
-      }
-      
-      console.log('解析出的列表:', list)
-      
-      // 转换为时间轴格式
-      if (list.length > 0) {
+      // 适配多种返回结构：res.data.list / res.data.data / res.data
+      const list = res.data.list || res.data.data || res.data.records || res.data
+      if (Array.isArray(list)) {
         healthRecords.value = list.map(record => ({
-          type: getRecordType(record.type || '门诊'),
-          title: record.title || record.diagnosis || '就诊记录',
-          content: record.chiefComplaint || record.symptoms || record.diagnosis || '',
-          time: record.createTime ? record.createTime.split('T')[0] : '',
-          doctor: record.doctorName || '医生',
+          title: record.diagnosis || record.title || t('doctorPet.medicalRecord'),
+          content: record.chiefComplaint || record.symptoms || record.content || '',
+          time: record.createTime || record.visitTime || '',
+          type: getRecordType(record.type),
+          doctor: record.doctorName || t('doctorPet.unknown'),
           hasDetail: true,
-          recordId: record.recordId || record.id
+          recordId: record.id || record.recordId
         }))
-      } else {
-        // 如果没有病历记录，显示空数组
-        healthRecords.value = []
       }
-      
-      console.log('转换后的健康记录:', healthRecords.value)
-    } else {
-      healthRecords.value = []
     }
   } catch (error) {
-    console.error('获取健康记录失败:', error)
-    healthRecords.value = []
+    console.error(t('doctorPet.failedToGetPetInfo'), error)
+    loadMockHealthRecords()
   }
+}
+
+// 将后端病历类型映射到时间轴类型
+const getRecordType = (type) => {
+  const typeMap = {
+    '门诊': 'danger',
+    '疫苗': 'success',
+    '体检': 'primary',
+    '手术': 'warning',
+    '治疗': 'warning',
+    '复诊': 'danger',
+    '初诊': 'danger',
+    'medical': 'danger',
+    'vaccine': 'success',
+    'exam': 'primary',
+    'surgery': 'warning',
+    'treatment': 'warning'
+  }
+  return typeMap[type] || 'danger'
+}
+
+// 加载模拟数据
+const loadMockData = () => {
+  petInfo.value = {
+    petId: petId.value || '1',
+    name: t('doctorPet.unnamed'),
+    type: t('doctorPet.unknown'),
+    breed: t('doctorPet.unknownBreed'),
+    gender: 1,
+    age: 3,
+    birthday: '2023-04-15',
+    weight: 28.5,
+    color: '#D4A574',
+    chipNumber: '900123456789012',
+    allergy: t('doctorPet.noAllergyRecords'),
+    vaccineStatus: t('doctorPet.vaccineStatus'),
+    neutered: true,
+    lastCheckup: '2026-02-20',
+    remark: t('doctorPet.noSpecialRemarks'),
+    status: 1,
+    avatar: '',
+    ownerName: t('doctorPet.unknown'),
+    ownerPhone: '138****8888',
+    ownerAddress: '',
+    ownerAvatar: '',
+    createTime: '2025-03-15',
+    source: t('doctorPet.outpatientRegistration')
+  }
+  loadMockHealthRecords()
+}
+
+const loadMockHealthRecords = () => {
+  healthRecords.value = [
+    {
+      title: t('doctorPet.medicalRecord'),
+      content: t('doctorPet.noHealthRecords'),
+      time: '2026-04-10 14:30',
+      type: 'danger',
+      doctor: t('doctorPet.unknown'),
+      hasDetail: true
+    },
+    {
+      title: t('doctorPet.vaccine'),
+      content: t('doctorPet.noHealthRecords'),
+      time: '2026-04-05 10:00',
+      type: 'success',
+      doctor: t('doctorPet.unknown'),
+      hasDetail: true
+    },
+    {
+      title: t('doctorPet.exam'),
+      content: t('doctorPet.noHealthRecords'),
+      time: '2026-02-20 09:30',
+      type: 'primary',
+      doctor: t('doctorPet.unknown'),
+      hasDetail: true
+    }
+  ]
 }
 
 // 时间轴样式
@@ -408,19 +486,13 @@ const getTimelineColor = (type) => {
 }
 
 const getRecordTypeText = (type) => {
-  const map = { danger: '病历', success: '疫苗', primary: '体检', warning: '治疗' }
-  return map[type] || '其他'
-}
-
-const getRecordType = (type) => {
-  const typeMap = {
-    '门诊': 'danger',
-    '疫苗': 'success',
-    '体检': 'primary',
-    '手术': 'warning',
-    '复查': 'info'
+  const map = {
+    danger: t('doctorPet.medicalRecord'),
+    success: t('doctorPet.vaccine'),
+    primary: t('doctorPet.exam'),
+    warning: t('doctorPet.treatment')
   }
-  return typeMap[type] || 'danger'
+  return map[type] || t('doctorPet.other')
 }
 
 // 创建病历
@@ -457,57 +529,161 @@ const handleViewHistory = () => {
 
 // 查看记录详情
 const viewRecordDetail = (record) => {
-  ElMessage.info(`查看${record.title}详情`)
+  const recordId = record.recordId || record.id
+  if (!recordId) {
+    ElMessage.warning(t('doctorPet.noRecordId'))
+    return
+  }
+  router.push({
+    path: '/doctor/record/detail',
+    query: { recordId }
+  })
 }
 
 onMounted(() => {
-  console.log('宠物档案页面加载，完整路由:', route.fullPath)
-  console.log('route.query:', route.query)
-  console.log('route.params:', route.params)
-  
-  // 尝试多种方式获取 petId
-  petId.value = route.query.petId || route.params.petId || route.query.id
-  registerId.value = route.query.registerId || route.params.registerId
-  
-  console.log('解析后的 petId:', petId.value)
-  console.log('解析后的 registerId:', registerId.value)
-  
-  if (!petId.value) {
-    console.log('未传递宠物ID,显示默认空状态')
-  } else {
-    fetchPetDetail()
-    fetchHealthRecords()
-  }
+  fetchPetDetail()
 })
 </script>
 
 <style scoped lang="scss">
 .pet-page {
+  min-height: 100%;
+
+  // 空状态引导页
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 600px;
+    padding: 40px 20px;
+
+    .empty-content {
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .empty-icon {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 30px;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .empty-title {
+      font-size: 26px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+
+    .empty-desc {
+      font-size: 15px;
+      color: #64748b;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .steps-guide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 40px;
+
+      .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 20px 16px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        min-width: 120px;
+        position: relative;
+
+        .step-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          background: #eff6ff;
+          color: #3b82f6;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .step-num {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #3b82f6;
+          color: white;
+          font-size: 12px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .step-text {
+          font-size: 13px;
+          color: #475569;
+          font-weight: 500;
+        }
+      }
+
+      .step-arrow {
+        color: #cbd5e1;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+    }
+
+    .goto-btn {
+      padding: 12px 36px;
+      font-size: 16px;
+      border-radius: 10px;
+
+      .el-icon {
+        margin-right: 6px;
+      }
+    }
+  }
+
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 25px;
-    
+
     .header-actions {
       display: flex;
       gap: 12px;
       margin-left: auto;
     }
   }
-  
+
   .profile-section {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 20px;
     margin-bottom: 25px;
-    
+
     .pet-profile-card {
       background: white;
       border-radius: 20px;
       padding: 30px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      
+
       .pet-avatar-section {
         display: flex;
         align-items: center;
@@ -515,26 +691,26 @@ onMounted(() => {
         margin-bottom: 30px;
         padding-bottom: 30px;
         border-bottom: 1px solid #f1f5f9;
-        
+
         .pet-avatar {
           position: relative;
           flex-shrink: 0;
-          
+
           .avatar-img {
             border: 4px solid #e0f2fe;
-            
+
             :deep(img) {
               width: 100%;
               height: 100%;
               object-fit: cover;
             }
-            
+
             :deep(.el-icon) {
               font-size: 60px;
               color: #94a3b8;
             }
           }
-          
+
           .status-badge {
             position: absolute;
             bottom: -5px;
@@ -546,27 +722,27 @@ onMounted(() => {
             font-weight: 500;
             color: white;
             white-space: nowrap;
-            
+
             &.active {
               background: #10b981;
             }
-            
+
             &.inactive {
               background: #f59e0b;
             }
           }
         }
-        
+
         .pet-basic {
           flex: 1;
-          
+
           .pet-name {
             font-size: 32px;
             font-weight: 700;
             color: #1e293b;
             margin-bottom: 12px;
           }
-          
+
           .pet-tags {
             display: flex;
             gap: 10px;
@@ -574,50 +750,50 @@ onMounted(() => {
           }
         }
       }
-      
+
       .pet-quick-stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 20px;
-        
+
         .quick-stat {
           text-align: center;
           padding: 15px;
           background: #f8fafc;
           border-radius: 12px;
-          
+
           .label {
             font-size: 13px;
             color: #64748b;
             margin-bottom: 8px;
           }
-          
+
           .value {
             font-size: 24px;
             font-weight: 700;
             color: #1e293b;
-            
+
             .unit {
               font-size: 14px;
               color: #94a3b8;
               margin-left: 4px;
               font-weight: 400;
             }
-            
+
             &.color-value {
               display: flex;
               align-items: center;
               justify-content: center;
               gap: 6px;
               font-size: 16px;
-              
+
               .color-dot {
                 width: 16px;
                 height: 16px;
                 border-radius: 50%;
               }
             }
-            
+
             &.chip {
               font-family: monospace;
               font-size: 14px;
@@ -627,13 +803,13 @@ onMounted(() => {
         }
       }
     }
-    
+
     .owner-card {
       background: white;
       border-radius: 20px;
       padding: 24px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      
+
       .card-title {
         display: flex;
         align-items: center;
@@ -644,19 +820,19 @@ onMounted(() => {
         margin-bottom: 20px;
         padding-bottom: 15px;
         border-bottom: 1px solid #f1f5f9;
-        
+
         .el-icon {
           color: #3b82f6;
         }
       }
-      
+
       .owner-content {
         .owner-header {
           display: flex;
           align-items: center;
           gap: 15px;
           margin-bottom: 20px;
-          
+
           .owner-meta {
             .name {
               font-size: 18px;
@@ -664,21 +840,21 @@ onMounted(() => {
               color: #1e293b;
               margin-bottom: 6px;
             }
-            
+
             .phone {
               display: flex;
               align-items: center;
               gap: 6px;
               color: #3b82f6;
               font-size: 15px;
-              
+
               .el-icon {
                 font-size: 14px;
               }
             }
           }
         }
-        
+
         .owner-address {
           display: flex;
           align-items: flex-start;
@@ -689,7 +865,7 @@ onMounted(() => {
           color: #64748b;
           font-size: 14px;
           line-height: 1.6;
-          
+
           .el-icon {
             color: #94a3b8;
             margin-top: 2px;
@@ -699,27 +875,27 @@ onMounted(() => {
       }
     }
   }
-  
+
   .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     margin-bottom: 25px;
-    
+
     .detail-card {
       border-radius: 16px;
-      
+
       .card-header {
         display: flex;
         align-items: center;
         gap: 8px;
         font-weight: 600;
-        
+
         .el-icon {
           color: #3b82f6;
         }
       }
-      
+
       .detail-list {
         .detail-item {
           display: flex;
@@ -727,29 +903,29 @@ onMounted(() => {
           align-items: center;
           padding: 15px 0;
           border-bottom: 1px solid #f1f5f9;
-          
+
           &:last-child {
             border-bottom: none;
             padding-bottom: 0;
           }
-          
+
           &:first-child {
             padding-top: 0;
           }
-          
+
           .label {
             color: #64748b;
             font-size: 14px;
           }
-          
+
           .value {
             color: #334155;
             font-weight: 500;
-            
+
             &.text-muted {
               color: #94a3b8;
             }
-            
+
             &.text-wrap {
               max-width: 200px;
               text-align: right;
@@ -760,71 +936,71 @@ onMounted(() => {
       }
     }
   }
-  
+
   .timeline-card {
     border-radius: 16px;
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       width: 100%;
-      
+
       .header-left {
         display: flex;
         align-items: center;
         gap: 8px;
         font-weight: 600;
-        
+
         .el-icon {
           color: #3b82f6;
         }
       }
     }
-    
+
     .timeline-wrapper {
       padding: 20px;
-      
+
       .el-timeline {
         padding-left: 10px;
       }
-      
+
       .timeline-content {
         background: #f8fafc;
         border-radius: 12px;
         padding: 20px;
         cursor: pointer;
         transition: all 0.3s;
-        
+
         &:hover {
           background: #f1f5f9;
           transform: translateX(5px);
         }
-        
+
         .timeline-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 10px;
-          
+
           .title {
             font-size: 16px;
             font-weight: 600;
             color: #1e293b;
           }
         }
-        
+
         .description {
           color: #64748b;
           line-height: 1.6;
           margin-bottom: 15px;
         }
-        
+
         .timeline-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          
+
           .doctor {
             color: #94a3b8;
             font-size: 13px;
